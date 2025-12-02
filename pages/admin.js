@@ -53,13 +53,14 @@ export default function Admin() {
           setProducts(newProducts)
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
           setIsEditing(null)
+          alert('Product updated successfully!')
         } else {
           const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
           const created = await res.json()
           const newProducts = [...products, created]
           setProducts(newProducts)
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
-          alert('Product added successfully! Note: Using browser storage until database is connected.')
+          alert('Product added successfully!')
         }
       } catch (err) {
         console.error('Failed to save product', err)
