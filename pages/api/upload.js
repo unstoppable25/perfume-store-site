@@ -1,17 +1,23 @@
 let cloudinary = null
+let cloudinaryInitialized = false
 
-try {
-  const cloudinaryModule = await import('cloudinary')
-  cloudinary = cloudinaryModule.v2
+async function initCloudinary() {
+  if (cloudinaryInitialized) return
+  cloudinaryInitialized = true
   
-  // Configure Cloudinary (uses env vars)
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  })
-} catch (err) {
-  console.error('Cloudinary import failed:', err.message)
+  try {
+    const cloudinaryModule = await import('cloudinary')
+    cloudinary = cloudinaryModule.v2
+    
+    // Configure Cloudinary (uses env vars)
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    })
+  } catch (err) {
+    console.error('Cloudinary import failed:', err.message)
+  }
 }
 
 export const config = {
@@ -23,6 +29,8 @@ export const config = {
 }
 
 export default async function handler(req, res) {
+  await initCloudinary()
+  
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST'])
     return res.status(405).end('Method Not Allowed')
