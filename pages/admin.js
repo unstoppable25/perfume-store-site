@@ -188,18 +188,47 @@ export default function Admin() {
                       if (!file) return
                       
                       setUploading(true)
-                      const reader = new FileReader()
-                      reader.onloadend = async () => {
+                      
+                      // Compress image before upload
+                      const img = new Image()
+                      img.onload = async () => {
                         try {
-                          const base64 = reader.result
-                          const filename = `product-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
+                          // Create canvas to resize image
+                          const canvas = document.createElement('canvas')
+                          let width = img.width
+                          let height = img.height
                           
-                          console.log('Starting upload...', filename)
+                          // Resize if too large (max 1200px on longest side)
+                          const maxSize = 1200
+                          if (width > maxSize || height > maxSize) {
+                            if (width > height) {
+                              height = (height / width) * maxSize
+                              width = maxSize
+                            } else {
+                              width = (width / height) * maxSize
+                              height = maxSize
+                            }
+                          }
+                          
+                          canvas.width = width
+                          canvas.height = height
+                          const ctx = canvas.getContext('2d')
+                          ctx.drawImage(img, 0, 0, width, height)
+                          
+                          // Convert to base64 with compression
+                          const base64 = canvas.toDataURL('image/jpeg', 0.8) // 80% quality
+                          const filename = `product-${Date.now()}-${file.name.replace(/\s+/g,'-').replace(/\.[^.]+$/, '.jpg')}`
+                          
+                          console.log('Starting upload...', filename, 'Size:', Math.round(base64.length / 1024), 'KB')
                           const res = await fetch('/api/upload', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/json' }, 
                             body: JSON.stringify({ filename, data: base64 }) 
                           })
+                          
+                          if (!res.ok) {
+                            throw new Error(`Upload failed: ${res.status} ${res.statusText}`)
+                          }
                           
                           const data = await res.json()
                           console.log('Upload response:', data)
@@ -215,10 +244,18 @@ export default function Admin() {
                           alert('Upload error: ' + err.message)
                         } finally {
                           setUploading(false)
-                          // Reset file input
                           e.target.value = ''
                         }
                       }
+                      
+                      img.onerror = () => {
+                        alert('Failed to load image')
+                        setUploading(false)
+                      }
+                      
+                      // Read file as URL for Image object
+                      const reader = new FileReader()
+                      reader.onload = (ev) => { img.src = ev.target.result }
                       reader.onerror = () => {
                         alert('Failed to read file')
                         setUploading(false)
