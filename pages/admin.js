@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
 
 export default function Admin() {
@@ -7,8 +8,23 @@ export default function Admin() {
   const [form, setForm] = useState({ name: '', price: '', description: '', image: '' })
   const [isEditing, setIsEditing] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
+    // Check authentication
+    const isAuth = sessionStorage.getItem('admin_gate_passed')
+    if (isAuth !== 'true') {
+      // Redirect to security gate
+      router.push('/scentlumus-access-portal-8893')
+      return
+    }
+    setAuthenticated(true)
+  }, [router])
+
+  useEffect(() => {
+    if (!authenticated) return
+
     // Load products from server API
     const fetchProducts = async () => {
       try {
@@ -38,7 +54,7 @@ export default function Admin() {
 
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
-  }, [])
+  }, [authenticated])
 
   const handleAddProduct = (e) => {
     e.preventDefault()
@@ -118,16 +134,36 @@ export default function Admin() {
     }
   }
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_gate_passed')
+    router.push('/')
+  }
+
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-600">Verifying access...</p>
+      </div>
+    )
+  }
+
   return (
     <>
       <Head>
         <title>Admin — ScentLumus</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
       <main className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <a href="/" className="text-amber-700 hover:text-amber-900">← Back to Store</a>
+            <button 
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-800 font-semibold"
+            >
+              Logout
+            </button>
+          </div>
           </div>
 
           {/* Logo Upload */}

@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin
+Disallow: /scentlumus-access-portal-8893
+Disallow: /api/
+
+Sitemap: https://scentlumus.com/sitemap.xml
