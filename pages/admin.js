@@ -16,7 +16,7 @@ export default function Admin() {
     const isAuth = sessionStorage.getItem('admin_gate_passed')
     if (isAuth !== 'true') {
       // Redirect to security gate
-      router.push('/scentlumus_access_portal_8893')
+      router.push('/secure8893')
       return
     }
     setAuthenticated(true)
