@@ -164,7 +164,6 @@ export default function Admin() {
               Logout
             </button>
           </div>
-          </div>
 
           {/* Logo Upload */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
