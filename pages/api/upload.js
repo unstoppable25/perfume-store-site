@@ -1,11 +1,18 @@
-import { v2 as cloudinary } from 'cloudinary'
+let cloudinary = null
 
-// Configure Cloudinary (uses env vars)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+try {
+  const cloudinaryModule = await import('cloudinary')
+  cloudinary = cloudinaryModule.v2
+  
+  // Configure Cloudinary (uses env vars)
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  })
+} catch (err) {
+  console.error('Cloudinary import failed:', err.message)
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,11 +24,13 @@ export default async function handler(req, res) {
   if (!filename || !data) return res.status(400).json({ message: 'filename and data are required' })
 
   try {
-    // Check if Cloudinary is configured
-    const cloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME && 
+    // Check if Cloudinary is configured and loaded
+    const cloudinaryConfigured = cloudinary && 
+                                  process.env.CLOUDINARY_CLOUD_NAME && 
                                   process.env.CLOUDINARY_API_KEY && 
                                   process.env.CLOUDINARY_API_SECRET
 
+    console.log('Cloudinary module loaded:', !!cloudinary)
     console.log('Cloudinary configured:', cloudinaryConfigured)
     console.log('Cloud name:', process.env.CLOUDINARY_CLOUD_NAME)
 
