@@ -6,6 +6,7 @@ export default function Admin() {
   const [logo, setLogo] = useState(null)
   const [form, setForm] = useState({ name: '', price: '', description: '', image: '' })
   const [isEditing, setIsEditing] = useState(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     // Load products from server API
@@ -177,30 +178,58 @@ export default function Admin() {
                 className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-600"
               />
               <div className="flex items-center gap-4">
-                <label className="border p-2 rounded cursor-pointer bg-gray-50">
+                <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={uploading}
                     onChange={async (e) => {
                       const file = e.target.files[0]
                       if (!file) return
+                      
+                      setUploading(true)
                       const reader = new FileReader()
                       reader.onloadend = async () => {
                         try {
                           const base64 = reader.result
                           const filename = `product-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
-                          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+                          
+                          console.log('Starting upload...', filename)
+                          const res = await fetch('/api/upload', { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ filename, data: base64 }) 
+                          })
+                          
                           const data = await res.json()
-                          if (data.url) setForm((f) => ({ ...f, image: data.url }))
+                          console.log('Upload response:', data)
+                          
+                          if (data.url) {
+                            setForm((f) => ({ ...f, image: data.url }))
+                            alert('Image uploaded successfully!')
+                          } else {
+                            alert('Upload failed: ' + (data.message || 'Unknown error'))
+                          }
                         } catch (err) {
                           console.error('Upload failed', err)
+                          alert('Upload error: ' + err.message)
+                        } finally {
+                          setUploading(false)
+                          // Reset file input
+                          e.target.value = ''
                         }
+                      }
+                      reader.onerror = () => {
+                        alert('Failed to read file')
+                        setUploading(false)
                       }
                       reader.readAsDataURL(file)
                     }}
                     className="hidden"
                   />
-                  <span className="text-sm">Upload Image</span>
+                  <span className="text-sm">
+                    {uploading ? 'Uploading...' : 'Upload Image'}
+                  </span>
                 </label>
                 {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
               </div>
