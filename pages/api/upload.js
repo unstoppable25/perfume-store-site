@@ -22,14 +22,19 @@ export default async function handler(req, res) {
                                   process.env.CLOUDINARY_API_KEY && 
                                   process.env.CLOUDINARY_API_SECRET
 
+    console.log('Cloudinary configured:', cloudinaryConfigured)
+    console.log('Cloud name:', process.env.CLOUDINARY_CLOUD_NAME)
+
     if (cloudinaryConfigured) {
       // Upload to Cloudinary
+      console.log('Attempting Cloudinary upload...')
       const result = await cloudinary.uploader.upload(data, {
         folder: 'scentlumus', // organize uploads in a folder
         public_id: filename.split('.')[0], // use filename without extension
         resource_type: 'auto', // auto-detect image/video/raw
       })
       
+      console.log('Upload successful:', result.secure_url)
       return res.status(201).json({ url: result.secure_url })
     } else {
       // Fallback to local filesystem (for local dev)
