@@ -3,7 +3,7 @@
 ## Access Information
 
 ### Admin Portal URL
-**🔒 Secret URL:** `https://scentlumus.com/scentlumus-access-portal-8893`
+**🔒 Secret URL:** `https://scentlumus.com/scentlumus_access_portal_8893`
 
 **⚠️ IMPORTANT:** Never share this URL publicly. Bookmark it privately.
 
@@ -47,7 +47,7 @@ const VALID_SECURITY_ID = 'YOUR_NEW_SECURE_ID_HERE'
 
 ## How to Access Admin
 
-1. Navigate to: `https://scentlumus.com/scentlumus-access-portal-8893`
+1. Navigate to: `https://scentlumus.com/scentlumus_access_portal_8893`
 2. Enter Security ID: `ScentLumus2025!SecureAccess#8893` (or your custom one)
 3. Click "Verify Access"
 4. You'll be redirected to the admin dashboard
@@ -115,7 +115,7 @@ Use at least:
 
 ## Current Configuration
 
-- **Secret URL:** `/scentlumus-access-portal-8893`
+- **Secret URL:** `/scentlumus_access_portal_8893`
 - **Max Attempts:** 10
 - **Lockout Duration:** 30 minutes
 - **Session Storage:** Browser session only
