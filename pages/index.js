@@ -25,9 +25,22 @@ export default function Home() {
       try {
         const res = await fetch('/api/products')
         const data = await res.json()
-        setProducts(data)
+        if (data && data.length > 0) {
+          setProducts(data)
+        } else {
+          // Fallback to localStorage if server has no products
+          const backup = localStorage.getItem('scentlumus_products_backup')
+          if (backup) {
+            setProducts(JSON.parse(backup))
+          }
+        }
       } catch (err) {
         console.error('Failed to load products', err)
+        // Fallback to localStorage if API fails
+        const backup = localStorage.getItem('scentlumus_products_backup')
+        if (backup) {
+          setProducts(JSON.parse(backup))
+        }
       }
     }
     fetchProducts()

@@ -14,8 +14,23 @@ export default function Admin() {
         const res = await fetch('/api/products')
         const data = await res.json()
         setProducts(data)
+        // Also save to localStorage as backup
+        if (data && data.length > 0) {
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(data))
+        } else {
+          // If server has no products, try localStorage backup
+          const backup = localStorage.getItem('scentlumus_products_backup')
+          if (backup) {
+            setProducts(JSON.parse(backup))
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch products', err)
+        // Fallback to localStorage if API fails
+        const backup = localStorage.getItem('scentlumus_products_backup')
+        if (backup) {
+          setProducts(JSON.parse(backup))
+        }
       }
     }
     fetchProducts()
@@ -33,15 +48,32 @@ export default function Admin() {
           const payload = { id: isEditing, ...form }
           const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
           const updated = await res.json()
-          setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+          const newProducts = products.map((p) => (p.id === updated.id ? updated : p))
+          setProducts(newProducts)
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
           setIsEditing(null)
         } else {
           const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
           const created = await res.json()
-          setProducts((prev) => [...prev, created])
+          const newProducts = [...products, created]
+          setProducts(newProducts)
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
+          alert('Product added successfully! Note: Using browser storage until database is connected.')
         }
       } catch (err) {
         console.error('Failed to save product', err)
+        alert('Server save failed. Product saved in browser only.')
+        // Save to localStorage even if server fails
+        if (isEditing !== null) {
+          const newProducts = products.map((p) => (p.id === isEditing ? { id: isEditing, ...form } : p))
+          setProducts(newProducts)
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
+        } else {
+          const newProduct = { id: Date.now().toString(), ...form }
+          const newProducts = [...products, newProduct]
+          setProducts(newProducts)
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
+        }
       } finally {
         setForm({ name: '', price: '', description: '', image: '' })
       }
