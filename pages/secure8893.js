@@ -10,24 +10,25 @@ export default function SecureGate() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if already authenticated
     const isAuthenticated = sessionStorage.getItem('admin_gate_passed')
     if (isAuthenticated === 'true') {
       router.push('/admin')
       return
     }
 
-    // Check lockout status
     const lockoutData = localStorage.getItem('admin_lockout')
     if (lockoutData) {
-      const { until, count } = JSON.parse(lockoutData)
-      const now = Date.now()
-      
-      if (now < until) {
-        setLockedUntil(until)
-        setAttempts(count)
-      } else {
-        // Lockout expired, reset
+      try {
+        const parsed = JSON.parse(lockoutData)
+        const now = Date.now()
+        
+        if (now < parsed.until) {
+          setLockedUntil(parsed.until)
+          setAttempts(parsed.count)
+        } else {
+          localStorage.removeItem('admin_lockout')
+        }
+      } catch (err) {
         localStorage.removeItem('admin_lockout')
       }
     }
@@ -36,10 +37,9 @@ export default function SecureGate() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Check if locked out
     if (lockedUntil && Date.now() < lockedUntil) {
       const remainingMinutes = Math.ceil((lockedUntil - Date.now()) / 60000)
-      setError(`Too many failed attempts. Locked out for ${remainingMinutes} more minute(s).`)
+      setError('Too many failed attempts. Locked out for ' + remainingMinutes + ' more minute(s).')
       return
     }
 
@@ -53,21 +53,14 @@ export default function SecureGate() {
       const data = await res.json()
 
       if (data.success) {
-        // Clear lockout data
         localStorage.removeItem('admin_lockout')
-        
-        // Mark as authenticated
         sessionStorage.setItem('admin_gate_passed', 'true')
-        
-        // Redirect to admin
         router.push('/admin')
       } else {
-        // Failed attempt
         const newAttempts = attempts + 1
         setAttempts(newAttempts)
         
         if (newAttempts >= 10) {
-          // Lock out for 30 minutes
           const lockoutUntil = Date.now() + (30 * 60 * 1000)
           localStorage.setItem('admin_lockout', JSON.stringify({
             until: lockoutUntil,
@@ -76,23 +69,12 @@ export default function SecureGate() {
           setLockedUntil(lockoutUntil)
           setError('Maximum attempts exceeded. Locked out for 30 minutes.')
         } else {
-          setError(`Invalid Security ID. ${10 - newAttempts} attempt(s) remaining.`)
-        }
-        
-        // Save attempt count
-        if (newAttempts < 10) {
-          const existingData = localStorage.getItem('admin_lockout')
-          if (existingData) {
-            const parsed = JSON.parse(existingData)
-            parsed.count = newAttempts
-            localStorage.setItem('admin_lockout', JSON.stringify(parsed))
-          }
+          setError('Invalid Security ID. ' + (10 - newAttempts) + ' attempt(s) remaining.')
         }
         
         setSecurityId('')
       }
     } catch (err) {
-      console.error('Verification error:', err)
       setError('Security verification failed. Please try again.')
     }
   }
@@ -116,7 +98,7 @@ export default function SecureGate() {
           </div>
 
           {lockedUntil && Date.now() < lockedUntil ? (
-            <div className="bg-red-900/50 border border-red-700 rounded p-4 text-center">
+            <div className="bg-red-900 bg-opacity-50 border border-red-700 rounded p-4 text-center">
               <svg className="w-12 h-12 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -140,7 +122,7 @@ export default function SecureGate() {
               </div>
 
               {error && (
-                <div className="bg-red-900/30 border border-red-700 rounded p-3 text-red-400 text-sm">
+                <div className="bg-red-900 bg-opacity-30 border border-red-700 rounded p-3 text-red-400 text-sm">
                   {error}
                 </div>
               )}

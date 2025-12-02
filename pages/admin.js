@@ -12,13 +12,13 @@ export default function Admin() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check authentication - TEMPORARILY DISABLED FOR DEBUGGING
-    // const isAuth = sessionStorage.getItem('admin_gate_passed')
-    // if (isAuth !== 'true') {
-    //   // Redirect to security gate
-    //   router.push('/secure8893')
-    //   return
-    // }
+    // Check authentication
+    const isAuth = sessionStorage.getItem('admin_gate_passed')
+    if (isAuth !== 'true') {
+      // Redirect to security gate
+      router.push('/secure8893')
+      return
+    }
     setAuthenticated(true)
   }, [router])
 
