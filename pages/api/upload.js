@@ -54,6 +54,15 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('Upload error', err)
-    return res.status(500).json({ message: 'Upload failed', error: err.message })
+    return res.status(500).json({ 
+      message: 'Upload failed', 
+      error: err.message,
+      stack: err.stack,
+      cloudinaryConfig: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'NOT SET',
+        apiKey: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT SET',
+        apiSecret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'NOT SET'
+      }
+    })
   }
 }
