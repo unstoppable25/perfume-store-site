@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useCart } from '../context/CartContext'
 import Head from 'next/head'
+import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [subscribe, setSubscribe] = useState('')
   const [products, setProducts] = useState([])
+  const { addToCart, getCartCount } = useCart()
 
   const handleSubscribe = async (e) => {
     e.preventDefault()
@@ -55,10 +58,23 @@ export default function Home() {
       <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
         <header className="max-w-5xl mx-auto p-6 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-amber-900">ScentLumus</h1>
-          <nav className="space-x-6">
-            <a href="/" className="text-sm text-gray-700 hover:text-amber-700">Home</a>
-            <a href="#" className="text-sm text-gray-700 hover:text-amber-700">About</a>
-            <a href="#" className="text-sm text-gray-700 hover:text-amber-700">Contact</a>
+          <nav className="flex items-center space-x-6">
+            <Link href="/" className="text-sm text-gray-700 hover:text-amber-700">Home</Link>
+            <Link href="/about" className="text-sm text-gray-700 hover:text-amber-700">About</Link>
+            <Link href="/contact" className="text-sm text-gray-700 hover:text-amber-700">Contact</Link>
+            <Link href="/faq" className="text-sm text-gray-700 hover:text-amber-700">FAQ</Link>
+            <Link href="/cart" className="relative">
+              <svg className="w-6 h-6 text-gray-700 hover:text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {getCartCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {getCartCount()}
+                </span>
+              )}
+            </Link>
+          </nav>
+        </header>
             <a href="/admin" className="text-sm text-gray-700 hover:text-amber-700">Admin</a>
           </nav>
         </header>
@@ -95,20 +111,24 @@ export default function Home() {
                 <p className="text-sm text-gray-600">{p.description}</p>
                 <p className="mt-2 font-bold text-amber-700">₦{parseFloat(p.price).toLocaleString('en-NG')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button className="w-full bg-amber-700 text-white py-2 rounded hover:bg-amber-800">Add to Cart</button>
+                  <button 
+                    onClick={() => {
+                      addToCart(p)
+                      alert('Added to cart!')
+                    }}
+                    className="w-full bg-amber-700 text-white py-2 rounded hover:bg-amber-800"
+                  >
+                    Add to Cart
+                  </button>
                   <button
                     className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product: p }) })
-                        const data = await res.json()
-                        if (data.url) window.location.href = data.url
-                      } catch (err) {
-                        console.error('Checkout failed', err)
-                        alert('Checkout failed')
-                      }
+                    onClick={() => {
+                      addToCart(p)
+                      window.location.href = '/cart'
                     }}
-                  >Buy</button>
+                  >
+                    Buy Now
+                  </button>
                 </div>
               </article>
             ))

@@ -9,6 +9,10 @@ export default function Admin() {
   const [isEditing, setIsEditing] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
+  const [activeTab, setActiveTab] = useState('products')
+  const [orders, setOrders] = useState([])
+  const [messages, setMessages] = useState([])
+  const [subscribers, setSubscribers] = useState([])
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +55,48 @@ export default function Admin() {
       }
     }
     fetchProducts()
+
+    // Load orders
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/orders')
+        const data = await res.json()
+        if (data.success) {
+          setOrders(data.orders || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch orders', err)
+      }
+    }
+    fetchOrders()
+
+    // Load messages
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch('/api/messages')
+        const data = await res.json()
+        if (data.success) {
+          setMessages(data.messages || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch messages', err)
+      }
+    }
+    fetchMessages()
+
+    // Load subscribers
+    const fetchSubscribers = async () => {
+      try {
+        const res = await fetch('/api/subscribers')
+        const data = await res.json()
+        if (data.success) {
+          setSubscribers(data.subscribers || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch subscribers', err)
+      }
+    }
+    fetchSubscribers()
 
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
@@ -139,6 +185,26 @@ export default function Admin() {
     router.push('/')
   }
 
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: newStatus })
+      })
+      if (res.ok) {
+        setOrders(orders.map(o => o.id === orderId ? {...o, status: newStatus} : o))
+        alert('Order status updated!')
+      }
+    } catch (err) {
+      console.error('Failed to update order status', err)
+      alert('Failed to update order status')
+    }
+  }
+
+  // Get unique customers from orders
+  const customers = [...new Map(orders.map(o => [o.customer.email, o.customer])).values()]
+
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -154,7 +220,7 @@ export default function Admin() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <main className="min-h-screen bg-gray-100 p-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <button 
@@ -165,17 +231,56 @@ export default function Admin() {
             </button>
           </div>
 
-          {/* Logo Upload */}
-          <div className="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Logo</h2>
-            <div className="flex items-center gap-6">
-              {logo && <img src={logo} alt="Logo" className="h-24 w-24 object-contain" />}
-              <label className="border-2 border-dashed border-amber-300 p-4 rounded cursor-pointer hover:bg-amber-50">
-                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                <p className="text-sm text-gray-600">Click to upload logo</p>
-              </label>
+          {/* Tab Navigation */}
+          <div className="bg-white rounded-lg shadow mb-6">
+            <div className="flex border-b">
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'products' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Products ({products.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'orders' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('customers')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'customers' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Customers ({customers.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('messages')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'messages' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Messages ({messages.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('subscribers')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'subscribers' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Subscribers ({subscribers.length})
+              </button>
             </div>
           </div>
+
+          {/* Products Tab */}
+          {activeTab === 'products' && (
+            <>
+              {/* Logo Upload */}
+              <div className="bg-white p-6 rounded-lg shadow mb-8">
+                <h2 className="text-2xl font-semibold mb-4">Logo</h2>
+                <div className="flex items-center gap-6">
+                  {logo && <img src={logo} alt="Logo" className="h-24 w-24 object-contain" />}
+                  <label className="border-2 border-dashed border-amber-300 p-4 rounded cursor-pointer hover:bg-amber-50">
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    <p className="text-sm text-gray-600">Click to upload logo</p>
+                  </label>
+                </div>
+              </div>
 
           {/* Add/Edit Product */}
           <div className="bg-white p-6 rounded-lg shadow mb-8">
@@ -359,6 +464,168 @@ export default function Admin() {
               </div>
             )}
           </div>
+          </>
+          )}
+
+          {/* Orders Tab */}
+          {activeTab === 'orders' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-4">Orders ({orders.length})</h2>
+              {orders.length === 0 ? (
+                <p className="text-gray-500">No orders yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((order) => (
+                    <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg">{order.id}</h3>
+                          <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                        </div>
+                        <select
+                          value={order.status}
+                          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          className={`px-3 py-1 rounded font-semibold ${
+                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Customer</p>
+                          <p className="text-sm">{order.customer.firstName} {order.customer.lastName}</p>
+                          <p className="text-sm text-gray-600">{order.customer.email}</p>
+                          <p className="text-sm text-gray-600">{order.customer.phone}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
+                          <p className="text-sm">{order.shipping.address}</p>
+                          <p className="text-sm text-gray-600">{order.shipping.city}, {order.shipping.state} {order.shipping.zipCode}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                            <span>{item.name} x{item.quantity}</span>
+                            <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                          </div>
+                        ))}
+                        <div className="mt-2 pt-2 border-t flex justify-between font-bold">
+                          <span>Total</span>
+                          <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Customers Tab */}
+          {activeTab === 'customers' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-4">Customers ({customers.length})</h2>
+              {customers.length === 0 ? (
+                <p className="text-gray-500">No customers yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Phone</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Orders</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customers.map((customer, idx) => {
+                        const customerOrders = orders.filter(o => o.customer.email === customer.email)
+                        return (
+                          <tr key={idx} className="border-b">
+                            <td className="px-4 py-3">{customer.firstName} {customer.lastName}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{customer.email}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{customer.phone}</td>
+                            <td className="px-4 py-3 text-sm font-semibold">{customerOrders.length}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Messages Tab */}
+          {activeTab === 'messages' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-4">Contact Messages ({messages.length})</h2>
+              {messages.length === 0 ? (
+                <p className="text-gray-500">No messages yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((msg) => (
+                    <div key={msg.id} className="border p-4 rounded-lg bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold">{msg.name}</h3>
+                          <p className="text-sm text-gray-600">{msg.email}</p>
+                        </div>
+                        <p className="text-sm text-gray-500">{new Date(msg.createdAt).toLocaleString()}</p>
+                      </div>
+                      <p className="font-semibold text-sm text-gray-700 mb-1">Subject: {msg.subject}</p>
+                      <p className="text-sm text-gray-600">{msg.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Subscribers Tab */}
+          {activeTab === 'subscribers' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-4">Newsletter Subscribers ({subscribers.length})</h2>
+              {subscribers.length === 0 ? (
+                <p className="text-gray-500">No subscribers yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Subscribed Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subscribers.sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt)).map((sub, idx) => (
+                        <tr key={idx} className="border-b">
+                          <td className="px-4 py-3">{sub.email}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {new Date(sub.subscribedAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </>
