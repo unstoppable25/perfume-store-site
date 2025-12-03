@@ -75,9 +75,6 @@ export default function Home() {
             </Link>
           </nav>
         </header>
-            <a href="/admin" className="text-sm text-gray-700 hover:text-amber-700">Admin</a>
-          </nav>
-        </header>
 
         <section className="max-w-5xl mx-auto p-6 text-center">
           <h2 className="text-5xl font-bold mb-4 text-amber-900">Beautiful scents crafted with care</h2>
