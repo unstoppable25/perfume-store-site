@@ -14,6 +14,8 @@ export default function Admin() {
   const [messages, setMessages] = useState([])
   const [subscribers, setSubscribers] = useState([])
   const [users, setUsers] = useState([])
+  const [resetPasswordUser, setResetPasswordUser] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -170,6 +172,65 @@ export default function Admin() {
       setProducts((prev) => prev.filter((p) => p.id !== id))
     } catch (err) {
       console.error('Failed to delete', err)
+    }
+  }
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/users/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        setUsers((prev) => prev.filter((u) => u.id !== userId))
+        alert('User deleted successfully')
+      } else {
+        alert('Failed to delete user: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to delete user', err)
+      alert('Failed to delete user')
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordUser || !newPassword) {
+      alert('Please enter a new password')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      alert('Password must be at least 6 characters')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/users/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: resetPasswordUser.id, newPassword })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        alert('Password reset successfully')
+        setResetPasswordUser(null)
+        setNewPassword('')
+      } else {
+        alert('Failed to reset password: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to reset password', err)
+      alert('Failed to reset password')
     }
   }
 
@@ -663,6 +724,7 @@ export default function Admin() {
                         <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Phone</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Registered Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -674,10 +736,63 @@ export default function Admin() {
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => setResetPasswordUser(user)}
+                              className="text-blue-600 hover:text-blue-800 text-sm mr-3"
+                            >
+                              Reset Password
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Password Reset Modal */}
+              {resetPasswordUser && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <h3 className="text-xl font-semibold mb-4">Reset Password</h3>
+                    <p className="text-gray-600 mb-4">
+                      Reset password for: <strong>{resetPasswordUser.firstName} {resetPasswordUser.lastName}</strong> ({resetPasswordUser.email})
+                    </p>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">New Password</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password (min 6 characters)"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setResetPasswordUser(null)
+                          setNewPassword('')
+                        }}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleResetPassword}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        Reset Password
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
