@@ -13,6 +13,7 @@ export default function Admin() {
   const [orders, setOrders] = useState([])
   const [messages, setMessages] = useState([])
   const [subscribers, setSubscribers] = useState([])
+  const [users, setUsers] = useState([])
   const router = useRouter()
 
   useEffect(() => {
@@ -97,6 +98,20 @@ export default function Admin() {
       }
     }
     fetchSubscribers()
+
+    // Load users
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('/api/users')
+        const data = await res.json()
+        if (data.success) {
+          setUsers(data.users || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch users', err)
+      }
+    }
+    fetchUsers()
 
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
@@ -263,6 +278,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'subscribers' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Subscribers ({subscribers.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Registered Users ({users.length})
               </button>
             </div>
           </div>
@@ -617,6 +638,41 @@ export default function Admin() {
                           <td className="px-4 py-3">{sub.email}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {new Date(sub.subscribedAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Registered Users Tab */}
+          {activeTab === 'users' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-4">Registered Users ({users.length})</h2>
+              {users.length === 0 ? (
+                <p className="text-gray-500">No registered users yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Phone</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Registered Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((user, idx) => (
+                        <tr key={idx} className="border-b">
+                          <td className="px-4 py-3">{user.firstName} {user.lastName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{user.email}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{user.phone}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {new Date(user.createdAt).toLocaleDateString()}
                           </td>
                         </tr>
                       ))}
