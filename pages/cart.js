@@ -1,11 +1,20 @@
 import { useCart } from '../context/CartContext'
 import { useRouter } from 'next/router'
+import { useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart()
   const router = useRouter()
+
+  // Check authentication
+  useEffect(() => {
+    const userAuth = sessionStorage.getItem('user_authenticated')
+    if (userAuth !== 'true') {
+      router.push('/signin?returnUrl=/cart')
+    }
+  }, [router])
 
   const handleCheckout = () => {
     if (cart.length === 0) {

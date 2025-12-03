@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -19,6 +19,29 @@ export default function Checkout() {
     zipCode: '',
     paymentMethod: 'stripe'
   })
+
+  // Check authentication and pre-fill form
+  useEffect(() => {
+    const userAuth = sessionStorage.getItem('user_authenticated')
+    const userData = sessionStorage.getItem('user_data')
+    
+    if (userAuth !== 'true') {
+      router.push('/signin?returnUrl=/checkout')
+      return
+    }
+
+    // Pre-fill user data if available
+    if (userData) {
+      const user = JSON.parse(userData)
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      }))
+    }
+  }, [router])
 
   const handleChange = (e) => {
     setFormData({

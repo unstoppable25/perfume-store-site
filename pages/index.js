@@ -1,13 +1,37 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
 import Head from 'next/head'
 import Link from 'next/link'
 
 export default function Home() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [subscribe, setSubscribe] = useState('')
   const [products, setProducts] = useState([])
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(null)
   const { addToCart, getCartCount } = useCart()
+
+  // Check authentication
+  useEffect(() => {
+    const userAuth = sessionStorage.getItem('user_authenticated')
+    const userData = sessionStorage.getItem('user_data')
+    
+    if (userAuth === 'true' && userData) {
+      setIsAuthenticated(true)
+      setUser(JSON.parse(userData))
+    } else {
+      // Redirect to signin
+      router.push('/signin')
+    }
+  }, [router])
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('user_authenticated')
+    sessionStorage.removeItem('user_data')
+    router.push('/signin')
+  }
 
   const handleSubscribe = async (e) => {
     e.preventDefault()
@@ -73,6 +97,14 @@ export default function Home() {
                 </span>
               )}
             </Link>
+            {user && (
+              <>
+                <span className="text-sm text-gray-700">Hi, {user.firstName}</span>
+                <button onClick={handleLogout} className="text-sm text-red-600 hover:text-red-700">
+                  Logout
+                </button>
+              </>
+            )}
           </nav>
         </header>
 
