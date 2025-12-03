@@ -25,13 +25,13 @@ export default function Checkout() {
     const userAuth = sessionStorage.getItem('user_authenticated')
     const userData = sessionStorage.getItem('user_data')
     
-    if (userAuth !== 'true') {
+    if (userAuth !== 'true' && userAuth !== 'guest') {
       router.push('/signin?returnUrl=/checkout')
       return
     }
 
-    // Pre-fill user data if available
-    if (userData) {
+    // Pre-fill user data if available (not for guest)
+    if (userData && userAuth === 'true') {
       const user = JSON.parse(userData)
       setFormData(prev => ({
         ...prev,

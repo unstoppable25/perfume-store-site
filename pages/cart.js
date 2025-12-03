@@ -11,7 +11,7 @@ export default function Cart() {
   // Check authentication
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
-    if (userAuth !== 'true') {
+    if (userAuth !== 'true' && userAuth !== 'guest') {
       router.push('/signin?returnUrl=/cart')
     }
   }, [router])

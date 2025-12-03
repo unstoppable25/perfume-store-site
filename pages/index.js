@@ -18,9 +18,11 @@ export default function Home() {
     const userAuth = sessionStorage.getItem('user_authenticated')
     const userData = sessionStorage.getItem('user_data')
     
-    if (userAuth === 'true' && userData) {
+    if (userAuth === 'true' || userAuth === 'guest') {
       setIsAuthenticated(true)
-      setUser(JSON.parse(userData))
+      if (userData) {
+        setUser(JSON.parse(userData))
+      }
     } else {
       // Redirect to signin
       router.push('/signin')
