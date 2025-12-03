@@ -48,6 +48,10 @@ export default async function handler(req, res) {
     const savedUser = await createUser(user)
     console.log('User created successfully:', savedUser.id)
 
+    // Verify user was saved
+    const verifyUser = await getUserByEmailOrPhone(email)
+    console.log('Verification - User found:', !!verifyUser)
+
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user
 
