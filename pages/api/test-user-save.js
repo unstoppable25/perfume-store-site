@@ -40,7 +40,16 @@ export default async function handler(req, res) {
     // Try to find our test user
     let foundUser = null
     if (allUsers && allUsers[testUser.id]) {
-      foundUser = JSON.parse(allUsers[testUser.id])
+      const userData = allUsers[testUser.id]
+      console.log('User data type:', typeof userData)
+      console.log('User data value:', userData)
+      
+      // Check if it's already an object or needs parsing
+      if (typeof userData === 'string') {
+        foundUser = JSON.parse(userData)
+      } else {
+        foundUser = userData
+      }
       console.log('Found our test user:', foundUser.email)
     }
 
