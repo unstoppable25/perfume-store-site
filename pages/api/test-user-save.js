@@ -58,9 +58,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      testUser: testUser,
+      testUserId: testUser.id,
       allUsersCount: allUsers ? Object.keys(allUsers).length : 0,
-      foundUser: foundUser,
+      foundUserEmail: foundUser ? foundUser.email : null,
       allUserIds: allUsers ? Object.keys(allUsers) : []
     })
 
