@@ -25,7 +25,8 @@ export default async function handler(req, res) {
 
     // Save to KV using hset
     console.log('Attempting hset...')
-    await kv.hset('users', { [testUser.id]: JSON.stringify(testUser) })
+    // Note: @vercel/kv automatically serializes objects, no need to JSON.stringify
+    await kv.hset('users', { [testUser.id]: testUser })
     console.log('User saved to KV hash')
 
     // Retrieve all users from hash
