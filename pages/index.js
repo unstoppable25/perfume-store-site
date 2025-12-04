@@ -59,10 +59,10 @@ export default function Home() {
         </header>
 
         {/* Hero Section - Full screen gradient */}
-        <div className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center justify-center px-4">
+        <div className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center justify-center px-4 min-h-[calc(100vh-16rem)]">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-16">
-              WELCOME TO THE HOUSE OF SCENTLUMUS
+              ScentLumus: destination for luxury fragrances
             </h2>
             
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
@@ -76,9 +76,9 @@ export default function Home() {
               
               <Link 
                 href="/about" 
-                className="relative inline-block bg-transparent border-4 border-white text-white px-20 py-6 rounded-md text-2xl font-bold hover:bg-white hover:text-purple-600 transition shadow-lg min-w-[200px] overflow-hidden group"
+                className="relative inline-block bg-white text-purple-600 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
               >
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition"></div>
+                <div className="absolute inset-0 bg-gray-200 opacity-20 group-hover:opacity-30 transition"></div>
                 <span className="relative z-10">About us</span>
               </Link>
             </div>
