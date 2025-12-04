@@ -187,7 +187,6 @@ export default function Shop() {
               </select>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Shop</h1>
           
           {/* Search Bar */}
           <div className="mb-8">
