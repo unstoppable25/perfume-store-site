@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useCart } from '../context/CartContext'
 
 export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState(null)
+  const { getCartCount } = useCart()
+  const cartCount = getCartCount()
 
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
