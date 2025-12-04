@@ -148,18 +148,98 @@ export default function MyOrders() {
                           minute: '2-digit'
                         })}
                       </p>
+                      {order.updatedAt && order.updatedAt !== order.createdAt && (
+                        <p className="text-xs text-gray-400">
+                          Last updated: {new Date(order.updatedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
                     </div>
                     <div className="mt-4 md:mt-0 flex items-center space-x-4">
                       <span className="text-lg font-bold text-purple-600">
                         NGN {order.total?.toLocaleString() || '0'}
                       </span>
-                      <button
-                        onClick={() => handleCancelOrder(order.id)}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
-                      >
-                        Cancel Order
-                      </button>
+                      {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Order Status Tracker */}
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-gray-700 mb-3">Order Status</h4>
+                    <div className="flex items-center justify-between relative">
+                      {/* Progress Line */}
+                      <div className="absolute top-5 left-0 right-0 h-1 bg-gray-300" style={{ zIndex: 0 }}>
+                        <div 
+                          className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-500"
+                          style={{
+                            width: 
+                              order.status === 'Pending' ? '0%' :
+                              order.status === 'Processing' ? '33%' :
+                              order.status === 'Shipped' ? '66%' :
+                              order.status === 'Delivered' ? '100%' :
+                              '0%'
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Status Steps */}
+                      {['Pending', 'Processing', 'Shipped', 'Delivered'].map((status, idx) => {
+                        const isActive = 
+                          order.status === status ||
+                          (order.status === 'Processing' && ['Pending'].includes(status)) ||
+                          (order.status === 'Shipped' && ['Pending', 'Processing'].includes(status)) ||
+                          (order.status === 'Delivered' && ['Pending', 'Processing', 'Shipped'].includes(status))
+                        
+                        const isCurrent = order.status === status
+                        
+                        return (
+                          <div key={status} className="flex flex-col items-center relative" style={{ zIndex: 1 }}>
+                            <div 
+                              className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                isCurrent 
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 border-purple-600 scale-110' 
+                                  : isActive 
+                                    ? 'bg-purple-600 border-purple-600' 
+                                    : 'bg-white border-gray-300'
+                              }`}
+                            >
+                              {isActive ? (
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <div className={`w-3 h-3 rounded-full ${isCurrent ? 'bg-white' : 'bg-gray-300'}`} />
+                              )}
+                            </div>
+                            <span className={`text-xs mt-2 font-medium ${isCurrent ? 'text-purple-600' : isActive ? 'text-gray-700' : 'text-gray-400'}`}>
+                              {status}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    
+                    {order.status === 'Cancelled' && (
+                      <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-center">
+                          <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span className="text-sm font-semibold text-red-600">This order has been cancelled</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t pt-4">

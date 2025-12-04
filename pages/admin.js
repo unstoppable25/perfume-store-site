@@ -263,14 +263,19 @@ export default function Admin() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/orders/cancel', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus })
       })
-      if (res.ok) {
-        setOrders(orders.map(o => o.id === orderId ? {...o, status: newStatus} : o))
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        setOrders(orders.map(o => o.id === orderId ? {...o, status: newStatus, updatedAt: new Date().toISOString()} : o))
         alert('Order status updated!')
+      } else {
+        alert('Failed to update order status: ' + data.message)
       }
     } catch (err) {
       console.error('Failed to update order status', err)
@@ -561,26 +566,31 @@ export default function Admin() {
                     <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-semibold text-lg">{order.id}</h3>
+                          <h3 className="font-semibold text-lg">Order #{order.id}</h3>
                           <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                          {order.updatedAt && order.updatedAt !== order.createdAt && (
+                            <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                          )}
                         </div>
-                        <select
-                          value={order.status}
-                          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                          className={`px-3 py-1 rounded font-semibold ${
-                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                            order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="processing">Processing</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
+                        <div className="flex flex-col items-end space-y-2">
+                          <select
+                            value={order.status || 'Pending'}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
+                              order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
+                              order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                              order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
+                              order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
+                              'bg-red-50 text-red-800 border-red-300'
+                            }`}
+                          >
+                            <option value="Pending">📋 Pending</option>
+                            <option value="Processing">⚙️ Processing</option>
+                            <option value="Shipped">🚚 Shipped</option>
+                            <option value="Delivered">✅ Delivered</option>
+                            <option value="Cancelled">❌ Cancelled</option>
+                          </select>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
