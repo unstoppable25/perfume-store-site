@@ -104,16 +104,16 @@ export default function MyOrders() {
             <Link href="/" className="text-gray-700 hover:text-purple-600">Home</Link>
             <Link href="/my-orders" className="text-purple-600 font-semibold">My Orders</Link>
             <Link href="/contact" className="text-gray-700 hover:text-purple-600">Contact</Link>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <Link href="/cart" className="text-gray-700 hover:text-purple-600">
+            </nav>
+            <div className="flex gap-4 mt-4">
+            <Link href="/cart" className="text-gray-700 hover:text-amber-900">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </Link>
             <button
               onClick={handleLogout}
-              className="text-sm text-gray-600 hover:text-purple-600"
+              className="text-sm text-gray-600 hover:text-amber-900"
             >
               Logout
             </button>
@@ -134,9 +134,9 @@ export default function MyOrders() {
               <svg className="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">No orders yet</h2>
-              <p className="text-gray-500 mb-6">Start shopping to see your orders here!</p>
-              <Link href="/" className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-2">No orders yet</h2>
+              <p className="text-gray-500 mb-6">Start shopping to see your orders here</p>
+              <Link href="/" className="inline-block bg-amber-700 text-white px-6 py-3 rounded-lg hover:bg-amber-800">
                 Start Shopping
               </Link>
             </div>

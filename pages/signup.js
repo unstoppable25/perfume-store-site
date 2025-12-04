@@ -74,11 +74,11 @@ export default function SignUp() {
       <Head>
         <title>Sign Up — ScentLumus</title>
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center px-4 py-8">
         <div className="max-w-md w-full">
           {/* Logo/Brand */}
           <div className="text-center mb-8">
-            <Link href="/" className="text-4xl font-bold text-purple-600">
+            <Link href="/" className="text-4xl font-bold text-amber-900">
               ScentLumus
             </Link>
             <p className="text-gray-600 mt-2">Create your account</p>
@@ -197,7 +197,7 @@ export default function SignUp() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
+                className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
               >
                 {loading ? 'Creating Account...' : 'Sign Up'}
               </button>
@@ -207,7 +207,7 @@ export default function SignUp() {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Already have an account?{' '}
-                <Link href="/signin" className="text-purple-600 hover:text-purple-700 font-semibold">
+                <Link href="/signin" className="text-amber-700 hover:text-amber-800 font-semibold">
                   Sign In
                 </Link>
               </p>

@@ -49,7 +49,7 @@ export default function Home() {
                   Login
                 </Link>
                 <Link href="/cart" className="relative">
-                  <svg className="w-6 h-6 text-gray-700 hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-gray-700 hover:text-amber-900 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                 </Link>
@@ -59,24 +59,24 @@ export default function Home() {
         </header>
 
         {/* Hero Section - Full screen gradient */}
-        <div className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white flex items-center justify-center px-4 min-h-[calc(100vh-16rem)]">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-16">
+        <div className="flex-1 bg-gradient-to-r from-amber-700 to-amber-900 text-white flex items-center justify-center px-4 min-h-[calc(100vh-16rem)]">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-16">
               ScentLumus: destination for luxury fragrances
-            </h2>
+            </h1>
             
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
-              <Link 
-                href="/shop" 
-                className="relative inline-block bg-white text-purple-600 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
+              <Link
+                href="/shop"
+                className="relative inline-block bg-white text-amber-900 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gray-200 opacity-20 group-hover:opacity-30 transition"></div>
                 <span className="relative z-10">Shop</span>
               </Link>
               
-              <Link 
-                href="/about" 
-                className="relative inline-block bg-white text-purple-600 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
+              <Link
+                href="/about"
+                className="relative inline-block bg-white text-amber-900 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gray-200 opacity-20 group-hover:opacity-30 transition"></div>
                 <span className="relative z-10">About us</span>

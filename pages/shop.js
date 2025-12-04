@@ -125,17 +125,17 @@ export default function Shop() {
                 </button>
                 
                 <nav className="mt-12 space-y-4">
-                  <Link href="/" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                  <Link href="/" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                     Home
                   </Link>
-                  <Link href="/about" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                  <Link href="/about" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                     About us
                   </Link>
-                  <Link href="/contact" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                  <Link href="/contact" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                     Contact us
                   </Link>
                   {user && (
-                    <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                    <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                       My Orders
                     </Link>
                   )}
@@ -148,8 +148,8 @@ export default function Shop() {
         {/* Breadcrumb */}
         <div className="border-b bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <p className="text-sm text-gray-600">
-              <Link href="/" className="hover:text-purple-600">Home</Link>
+            <div className="text-sm text-gray-600 mb-4">
+              <Link href="/" className="hover:text-amber-900">Home</Link>
               <span className="mx-2">/</span>
               <span className="text-gray-900">Shop</span>
             </p>
@@ -165,7 +165,7 @@ export default function Shop() {
             </div>
             
             <div className="hidden sm:block">
-              <select className="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600">
+              <select className="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700">
                 <option>Default sorting</option>
                 <option>Sort by price: low to high</option>
                 <option>Sort by price: high to low</option>
@@ -201,12 +201,12 @@ export default function Shop() {
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">{product.name}</h3>
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-purple-600">
+                    <span className="text-xl font-bold text-amber-900">
                       NGN {product.price?.toLocaleString()}
                     </span>
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition text-sm font-medium"
+                      className="bg-amber-700 text-white px-4 py-2 rounded-md hover:bg-amber-800 transition text-sm font-medium"
                     >
                       Add to Cart
                     </button>

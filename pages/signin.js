@@ -53,11 +53,11 @@ export default function SignIn() {
       <Head>
         <title>Sign In — ScentLumus</title>
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           {/* Logo/Brand */}
           <div className="text-center mb-8">
-            <Link href="/" className="text-4xl font-bold text-purple-600">
+            <Link href="/" className="text-4xl font-bold text-amber-900">
               ScentLumus
             </Link>
             <p className="text-gray-600 mt-2">Welcome back!</p>
@@ -111,7 +111,7 @@ export default function SignIn() {
                   <input type="checkbox" className="mr-2" />
                   <span className="text-gray-600">Remember me</span>
                 </label>
-                <Link href="/forgot-password" className="text-purple-600 hover:text-purple-700">
+                <Link href="/forgot-password" className="text-amber-700 hover:text-amber-800">
                   Forgot password?
                 </Link>
               </div>
@@ -119,7 +119,7 @@ export default function SignIn() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
+                className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
@@ -129,7 +129,7 @@ export default function SignIn() {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Don't have an account?{' '}
-                <Link href="/signup" className="text-purple-600 hover:text-purple-700 font-semibold">
+                <Link href="/signup" className="text-amber-700 hover:text-amber-800 font-semibold">
                   Sign Up
                 </Link>
               </p>

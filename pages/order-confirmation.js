@@ -85,7 +85,7 @@ export default function OrderConfirmation() {
 
           {/* Action Buttons */}
           <div className="flex gap-4">
-            <Link href="/" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-semibold text-center transition duration-300">
+            <Link href="/" className="flex-1 bg-amber-700 hover:bg-amber-800 text-white py-3 px-6 rounded-lg font-semibold text-center transition duration-300">
               Continue Shopping
             </Link>
             <Link href="/contact" className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-semibold text-center transition duration-300">
