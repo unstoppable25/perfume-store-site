@@ -110,7 +110,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold mb-2">
-                    {user.firstName} {user.lastName}
+                    Hi, {user.firstName}
                   </h1>
                   <p className="text-amber-100">{user.email}</p>
                   {user.phone && <p className="text-amber-100">{user.phone}</p>}
