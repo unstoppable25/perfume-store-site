@@ -296,7 +296,9 @@ export default function Admin() {
               alert('Shop button background updated successfully!')
             } else {
               console.error('Settings save failed:', settingsData)
-              alert('Image uploaded but failed to save settings')
+              const errorMsg = settingsData.error || settingsData.message || 'Unknown error'
+              const details = settingsData.details || ''
+              alert(`Image uploaded but failed to save settings.\n\nError: ${errorMsg}\n${details}`)
             }
           }
         } catch (err) {
@@ -331,7 +333,9 @@ export default function Admin() {
               alert('About button background updated successfully!')
             } else {
               console.error('Settings save failed:', settingsData)
-              alert('Image uploaded but failed to save settings')
+              const errorMsg = settingsData.error || settingsData.message || 'Unknown error'
+              const details = settingsData.details || ''
+              alert(`Image uploaded but failed to save settings.\n\nError: ${errorMsg}\n${details}`)
             }
           }
         } catch (err) {
