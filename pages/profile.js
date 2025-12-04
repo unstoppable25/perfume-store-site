@@ -103,25 +103,17 @@ export default function Profile() {
         <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-amber-700 to-amber-900 rounded-lg shadow-lg p-8 mb-8 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="bg-white text-amber-900 rounded-full w-20 h-20 flex items-center justify-center text-3xl font-bold">
-                  {user.firstName?.[0]}{user.lastName?.[0]}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">
-                    Hi, {user.firstName}
-                  </h1>
-                  <p className="text-amber-100">{user.email}</p>
-                  {user.phone && <p className="text-amber-100">{user.phone}</p>}
-                </div>
+            <div className="flex items-center gap-6">
+              <div className="bg-white text-amber-900 rounded-full w-20 h-20 flex items-center justify-center text-3xl font-bold">
+                {user.firstName?.[0]}{user.lastName?.[0]}
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-white text-amber-900 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-              >
-                Logout
-              </button>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">
+                  Hi, {user.firstName}
+                </h1>
+                <p className="text-amber-100">{user.email}</p>
+                {user.phone && <p className="text-amber-100">{user.phone}</p>}
+              </div>
             </div>
           </div>
 
@@ -277,6 +269,16 @@ export default function Profile() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Logout Button at Bottom */}
+          <div className="flex justify-center pb-8">
+            <button
+              onClick={handleLogout}
+              className="bg-amber-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-amber-800 transition shadow-md"
+            >
+              Logout
+            </button>
           </div>
         </main>
       </div>

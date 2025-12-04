@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
 import Head from 'next/head'
 import Link from 'next/link'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
 export default function Shop() {
   const router = useRouter()
@@ -10,6 +11,7 @@ export default function Shop() {
   const [user, setUser] = useState(null)
   const [addedToCart, setAddedToCart] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const { addToCart, getCartCount } = useCart()
 
   // Check if user is logged in (optional)
@@ -187,13 +189,45 @@ export default function Shop() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Shop</h1>
           
+          {/* Search Bar */}
+          <div className="mb-8">
+            <div className="relative max-w-2xl">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search perfumes by name, description, or category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
           {products.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">No products available yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {products.map((product) => (
+              {products
+                .filter(product => {
+                  if (!searchQuery.trim()) return true
+                  const query = searchQuery.toLowerCase()
+                  return (
+                    product.name.toLowerCase().includes(query) ||
+                    product.description?.toLowerCase().includes(query) ||
+                    product.category?.toLowerCase().includes(query)
+                  )
+                })
+                .map((product) => (
                 <div key={product.id} className="group">
                   <div className="bg-gray-100 rounded-lg overflow-hidden mb-4 aspect-square">
                     {product.image ? (
