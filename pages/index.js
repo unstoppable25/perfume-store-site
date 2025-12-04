@@ -12,7 +12,7 @@ export default function Home() {
   const [addedToCart, setAddedToCart] = useState(false)
   const { addToCart, getCartCount } = useCart()
 
-  // Check authentication
+  // Check authentication (optional - user can browse without signing in)
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
     const userData = sessionStorage.getItem('user_data')
@@ -22,15 +22,15 @@ export default function Home() {
       if (userData) {
         setUser(JSON.parse(userData))
       }
-    } else {
-      router.push('/signin')
     }
-  }, [router])
+    // Removed redirect - users can browse without signing in
+  }, [])
 
   const handleLogout = () => {
     sessionStorage.removeItem('user_authenticated')
     sessionStorage.removeItem('user_data')
-    router.push('/signin')
+    setUser(null)
+    setIsAuthenticated(false)
   }
 
   useEffect(() => {
@@ -57,10 +57,6 @@ export default function Home() {
     fetchProducts()
   }, [])
 
-  if (!isAuthenticated) {
-    return null
-  }
-
   const handleAddToCart = (product) => {
     addToCart(product)
     setAddedToCart(true)
@@ -77,8 +73,11 @@ export default function Home() {
       <div className="min-h-screen bg-white">
         {/* Add to Cart Notification */}
         {addedToCart && (
-          <div className="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
-            ✓ Added to cart
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-lg shadow-2xl z-50 flex items-center space-x-2 animate-fade-in">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-semibold text-lg">Added to cart!</span>
           </div>
         )}
 
@@ -94,12 +93,21 @@ export default function Home() {
                 {user && (
                   <span className="text-sm text-gray-600 hidden sm:inline">Hi, {user.firstName}</span>
                 )}
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-gray-600 hover:text-purple-600 transition"
-                >
-                  {user ? 'Logout' : 'Login'}
-                </button>
+                {user ? (
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-gray-600 hover:text-purple-600 transition"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <Link
+                    href="/signin"
+                    className="text-sm text-gray-600 hover:text-purple-600 transition"
+                  >
+                    Login
+                  </Link>
+                )}
                 <Link href="/cart" className="relative">
                   <svg className="w-6 h-6 text-gray-700 hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />

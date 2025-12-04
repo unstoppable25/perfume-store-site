@@ -8,13 +8,8 @@ export default function Cart() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart()
   const router = useRouter()
 
-  // Check authentication
-  useEffect(() => {
-    const userAuth = sessionStorage.getItem('user_authenticated')
-    if (userAuth !== 'true' && userAuth !== 'guest') {
-      router.push('/signin?returnUrl=/cart')
-    }
-  }, [router])
+  // No authentication check - anyone can view cart
+  // Authentication will be checked at checkout
 
   const handleCheckout = () => {
     if (cart.length === 0) {
