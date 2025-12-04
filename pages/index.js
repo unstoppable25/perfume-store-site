@@ -171,7 +171,7 @@ export default function Home() {
                   <li><Link href="/shop" className="text-gray-400 hover:text-white transition">Shop</Link></li>
                   <li><Link href="/about" className="text-gray-400 hover:text-white transition">About us</Link></li>
                   <li><Link href="/contact" className="text-gray-400 hover:text-white transition">Contact us</Link></li>
-                  <li><Link href="/my-orders" className="text-gray-400 hover:text-white transition">My Orders</Link></li>
+                  <li><Link href="/profile" className="text-gray-400 hover:text-white transition">My Orders</Link></li>
                 </ul>
               </div>
               

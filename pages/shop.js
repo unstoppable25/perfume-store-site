@@ -196,7 +196,7 @@ export default function Shop() {
                       <Link href="/profile" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                         My Profile
                       </Link>
-                      <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-amber-900 transition">
+                      <Link href="/profile" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                         My Orders
                       </Link>
                     </>
@@ -358,7 +358,7 @@ export default function Shop() {
                   <li><Link href="/about" className="text-gray-400 hover:text-white transition">About us</Link></li>
                   <li><Link href="/contact" className="text-gray-400 hover:text-white transition">Contact us</Link></li>
                   <li><Link href="/faq" className="text-gray-400 hover:text-white transition">FAQ</Link></li>
-                  <li><Link href="/my-orders" className="text-gray-400 hover:text-white transition">My Orders</Link></li>
+                  <li><Link href="/profile" className="text-gray-400 hover:text-white transition">My Orders</Link></li>
                 </ul>
               </div>
               

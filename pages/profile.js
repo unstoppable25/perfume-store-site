@@ -11,7 +11,7 @@ export default function Profile() {
   const [user, setUser] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('profile') // 'profile' or 'orders'
+  const [activeTab, setActiveTab] = useState('orders') // Default to 'orders' tab
 
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
