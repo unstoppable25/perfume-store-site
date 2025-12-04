@@ -18,17 +18,10 @@ export default function Admin() {
   const [newPassword, setNewPassword] = useState('')
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
-  const [categories, setCategories] = useState([
-    'Floral',
-    'Woody',
-    'Oriental',
-    'Fresh',
-    'Chanel',
-    'Dior',
-    'Gucci',
-    'Tom Ford'
-  ])
+  const [categories, setCategories] = useState([])
   const [newCategory, setNewCategory] = useState('')
+  const [editingCategory, setEditingCategory] = useState(null)
+  const [editCategoryName, setEditCategoryName] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -131,7 +124,7 @@ export default function Admin() {
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
     
-    // Load button background images from database
+    // Load button background images and categories from database
     const loadSettings = async () => {
       try {
         const res = await fetch('/api/settings')
@@ -139,6 +132,9 @@ export default function Admin() {
         if (data.success && data.settings) {
           if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
           if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
+          if (data.settings.categories && Array.isArray(data.settings.categories)) {
+            setCategories(data.settings.categories)
+          }
         }
       } catch (err) {
         console.error('Failed to load settings:', err)
@@ -287,6 +283,68 @@ export default function Admin() {
         }
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const handleAddCategory = async () => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      const updatedCategories = [...categories, newCategory.trim()]
+      setCategories(updatedCategories)
+      setNewCategory('')
+      
+      // Save to database
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'categories', value: updatedCategories })
+        })
+      } catch (err) {
+        console.error('Failed to save category:', err)
+        alert('Category added locally but failed to save to database')
+      }
+    }
+  }
+
+  const handleDeleteCategory = async (categoryToDelete) => {
+    if (confirm(`Are you sure you want to delete the category "${categoryToDelete}"?`)) {
+      const updatedCategories = categories.filter(c => c !== categoryToDelete)
+      setCategories(updatedCategories)
+      
+      // Save to database
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'categories', value: updatedCategories })
+        })
+        alert('Category deleted successfully')
+      } catch (err) {
+        console.error('Failed to delete category:', err)
+        alert('Category deleted locally but failed to update database')
+      }
+    }
+  }
+
+  const handleEditCategory = async (oldName, newName) => {
+    if (newName.trim() && newName !== oldName) {
+      const updatedCategories = categories.map(c => c === oldName ? newName.trim() : c)
+      setCategories(updatedCategories)
+      setEditingCategory(null)
+      setEditCategoryName('')
+      
+      // Save to database
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'categories', value: updatedCategories })
+        })
+        alert('Category updated successfully')
+      } catch (err) {
+        console.error('Failed to update category:', err)
+        alert('Category updated locally but failed to save to database')
+      }
     }
   }
 
@@ -611,51 +669,115 @@ export default function Admin() {
               <div className="border-t pt-4 mt-4">
                 <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Categories</h3>
                 <p className="text-sm text-gray-600 mb-3">Select one or more categories for this product</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                  {categories.map((category) => (
-                    <label
-                      key={category}
-                      className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.categories.includes(category)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setForm({ ...form, categories: [...form.categories, category] })
-                          } else {
-                            setForm({ ...form, categories: form.categories.filter(c => c !== category) })
-                          }
-                        }}
-                        className="w-4 h-4 text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="text-sm">{category}</span>
-                    </label>
-                  ))}
-                </div>
+                
+                {categories.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic mb-4">No categories yet. Add your first category below.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                    {categories.map((category) => (
+                      <label
+                        key={category}
+                        className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.categories.includes(category)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setForm({ ...form, categories: [...form.categories, category] })
+                            } else {
+                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
+                            }
+                          }}
+                          className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="text-sm flex-1">{category}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
                 
                 {/* Add New Category */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-4">
                   <input
                     type="text"
                     placeholder="Add new category (e.g., Versace, Citrus)"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
                     className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-                        setCategories([...categories, newCategory.trim()])
-                        setNewCategory('')
-                      }
-                    }}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+                    onClick={handleAddCategory}
+                    className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 text-sm font-medium"
                   >
                     Add Category
                   </button>
                 </div>
+
+                {/* Manage Categories */}
+                {categories.length > 0 && (
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
+                    <div className="space-y-2">
+                      {categories.map((category) => (
+                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          {editingCategory === category ? (
+                            <>
+                              <input
+                                type="text"
+                                value={editCategoryName}
+                                onChange={(e) => setEditCategoryName(e.target.value)}
+                                className="flex-1 border px-2 py-1 rounded text-sm"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleEditCategory(category, editCategoryName)}
+                                className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCategory(null)
+                                  setEditCategoryName('')
+                                }}
+                                className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="flex-1 text-sm font-medium">{category}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCategory(category)
+                                  setEditCategoryName(category)
+                                }}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCategory(category)}
+                                className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {form.categories.length > 0 && (
                   <div className="mt-3 text-sm text-gray-600">
                     Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
