@@ -85,7 +85,15 @@ export default function Shop() {
               
               <div className="flex items-center space-x-6">
                 {user && (
-                  <span className="text-sm text-gray-600 hidden sm:inline">Hi, {user.firstName}</span>
+                  <>
+                    <span className="text-sm text-gray-600 hidden sm:inline">Hi, {user.firstName}</span>
+                    <Link
+                      href="/my-orders"
+                      className="text-sm text-gray-600 hover:text-purple-600 transition"
+                    >
+                      My Orders
+                    </Link>
+                  </>
                 )}
                 {user ? (
                   <button

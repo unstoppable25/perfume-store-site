@@ -45,6 +45,14 @@ export default function MyOrders() {
   }
 
   const handleCancelOrder = async (orderId) => {
+    const order = orders.find(o => o.id === orderId)
+    
+    // Check if order is already in processing or beyond
+    if (order && ['Processing', 'Shipped', 'Delivered'].includes(order.status)) {
+      alert('This order is already being processed and cannot be cancelled. Please contact us for assistance.')
+      return
+    }
+    
     if (!confirm('Are you sure you want to cancel this order?')) {
       return
     }
@@ -163,13 +171,21 @@ export default function MyOrders() {
                       <span className="text-lg font-bold text-purple-600">
                         NGN {order.total?.toLocaleString() || '0'}
                       </span>
-                      {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                      {order.status === 'Pending' && (
                         <button
                           onClick={() => handleCancelOrder(order.id)}
                           className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
                         >
                           Cancel Order
                         </button>
+                      )}
+                      {['Processing', 'Shipped'].includes(order.status) && (
+                        <div className="text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                          <span className="block font-semibold">Need to make changes?</span>
+                          <Link href="/contact" className="text-blue-600 hover:text-blue-800 underline">
+                            Contact us
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>

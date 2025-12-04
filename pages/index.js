@@ -48,6 +48,11 @@ export default function Home() {
                 <Link href="/contact" className="text-sm text-gray-600 hover:text-purple-600 transition">
                   Contact us
                 </Link>
+                {user && (
+                  <Link href="/my-orders" className="text-sm text-gray-600 hover:text-purple-600 transition">
+                    My Orders
+                  </Link>
+                )}
               </nav>
 
               <div className="flex items-center space-x-6">

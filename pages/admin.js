@@ -262,6 +262,27 @@ export default function Admin() {
   }
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    const order = orders.find(o => o.id === orderId)
+    const currentStatus = order?.status || 'Pending'
+    
+    // Prevent changing status if already in Processing or beyond (except to Cancelled)
+    if (['Processing', 'Shipped', 'Delivered'].includes(currentStatus) && newStatus === 'Pending') {
+      if (!confirm('Warning: This order is already in progress. Are you sure you want to move it back to Pending? This should only be done after contacting the customer.')) {
+        return
+      }
+    }
+    
+    if (currentStatus === 'Processing' && newStatus !== 'Cancelled' && newStatus !== 'Shipped' && newStatus !== 'Processing') {
+      alert('Orders in Processing can only be moved to Shipped or Cancelled. Contact the customer before making changes.')
+      return
+    }
+    
+    if (newStatus === 'Cancelled' && ['Processing', 'Shipped'].includes(currentStatus)) {
+      if (!confirm('Warning: This order is already in progress. Cancelling may require refund processing. Have you contacted the customer?')) {
+        return
+      }
+    }
+    
     try {
       const res = await fetch('/api/orders/cancel', {
         method: 'PUT',
@@ -590,6 +611,11 @@ export default function Admin() {
                             <option value="Delivered">✅ Delivered</option>
                             <option value="Cancelled">❌ Cancelled</option>
                           </select>
+                          {['Processing', 'Shipped', 'Delivered'].includes(order.status) && (
+                            <span className="text-xs text-gray-500 italic">
+                              🔒 Status locked - Contact customer first
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-3">
