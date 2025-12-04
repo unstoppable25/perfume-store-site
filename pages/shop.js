@@ -148,11 +148,11 @@ export default function Shop() {
         {/* Breadcrumb */}
         <div className="border-b bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="text-sm text-gray-600 mb-4">
+            <div className="text-sm text-gray-600">
               <Link href="/" className="hover:text-amber-900">Home</Link>
               <span className="mx-2">/</span>
               <span className="text-gray-900">Shop</span>
-            </p>
+            </div>
           </div>
         </div>
 
