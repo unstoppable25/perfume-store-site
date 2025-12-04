@@ -197,11 +197,22 @@ export default function Admin() {
   }
 
   const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return
+    }
     try {
-      await fetch(`/api/products?id=${id}`, { method: 'DELETE' })
-      setProducts((prev) => prev.filter((p) => p.id !== id))
+      const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        const updatedProducts = products.filter((p) => p.id !== id)
+        setProducts(updatedProducts)
+        localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts))
+        alert('Product deleted successfully')
+      } else {
+        alert('Failed to delete product')
+      }
     } catch (err) {
       console.error('Failed to delete', err)
+      alert('Failed to delete product: ' + err.message)
     }
   }
 
@@ -302,8 +313,9 @@ export default function Admin() {
         if (data.success) {
           setCategories(updatedCategories)
           setNewCategory('')
-          alert('Category added successfully!')
+          // Category added successfully - no alert needed
         } else {
+          console.error('Category save response:', data)
           alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
         }
       } catch (err) {
