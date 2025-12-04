@@ -281,21 +281,27 @@ export default function Admin() {
         try {
           const base64 = reader.result
           const filename = `shop-bg-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
-          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
-          const data = await res.json()
-          if (data.url) {
-            setShopBgImage(data.url)
+          const uploadRes = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+          const uploadData = await uploadRes.json()
+          if (uploadData.url) {
+            setShopBgImage(uploadData.url)
             // Save to database
-            await fetch('/api/settings', {
+            const settingsRes = await fetch('/api/settings', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ key: 'shop_button_bg', value: data.url })
+              body: JSON.stringify({ key: 'shop_button_bg', value: uploadData.url })
             })
-            alert('Shop button background updated!')
+            const settingsData = await settingsRes.json()
+            if (settingsData.success) {
+              alert('Shop button background updated successfully!')
+            } else {
+              console.error('Settings save failed:', settingsData)
+              alert('Image uploaded but failed to save settings')
+            }
           }
         } catch (err) {
           console.error('Shop background upload failed', err)
-          alert('Upload failed')
+          alert('Upload failed: ' + err.message)
         }
       }
       reader.readAsDataURL(file)
@@ -310,21 +316,27 @@ export default function Admin() {
         try {
           const base64 = reader.result
           const filename = `about-bg-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
-          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
-          const data = await res.json()
-          if (data.url) {
-            setAboutBgImage(data.url)
+          const uploadRes = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+          const uploadData = await uploadRes.json()
+          if (uploadData.url) {
+            setAboutBgImage(uploadData.url)
             // Save to database
-            await fetch('/api/settings', {
+            const settingsRes = await fetch('/api/settings', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ key: 'about_button_bg', value: data.url })
+              body: JSON.stringify({ key: 'about_button_bg', value: uploadData.url })
             })
-            alert('About button background updated!')
+            const settingsData = await settingsRes.json()
+            if (settingsData.success) {
+              alert('About button background updated successfully!')
+            } else {
+              console.error('Settings save failed:', settingsData)
+              alert('Image uploaded but failed to save settings')
+            }
           }
         } catch (err) {
           console.error('About background upload failed', err)
-          alert('Upload failed')
+          alert('Upload failed: ' + err.message)
         }
       }
       reader.readAsDataURL(file)
