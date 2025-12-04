@@ -38,20 +38,18 @@ export default function Shop() {
       try {
         const res = await fetch('/api/products')
         const data = await res.json()
+        
+        // Always use server data, even if empty
+        setProducts(data || [])
+        groupProductsByCategories(data || [])
+        
+        // Update localStorage backup with server data
         if (data && data.length > 0) {
-          setProducts(data)
-          // Group products by categories
-          groupProductsByCategories(data)
-        } else {
-          const backup = localStorage.getItem('scentlumus_products_backup')
-          if (backup) {
-            const parsedBackup = JSON.parse(backup)
-            setProducts(parsedBackup)
-            groupProductsByCategories(parsedBackup)
-          }
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(data))
         }
       } catch (err) {
         console.error('Failed to load products', err)
+        // Only use backup if server is unreachable
         const backup = localStorage.getItem('scentlumus_products_backup')
         if (backup) {
           const parsedBackup = JSON.parse(backup)

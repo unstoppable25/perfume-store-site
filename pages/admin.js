@@ -43,20 +43,20 @@ export default function Admin() {
       try {
         const res = await fetch('/api/products')
         const data = await res.json()
-        setProducts(data)
-        // Also save to localStorage as backup
+        
+        // Always use server data, even if empty
+        setProducts(data || [])
+        
+        // Update localStorage backup with server data
         if (data && data.length > 0) {
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(data))
         } else {
-          // If server has no products, try localStorage backup
-          const backup = localStorage.getItem('scentlumus_products_backup')
-          if (backup) {
-            setProducts(JSON.parse(backup))
-          }
+          // Clear backup if server has no products
+          localStorage.removeItem('scentlumus_products_backup')
         }
       } catch (err) {
         console.error('Failed to fetch products', err)
-        // Fallback to localStorage if API fails
+        // Only use backup if server is unreachable (network error)
         const backup = localStorage.getItem('scentlumus_products_backup')
         if (backup) {
           setProducts(JSON.parse(backup))
@@ -201,14 +201,20 @@ export default function Admin() {
       return
     }
     try {
+      console.log('Deleting product with id:', id)
       const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      console.log('Delete response:', data)
+      
       if (res.ok) {
-        const updatedProducts = products.filter((p) => p.id !== id)
-        setProducts(updatedProducts)
-        localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts))
+        // Refetch products from server to ensure sync
+        const fetchRes = await fetch('/api/products')
+        const serverProducts = await fetchRes.json()
+        setProducts(serverProducts)
+        localStorage.setItem('scentlumus_products_backup', JSON.stringify(serverProducts))
         alert('Product deleted successfully')
       } else {
-        alert('Failed to delete product')
+        alert('Failed to delete product: ' + (data.message || 'Unknown error'))
       }
     } catch (err) {
       console.error('Failed to delete', err)
