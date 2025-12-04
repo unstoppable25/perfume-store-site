@@ -96,7 +96,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
               <Link
                 href="/shop"
-                className="relative inline-block px-20 py-6 rounded-md text-2xl font-bold transition shadow-lg min-w-[200px] h-[200px] flex items-center justify-center overflow-hidden group"
+                className="relative inline-block rounded-lg text-2xl font-bold transition shadow-lg w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center overflow-hidden group"
                 style={{
                   backgroundImage: shopBgImage ? `url(${shopBgImage})` : 'none',
                   backgroundSize: 'cover',
@@ -112,7 +112,7 @@ export default function Home() {
               
               <Link
                 href="/about"
-                className="relative inline-block px-20 py-6 rounded-md text-2xl font-bold transition shadow-lg min-w-[200px] h-[200px] flex items-center justify-center overflow-hidden group"
+                className="relative inline-block rounded-lg text-2xl font-bold transition shadow-lg w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center overflow-hidden group"
                 style={{
                   backgroundImage: aboutBgImage ? `url(${aboutBgImage})` : 'none',
                   backgroundSize: 'cover',
