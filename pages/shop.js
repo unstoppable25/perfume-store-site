@@ -1,20 +1,67 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { useCart } from '../context/CartContext'
+import Head from 'next/head'
+import Link from 'next/link'
 
-export default function Home() {
+export default function Shop() {
   const router = useRouter()
+  const [products, setProducts] = useState([])
+  const [user, setUser] = useState(null)
+  const [addedToCart, setAddedToCart] = useState(false)
+  const { addToCart, getCartCount } = useCart()
+
+  // Check if user is logged in (optional)
+  useEffect(() => {
+    const userAuth = sessionStorage.getItem('user_authenticated')
+    const userData = sessionStorage.getItem('user_data')
+    
+    if (userAuth === 'true' && userData) {
+      setUser(JSON.parse(userData))
+    }
+  }, [])
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('user_authenticated')
+    sessionStorage.removeItem('user_data')
+    setUser(null)
+  }
 
   useEffect(() => {
-    // Redirect to shop page (like MySedge)
-    router.push('/shop')
-  }, [router])
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products')
+        const data = await res.json()
+        if (data && data.length > 0) {
+          setProducts(data)
+        } else {
+          const backup = localStorage.getItem('scentlumus_products_backup')
+          if (backup) {
+            setProducts(JSON.parse(backup))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load products', err)
+        const backup = localStorage.getItem('scentlumus_products_backup')
+        if (backup) {
+          setProducts(JSON.parse(backup))
+        }
+      }
+    }
+    fetchProducts()
+  }, [])
 
-  return null
-}
+  const handleAddToCart = (product) => {
+    addToCart(product)
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 2000)
+  }
 
+  return (
+    <>
       <Head>
-        <title>ScentLumus — Luxury Fragrances</title>
-        <meta name="description" content="Welcome to the house of ScentLumus" />
+        <title>Shop — ScentLumus</title>
+        <meta name="description" content="Shop luxury fragrances at ScentLumus" />
       </Head>
       
       <div className="min-h-screen bg-white">
@@ -70,31 +117,10 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Hero Section - Clean like MySedge */}
-        <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-32 px-4">
-          <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-12">
-              WELCOME TO THE HOUSE OF SCENTLUMUS
-            </h1>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <a 
-                href="#products" 
-                className="inline-block bg-white text-purple-600 px-10 py-4 rounded-md text-lg font-semibold hover:bg-gray-100 transition"
-              >
-                Shop
-              </a>
-              <Link 
-                href="/about" 
-                className="inline-block bg-transparent border-2 border-white text-white px-10 py-4 rounded-md text-lg font-semibold hover:bg-white hover:text-purple-600 transition"
-              >
-                About us
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Products Grid */}
-        <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Shop</h1>
+          
           {products.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">No products available yet.</p>
@@ -138,7 +164,7 @@ export default function Home() {
         </section>
 
         {/* Footer with Social Media */}
-        <footer className="bg-gray-900 text-white py-12">
+        <footer className="bg-gray-900 text-white py-12 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-3 gap-8 mb-8">
               <div>
@@ -151,7 +177,7 @@ export default function Home() {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                 <ul className="space-y-2 text-sm">
-                  <li><Link href="/" className="text-gray-400 hover:text-white transition">Home</Link></li>
+                  <li><Link href="/" className="text-gray-400 hover:text-white transition">Shop</Link></li>
                   <li><Link href="/about" className="text-gray-400 hover:text-white transition">About us</Link></li>
                   <li><Link href="/contact" className="text-gray-400 hover:text-white transition">Contact us</Link></li>
                   <li><Link href="/faq" className="text-gray-400 hover:text-white transition">FAQ</Link></li>
