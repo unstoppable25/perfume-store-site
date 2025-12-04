@@ -9,6 +9,7 @@ export default function Home() {
   const [products, setProducts] = useState([])
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
+  const [addedToCart, setAddedToCart] = useState(false)
   const { addToCart, getCartCount } = useCart()
 
   // Check authentication
@@ -60,6 +61,12 @@ export default function Home() {
     return null
   }
 
+  const handleAddToCart = (product) => {
+    addToCart(product)
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 2000)
+  }
+
   return (
     <>
       <Head>
@@ -68,6 +75,13 @@ export default function Home() {
       </Head>
       
       <div className="min-h-screen bg-white">
+        {/* Add to Cart Notification */}
+        {addedToCart && (
+          <div className="fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+            ✓ Added to cart
+          </div>
+        )}
+
         {/* Simple Clean Header */}
         <header className="border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -156,7 +170,7 @@ export default function Home() {
                       NGN {product.price?.toLocaleString()}
                     </span>
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
                       className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition text-sm font-medium"
                     >
                       Add to Cart
