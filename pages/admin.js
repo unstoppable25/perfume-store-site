@@ -16,6 +16,8 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [resetPasswordUser, setResetPasswordUser] = useState(null)
   const [newPassword, setNewPassword] = useState('')
+  const [shopBgImage, setShopBgImage] = useState('')
+  const [aboutBgImage, setAboutBgImage] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -117,6 +119,11 @@ export default function Admin() {
 
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
+    
+    const shopBg = localStorage.getItem('shop_button_bg')
+    const aboutBg = localStorage.getItem('about_button_bg')
+    if (shopBg) setShopBgImage(shopBg)
+    if (aboutBg) setAboutBgImage(aboutBg)
   }, [authenticated])
 
   const handleAddProduct = (e) => {
@@ -250,6 +257,54 @@ export default function Admin() {
           }
         } catch (err) {
           console.error('Logo upload failed', err)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleShopBgUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result
+          const filename = `shop-bg-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
+          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+          const data = await res.json()
+          if (data.url) {
+            setShopBgImage(data.url)
+            localStorage.setItem('shop_button_bg', data.url)
+            alert('Shop button background updated!')
+          }
+        } catch (err) {
+          console.error('Shop background upload failed', err)
+          alert('Upload failed')
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleAboutBgUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result
+          const filename = `about-bg-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
+          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+          const data = await res.json()
+          if (data.url) {
+            setAboutBgImage(data.url)
+            localStorage.setItem('about_button_bg', data.url)
+            alert('About button background updated!')
+          }
+        } catch (err) {
+          console.error('About background upload failed', err)
+          alert('Upload failed')
         }
       }
       reader.readAsDataURL(file)
@@ -391,6 +446,74 @@ export default function Admin() {
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     <p className="text-sm text-gray-600">Click to upload logo</p>
                   </label>
+                </div>
+              </div>
+
+              {/* Home Page Button Backgrounds */}
+              <div className="bg-white p-6 rounded-lg shadow mb-8">
+                <h2 className="text-2xl font-semibold mb-4">Home Page Button Backgrounds</h2>
+                <p className="text-sm text-gray-600 mb-6">Upload background images for the Shop and About buttons on the home page. Images will be dimmed with the button text visible on top.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Shop Button Background */}
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-3">Shop Button Background</h3>
+                    <div className="border-2 border-dashed border-amber-300 rounded-lg p-4">
+                      {shopBgImage ? (
+                        <div className="space-y-3">
+                          <div className="relative h-32 rounded overflow-hidden">
+                            <img src={shopBgImage} alt="Shop Background" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black opacity-60"></div>
+                            <div className="absolute inset-0 flex items-center justify-center text-white text-xl font-bold">
+                              Shop
+                            </div>
+                          </div>
+                          <label className="block w-full bg-amber-600 text-white text-center py-2 rounded cursor-pointer hover:bg-amber-700">
+                            <input type="file" accept="image/*" onChange={handleShopBgUpload} className="hidden" />
+                            Change Image
+                          </label>
+                        </div>
+                      ) : (
+                        <label className="block cursor-pointer hover:bg-amber-50 p-8 text-center">
+                          <input type="file" accept="image/*" onChange={handleShopBgUpload} className="hidden" />
+                          <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-gray-600">Click to upload Shop button background</p>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* About Button Background */}
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-3">About Button Background</h3>
+                    <div className="border-2 border-dashed border-amber-300 rounded-lg p-4">
+                      {aboutBgImage ? (
+                        <div className="space-y-3">
+                          <div className="relative h-32 rounded overflow-hidden">
+                            <img src={aboutBgImage} alt="About Background" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black opacity-60"></div>
+                            <div className="absolute inset-0 flex items-center justify-center text-white text-xl font-bold">
+                              About us
+                            </div>
+                          </div>
+                          <label className="block w-full bg-amber-600 text-white text-center py-2 rounded cursor-pointer hover:bg-amber-700">
+                            <input type="file" accept="image/*" onChange={handleAboutBgUpload} className="hidden" />
+                            Change Image
+                          </label>
+                        </div>
+                      ) : (
+                        <label className="block cursor-pointer hover:bg-amber-50 p-8 text-center">
+                          <input type="file" accept="image/*" onChange={handleAboutBgUpload} className="hidden" />
+                          <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm text-gray-600">Click to upload About button background</p>
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -9,6 +9,8 @@ export default function Home() {
   const [user, setUser] = useState(null)
   const { getCartCount } = useCart()
   const cartCount = getCartCount()
+  const [shopBgImage, setShopBgImage] = useState('')
+  const [aboutBgImage, setAboutBgImage] = useState('')
 
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
@@ -17,6 +19,12 @@ export default function Home() {
     if (userAuth === 'true' && userData) {
       setUser(JSON.parse(userData))
     }
+
+    // Load background images from localStorage
+    const shopBg = localStorage.getItem('shop_button_bg')
+    const aboutBg = localStorage.getItem('about_button_bg')
+    if (shopBg) setShopBgImage(shopBg)
+    if (aboutBg) setAboutBgImage(aboutBg)
   }, [])
 
   const handleLogout = () => {
@@ -88,18 +96,34 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
               <Link
                 href="/shop"
-                className="relative inline-block bg-white text-amber-900 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
+                className="relative inline-block px-20 py-6 rounded-md text-2xl font-bold transition shadow-lg min-w-[200px] h-[200px] flex items-center justify-center overflow-hidden group"
+                style={{
+                  backgroundImage: shopBgImage ? `url(${shopBgImage})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               >
-                <div className="absolute inset-0 bg-gray-200 opacity-20 group-hover:opacity-30 transition"></div>
-                <span className="relative z-10">Shop</span>
+                {/* Dim overlay */}
+                <div className="absolute inset-0 bg-black opacity-60 group-hover:opacity-50 transition"></div>
+                {/* Fallback color if no image */}
+                {!shopBgImage && <div className="absolute inset-0 bg-amber-800"></div>}
+                <span className="relative z-10 text-white">Shop</span>
               </Link>
               
               <Link
                 href="/about"
-                className="relative inline-block bg-white text-amber-900 px-20 py-6 rounded-md text-2xl font-bold hover:bg-gray-100 transition shadow-lg min-w-[200px] overflow-hidden group"
+                className="relative inline-block px-20 py-6 rounded-md text-2xl font-bold transition shadow-lg min-w-[200px] h-[200px] flex items-center justify-center overflow-hidden group"
+                style={{
+                  backgroundImage: aboutBgImage ? `url(${aboutBgImage})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
               >
-                <div className="absolute inset-0 bg-gray-200 opacity-20 group-hover:opacity-30 transition"></div>
-                <span className="relative z-10">About us</span>
+                {/* Dim overlay */}
+                <div className="absolute inset-0 bg-black opacity-60 group-hover:opacity-50 transition"></div>
+                {/* Fallback color if no image */}
+                {!aboutBgImage && <div className="absolute inset-0 bg-amber-800"></div>}
+                <span className="relative z-10 text-white">About us</span>
               </Link>
             </div>
           </div>
