@@ -12,6 +12,8 @@ export default function Profile() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('orders') // Default to 'orders' tab
+  const [editingUsername, setEditingUsername] = useState(false)
+  const [username, setUsername] = useState('')
 
   useEffect(() => {
     const userAuth = sessionStorage.getItem('user_authenticated')
@@ -24,6 +26,7 @@ export default function Profile() {
 
     const parsedUser = JSON.parse(userData)
     setUser(parsedUser)
+    setUsername(parsedUser.username || parsedUser.firstName || 'User')
     fetchOrders(parsedUser.email)
   }, [router])
 
@@ -45,6 +48,16 @@ export default function Profile() {
     sessionStorage.removeItem('user_authenticated')
     sessionStorage.removeItem('user_data')
     router.push('/')
+  }
+
+  const handleSaveUsername = () => {
+    if (username.trim()) {
+      const updatedUser = { ...user, username: username.trim() }
+      setUser(updatedUser)
+      sessionStorage.setItem('user_data', JSON.stringify(updatedUser))
+      setEditingUsername(false)
+      alert('Username updated successfully!')
+    }
   }
 
   if (!user) {
@@ -109,7 +122,7 @@ export default function Profile() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold mb-2">
-                  Hi, {user.firstName}
+                  Hi, {username}
                 </h1>
                 <p className="text-amber-100">{user.email}</p>
                 {user.phone && <p className="text-amber-100">{user.phone}</p>}
@@ -150,6 +163,47 @@ export default function Profile() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Personal Information</h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                      {editingUsername ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            placeholder="Enter your username"
+                          />
+                          <button
+                            onClick={handleSaveUsername}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setUsername(user.username || user.firstName || 'User')
+                              setEditingUsername(false)
+                            }}
+                            className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900">
+                            {username}
+                          </div>
+                          <button
+                            onClick={() => setEditingUsername(true)}
+                            className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                       <div className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900">

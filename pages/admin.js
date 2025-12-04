@@ -5,7 +5,7 @@ import Head from 'next/head'
 export default function Admin() {
   const [products, setProducts] = useState([])
   const [logo, setLogo] = useState(null)
-  const [form, setForm] = useState({ name: '', price: '', description: '', image: '', categories: [] })
+  const [form, setForm] = useState({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [] })
   const [isEditing, setIsEditing] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
@@ -180,7 +180,7 @@ export default function Admin() {
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
         }
       } finally {
-        setForm({ name: '', price: '', description: '', image: '', categories: [] })
+        setForm({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [] })
       }
     })()
   }
@@ -188,7 +188,8 @@ export default function Admin() {
   const handleEdit = (product) => {
     setForm({ 
       name: product.name, 
-      price: product.price, 
+      price: product.price,
+      oldPrice: product.oldPrice || '',
       description: product.description, 
       image: product.image,
       categories: product.categories || []
@@ -680,12 +681,24 @@ export default function Admin() {
                 />
                 <input
                   type="number"
-                  placeholder="Price (USD)"
+                  placeholder="Price (NGN)"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-600"
                   required
                 />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  placeholder="Old Price (Optional - for strike-through)"
+                  value={form.oldPrice}
+                  onChange={(e) => setForm({ ...form, oldPrice: e.target.value })}
+                  className="border p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-600"
+                />
+                <div className="text-sm text-gray-500 flex items-center">
+                  <span>💡 Add old price to show a strike-through discount</span>
+                </div>
               </div>
               <textarea
                 placeholder="Description"

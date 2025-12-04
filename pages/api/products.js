@@ -9,12 +9,13 @@ export default async function handler(req, res) {
   }
 
   if (method === 'POST') {
-    const { name, price, description, image, categories } = req.body || {}
+    const { name, price, oldPrice, description, image, categories } = req.body || {}
     if (!name || !price) return res.status(400).json({ message: 'Name and price are required' })
     const newProduct = { 
       id: Date.now().toString(), 
       name, 
-      price: String(price), 
+      price: String(price),
+      oldPrice: oldPrice ? String(oldPrice) : '',
       description: description || '', 
       image: image || '',
       categories: categories || []
@@ -24,12 +25,13 @@ export default async function handler(req, res) {
   }
 
   if (method === 'PUT') {
-    const { id, name, price, description, image, categories } = req.body || {}
+    const { id, name, price, oldPrice, description, image, categories } = req.body || {}
     if (!id) return res.status(400).json({ message: 'Product id is required' })
     const updated = await updateProduct({ 
       id, 
       name, 
-      price: String(price), 
+      price: String(price),
+      oldPrice: oldPrice ? String(oldPrice) : '',
       description: description || '', 
       image: image || '',
       categories: categories || []
