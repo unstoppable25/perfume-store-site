@@ -120,10 +120,20 @@ export default function Admin() {
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
     
-    const shopBg = localStorage.getItem('shop_button_bg')
-    const aboutBg = localStorage.getItem('about_button_bg')
-    if (shopBg) setShopBgImage(shopBg)
-    if (aboutBg) setAboutBgImage(aboutBg)
+    // Load button background images from database
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings) {
+          if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
+          if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err)
+      }
+    }
+    loadSettings()
   }, [authenticated])
 
   const handleAddProduct = (e) => {
@@ -275,7 +285,12 @@ export default function Admin() {
           const data = await res.json()
           if (data.url) {
             setShopBgImage(data.url)
-            localStorage.setItem('shop_button_bg', data.url)
+            // Save to database
+            await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: 'shop_button_bg', value: data.url })
+            })
             alert('Shop button background updated!')
           }
         } catch (err) {
@@ -299,7 +314,12 @@ export default function Admin() {
           const data = await res.json()
           if (data.url) {
             setAboutBgImage(data.url)
-            localStorage.setItem('about_button_bg', data.url)
+            // Save to database
+            await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: 'about_button_bg', value: data.url })
+            })
             alert('About button background updated!')
           }
         } catch (err) {

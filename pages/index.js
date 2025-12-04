@@ -20,13 +20,24 @@ export default function Home() {
       setUser(JSON.parse(userData))
     }
 
-    // Load background images from localStorage
-    const shopBg = localStorage.getItem('shop_button_bg')
-    const aboutBg = localStorage.getItem('about_button_bg')
-    console.log('Shop BG:', shopBg)
-    console.log('About BG:', aboutBg)
-    if (shopBg) setShopBgImage(shopBg)
-    if (aboutBg) setAboutBgImage(aboutBg)
+    // Load background images from database
+    const loadBackgroundImages = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings) {
+          if (data.settings.shop_button_bg) {
+            setShopBgImage(data.settings.shop_button_bg)
+          }
+          if (data.settings.about_button_bg) {
+            setAboutBgImage(data.settings.about_button_bg)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load background images:', err)
+      }
+    }
+    loadBackgroundImages()
   }, [])
 
   const handleLogout = () => {
