@@ -149,7 +149,8 @@ export default function SignIn() {
                 e.preventDefault()
                 sessionStorage.setItem('user_authenticated', 'guest')
                 sessionStorage.setItem('user_data', JSON.stringify({ firstName: 'Guest', email: 'guest@guest.com' }))
-                window.location.href = '/'
+                const returnUrl = router.query.returnUrl || '/'
+                window.location.href = returnUrl
               }}
               className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold transition duration-300"
             >
