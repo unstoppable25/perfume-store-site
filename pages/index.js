@@ -23,6 +23,8 @@ export default function Home() {
     // Load background images from localStorage
     const shopBg = localStorage.getItem('shop_button_bg')
     const aboutBg = localStorage.getItem('about_button_bg')
+    console.log('Shop BG:', shopBg)
+    console.log('About BG:', aboutBg)
     if (shopBg) setShopBgImage(shopBg)
     if (aboutBg) setAboutBgImage(aboutBg)
   }, [])
