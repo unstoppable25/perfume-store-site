@@ -289,19 +289,26 @@ export default function Admin() {
   const handleAddCategory = async () => {
     if (newCategory.trim() && !categories.includes(newCategory.trim())) {
       const updatedCategories = [...categories, newCategory.trim()]
-      setCategories(updatedCategories)
-      setNewCategory('')
       
-      // Save to database
+      // Save to database first
       try {
-        await fetch('/api/settings', {
+        const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         })
+        const data = await res.json()
+        
+        if (data.success) {
+          setCategories(updatedCategories)
+          setNewCategory('')
+          alert('Category added successfully!')
+        } else {
+          alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
+        }
       } catch (err) {
         console.error('Failed to save category:', err)
-        alert('Category added locally but failed to save to database')
+        alert('Failed to save category: ' + err.message)
       }
     }
   }
@@ -309,19 +316,25 @@ export default function Admin() {
   const handleDeleteCategory = async (categoryToDelete) => {
     if (confirm(`Are you sure you want to delete the category "${categoryToDelete}"?`)) {
       const updatedCategories = categories.filter(c => c !== categoryToDelete)
-      setCategories(updatedCategories)
       
       // Save to database
       try {
-        await fetch('/api/settings', {
+        const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         })
-        alert('Category deleted successfully')
+        const data = await res.json()
+        
+        if (data.success) {
+          setCategories(updatedCategories)
+          alert('Category deleted successfully')
+        } else {
+          alert('Failed to delete category: ' + (data.error || data.message || 'Unknown error'))
+        }
       } catch (err) {
         console.error('Failed to delete category:', err)
-        alert('Category deleted locally but failed to update database')
+        alert('Failed to delete category: ' + err.message)
       }
     }
   }
@@ -329,21 +342,27 @@ export default function Admin() {
   const handleEditCategory = async (oldName, newName) => {
     if (newName.trim() && newName !== oldName) {
       const updatedCategories = categories.map(c => c === oldName ? newName.trim() : c)
-      setCategories(updatedCategories)
-      setEditingCategory(null)
-      setEditCategoryName('')
       
       // Save to database
       try {
-        await fetch('/api/settings', {
+        const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         })
-        alert('Category updated successfully')
+        const data = await res.json()
+        
+        if (data.success) {
+          setCategories(updatedCategories)
+          setEditingCategory(null)
+          setEditCategoryName('')
+          alert('Category updated successfully')
+        } else {
+          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'))
+        }
       } catch (err) {
         console.error('Failed to update category:', err)
-        alert('Category updated locally but failed to save to database')
+        alert('Failed to update category: ' + err.message)
       }
     }
   }

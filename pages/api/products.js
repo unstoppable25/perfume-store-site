@@ -9,17 +9,31 @@ export default async function handler(req, res) {
   }
 
   if (method === 'POST') {
-    const { name, price, description, image } = req.body || {}
+    const { name, price, description, image, categories } = req.body || {}
     if (!name || !price) return res.status(400).json({ message: 'Name and price are required' })
-    const newProduct = { id: Date.now().toString(), name, price: String(price), description: description || '', image: image || '' }
+    const newProduct = { 
+      id: Date.now().toString(), 
+      name, 
+      price: String(price), 
+      description: description || '', 
+      image: image || '',
+      categories: categories || []
+    }
     const created = await createProduct(newProduct)
     return res.status(201).json(created)
   }
 
   if (method === 'PUT') {
-    const { id, name, price, description, image } = req.body || {}
+    const { id, name, price, description, image, categories } = req.body || {}
     if (!id) return res.status(400).json({ message: 'Product id is required' })
-    const updated = await updateProduct({ id, name, price: String(price), description: description || '', image: image || '' })
+    const updated = await updateProduct({ 
+      id, 
+      name, 
+      price: String(price), 
+      description: description || '', 
+      image: image || '',
+      categories: categories || []
+    })
     return res.status(200).json(updated)
   }
 
