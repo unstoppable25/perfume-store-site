@@ -9,6 +9,7 @@ export default function Shop() {
   const [products, setProducts] = useState([])
   const [user, setUser] = useState(null)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const { addToCart, getCartCount } = useCart()
 
   // Check if user is logged in (optional)
@@ -76,40 +77,14 @@ export default function Shop() {
         )}
 
         {/* Simple Clean Header */}
-        <header className="border-b">
+        <header className="border-b bg-white sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Link href="/" className="text-2xl font-bold text-purple-600">
+              <Link href="/" className="text-xl font-bold text-purple-600">
                 SCENTLUMUS
               </Link>
               
-              <div className="flex items-center space-x-6">
-                {user && (
-                  <>
-                    <span className="text-sm text-gray-600 hidden sm:inline">Hi, {user.firstName}</span>
-                    <Link
-                      href="/my-orders"
-                      className="text-sm text-gray-600 hover:text-purple-600 transition"
-                    >
-                      My Orders
-                    </Link>
-                  </>
-                )}
-                {user ? (
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-gray-600 hover:text-purple-600 transition"
-                  >
-                    Logout
-                  </button>
-                ) : (
-                  <Link
-                    href="/signin"
-                    className="text-sm text-gray-600 hover:text-purple-600 transition"
-                  >
-                    Login
-                  </Link>
-                )}
+              <div className="flex items-center space-x-4">
                 <Link href="/cart" className="relative">
                   <svg className="w-6 h-6 text-gray-700 hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -120,13 +95,84 @@ export default function Shop() {
                     </span>
                   )}
                 </Link>
+                
+                {/* Hamburger Menu Button */}
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="p-2 text-gray-700 hover:text-purple-600 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Products Grid */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Dropdown Menu */}
+        {menuOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setMenuOpen(false)}>
+            <div className="absolute top-0 right-0 bg-white w-64 h-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4">
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                
+                <nav className="mt-12 space-y-4">
+                  <Link href="/" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                    Home
+                  </Link>
+                  <Link href="/about" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                    About us
+                  </Link>
+                  <Link href="/contact" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                    Contact us
+                  </Link>
+                  {user && (
+                    <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-purple-600 transition">
+                      My Orders
+                    </Link>
+                  )}
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Breadcrumb */}
+        <div className="border-b bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <p className="text-sm text-gray-600">
+              <Link href="/" className="hover:text-purple-600">Home</Link>
+              <span className="mx-2">/</span>
+              <span className="text-gray-900">Shop</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Shop Header */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Shop</h1>
+              <p className="text-sm text-gray-600">Showing all {products.length} results</p>
+            </div>
+            
+            <div className="hidden sm:block">
+              <select className="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-600">
+                <option>Default sorting</option>
+                <option>Sort by price: low to high</option>
+                <option>Sort by price: high to low</option>
+                <option>Sort by latest</option>
+              </select>
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Shop</h1>
           
           {products.length === 0 ? (
