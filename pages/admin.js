@@ -304,8 +304,12 @@ export default function Admin() {
     }
   }
 
-  // Get unique customers from orders
-  const customers = [...new Map(orders.map(o => [o.customer.email, o.customer])).values()]
+  // Get unique customers from orders (filter out orders without customer object)
+  const customers = [...new Map(
+    orders
+      .filter(o => o.customer && o.customer.email)
+      .map(o => [o.customer.email, o.customer])
+  ).values()]
 
   if (!authenticated) {
     return (
@@ -621,14 +625,14 @@ export default function Admin() {
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
                           <p className="text-sm font-semibold text-gray-700">Customer</p>
-                          <p className="text-sm">{order.customer.firstName} {order.customer.lastName}</p>
-                          <p className="text-sm text-gray-600">{order.customer.email}</p>
-                          <p className="text-sm text-gray-600">{order.customer.phone}</p>
+                          <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
+                          <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
-                          <p className="text-sm">{order.shipping.address}</p>
-                          <p className="text-sm text-gray-600">{order.shipping.city}, {order.shipping.state} {order.shipping.zipCode}</p>
+                          <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
                         </div>
                       </div>
                       <div>
@@ -671,7 +675,7 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {customers.map((customer, idx) => {
-                        const customerOrders = orders.filter(o => o.customer.email === customer.email)
+                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email)
                         return (
                           <tr key={idx} className="border-b">
                             <td className="px-4 py-3">{customer.firstName} {customer.lastName}</td>
