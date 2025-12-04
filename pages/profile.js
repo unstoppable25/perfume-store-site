@@ -124,8 +124,6 @@ export default function Profile() {
                 <h1 className="text-3xl font-bold mb-2">
                   Hi, {username}
                 </h1>
-                <p className="text-amber-100">{user.email}</p>
-                {user.phone && <p className="text-amber-100">{user.phone}</p>}
               </div>
             </div>
           </div>
