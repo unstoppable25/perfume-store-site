@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
+import { useCart } from '../context/CartContext'
 
 export default function Contact() {
+  const { getCartCount } = useCart()
+  const cartCount = getCartCount()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,15 +46,27 @@ export default function Contact() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100">
       {/* Header */}
       <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-purple-600">ScentLumus</Link>
-          <div className="flex gap-6">
-            <Link href="/" className="text-gray-700 hover:text-purple-600">Home</Link>
-            <Link href="/cart" className="text-gray-700 hover:text-purple-600">Cart</Link>
-            <Link href="/faq" className="text-gray-700 hover:text-purple-600">FAQ</Link>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <Link href="/" className="text-2xl font-bold text-amber-900">SCENTLUMUS</Link>
+              <p className="text-xs text-gray-500">destination for luxury fragrances</p>
+            </div>
+            <div className="flex gap-6 items-center">
+              <Link href="/" className="text-gray-700 hover:text-amber-900">Home</Link>
+              <Link href="/cart" className="relative text-gray-700 hover:text-amber-900">
+                Cart
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              <Link href="/faq" className="text-gray-700 hover:text-amber-900">FAQ</Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -148,7 +163,7 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
+                  className="w-full bg-amber-700 hover:bg-amber-800 text-white py-3 rounded-lg font-semibold transition duration-300 disabled:opacity-50"
                 >
                   {loading ? 'Sending...' : 'Send Message'}
                 </button>
@@ -162,7 +177,7 @@ export default function Contact() {
                 
                 <div className="space-y-4">
                   <div className="flex items-start">
-                    <svg className="w-6 h-6 text-purple-600 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-amber-700 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     <div>
@@ -172,7 +187,7 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-start">
-                    <svg className="w-6 h-6 text-purple-600 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-amber-700 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                     <div>
@@ -182,7 +197,7 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-start">
-                    <svg className="w-6 h-6 text-purple-600 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-amber-700 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -193,7 +208,7 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-start">
-                    <svg className="w-6 h-6 text-purple-600 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-amber-700 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
@@ -205,7 +220,7 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div className="bg-purple-100 rounded-lg shadow-lg p-8">
+              <div className="bg-amber-100 rounded-lg shadow-lg p-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Response</h3>
                 <p className="text-gray-600 mb-4">
                   We typically respond to all inquiries within 24 hours during business days.

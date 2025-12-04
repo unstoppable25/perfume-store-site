@@ -1,9 +1,12 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useCart } from '../context/CartContext'
 
 export default function About() {
   const [logo, setLogo] = useState(null)
+  const { getCartCount } = useCart()
+  const cartCount = getCartCount()
 
   useEffect(() => {
     const savedLogo = localStorage.getItem('scentlumus_logo')
@@ -19,34 +22,44 @@ export default function About() {
 
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center space-x-3">
-            {logo ? (
-              <img src={logo} alt="ScentLumus" className="h-10" />
-            ) : (
-              <div className="text-2xl font-bold text-purple-600">ScentLumus</div>
-            )}
-          </Link>
-          <nav className="hidden md:flex space-x-6">
-            <Link href="/" className="text-gray-700 hover:text-purple-600">Home</Link>
-            <Link href="/about" className="text-purple-600 font-semibold">About</Link>
-            <Link href="/contact" className="text-gray-700 hover:text-purple-600">Contact</Link>
-            <Link href="/faq" className="text-gray-700 hover:text-purple-600">FAQ</Link>
-          </nav>
-          <Link href="/cart" className="text-gray-700 hover:text-purple-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </Link>
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <Link href="/" className="flex items-center space-x-3">
+                {logo ? (
+                  <img src={logo} alt="ScentLumus" className="h-10" />
+                ) : (
+                  <div className="text-2xl font-bold text-amber-900">SCENTLUMUS</div>
+                )}
+              </Link>
+              <p className="text-xs text-gray-500 mt-1">destination for luxury fragrances</p>
+            </div>
+            <nav className="hidden md:flex space-x-6">
+              <Link href="/" className="text-gray-700 hover:text-amber-900">Home</Link>
+              <Link href="/about" className="text-amber-700 font-semibold">About</Link>
+              <Link href="/contact" className="text-gray-700 hover:text-amber-900">Contact</Link>
+              <Link href="/faq" className="text-gray-700 hover:text-amber-900">FAQ</Link>
+            </nav>
+            <Link href="/cart" className="relative text-gray-700 hover:text-amber-900">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-20">
+        <section className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-20">
           <div className="max-w-6xl mx-auto px-4 text-center">
             <h1 className="text-5xl font-bold mb-4">About ScentLumus</h1>
-            <p className="text-xl text-purple-100">Illuminating Your World with Exquisite Fragrances</p>
+            <p className="text-xl text-amber-100">Illuminating Your World with Exquisite Fragrances</p>
           </div>
         </section>
 
@@ -65,7 +78,7 @@ export default function About() {
                 Every bottle we offer is authentic, and every customer experience is crafted with care. From selection to delivery, we ensure your journey with ScentLumus is as memorable as the fragrances you choose.
               </p>
             </div>
-            <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg h-96 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-lg h-96 flex items-center justify-center">
               <svg className="w-32 h-32 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
               </svg>
@@ -79,8 +92,8 @@ export default function About() {
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">Our Values</h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center p-6">
-                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -91,8 +104,8 @@ export default function About() {
               </div>
 
               <div className="text-center p-6">
-                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </div>
@@ -103,8 +116,8 @@ export default function About() {
               </div>
 
               <div className="text-center p-6">
-                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
@@ -122,7 +135,7 @@ export default function About() {
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">Why Choose ScentLumus?</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="flex items-start space-x-4">
-              <div className="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
+              <div className="bg-amber-700 text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 mt-1">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
@@ -172,17 +185,17 @@ export default function About() {
         </section>
 
         {/* Call to Action */}
-        <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-16">
+        <section className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-16">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Find Your Signature Scent?</h2>
-            <p className="text-xl text-purple-100 mb-8">
+            <p className="text-xl text-amber-100 mb-8">
               Explore our curated collection of luxury fragrances
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/" className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+              <Link href="/" className="bg-white text-amber-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
                 Shop Now
               </Link>
-              <Link href="/contact" className="bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-800 transition">
+              <Link href="/contact" className="bg-amber-800 text-white px-8 py-3 rounded-lg font-semibold hover:bg-amber-900 transition">
                 Contact Us
               </Link>
             </div>
@@ -231,7 +244,7 @@ export default function About() {
                   className="flex-1 px-4 py-2 rounded-l-lg text-gray-800"
                   required
                 />
-                <button type="submit" className="bg-purple-600 px-6 py-2 rounded-r-lg hover:bg-purple-700">
+                <button type="submit" className="bg-amber-700 px-6 py-2 rounded-r-lg hover:bg-amber-800">
                   Subscribe
                 </button>
               </form>

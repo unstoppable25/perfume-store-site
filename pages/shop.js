@@ -80,17 +80,20 @@ export default function Shop() {
         <header className="border-b bg-white sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Link href="/" className="text-xl font-bold text-purple-600">
-                SCENTLUMUS
-              </Link>
+              <div>
+                <Link href="/" className="text-xl font-bold text-amber-900">
+                  SCENTLUMUS
+                </Link>
+                <p className="text-xs text-gray-500">destination for luxury fragrances</p>
+              </div>
               
               <div className="flex items-center space-x-4">
                 <Link href="/cart" className="relative">
-                  <svg className="w-6 h-6 text-gray-700 hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-gray-700 hover:text-amber-900 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                   {getCartCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {getCartCount()}
                     </span>
                   )}

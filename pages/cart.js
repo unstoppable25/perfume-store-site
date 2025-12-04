@@ -5,7 +5,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart()
+  const { cart, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart } = useCart()
   const router = useRouter()
 
   // No authentication check - anyone can view cart
@@ -19,6 +19,12 @@ export default function Cart() {
     router.push('/checkout')
   }
 
+  const handleClearCart = () => {
+    if (confirm('Are you sure you want to clear your entire cart?')) {
+      clearCart()
+    }
+  }
+
   return (
     <>
       <Head>
@@ -29,9 +35,12 @@ export default function Cart() {
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
-              <Link href="/" className="text-2xl font-bold text-amber-900">
-                ScentLumus
-              </Link>
+              <div>
+                <Link href="/" className="text-2xl font-bold text-amber-900">
+                  SCENTLUMUS
+                </Link>
+                <p className="text-xs text-gray-500">destination for luxury fragrances</p>
+              </div>
               <Link href="/" className="text-gray-600 hover:text-amber-900">
                 ← Continue Shopping
               </Link>
@@ -40,7 +49,17 @@ export default function Cart() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+            {cart.length > 0 && (
+              <button
+                onClick={handleClearCart}
+                className="text-sm text-red-600 hover:text-red-800 font-medium"
+              >
+                Clear Cart
+              </button>
+            )}
+          </div>
 
           {cart.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-12 text-center">
