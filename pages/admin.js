@@ -5,7 +5,7 @@ import Head from 'next/head'
 export default function Admin() {
   const [products, setProducts] = useState([])
   const [logo, setLogo] = useState(null)
-  const [form, setForm] = useState({ name: '', price: '', description: '', image: '' })
+  const [form, setForm] = useState({ name: '', price: '', description: '', image: '', categories: [] })
   const [isEditing, setIsEditing] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
@@ -18,6 +18,17 @@ export default function Admin() {
   const [newPassword, setNewPassword] = useState('')
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
+  const [categories, setCategories] = useState([
+    'Floral',
+    'Woody',
+    'Oriental',
+    'Fresh',
+    'Chanel',
+    'Dior',
+    'Gucci',
+    'Tom Ford'
+  ])
+  const [newCategory, setNewCategory] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -173,13 +184,19 @@ export default function Admin() {
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
         }
       } finally {
-        setForm({ name: '', price: '', description: '', image: '' })
+        setForm({ name: '', price: '', description: '', image: '', categories: [] })
       }
     })()
   }
 
   const handleEdit = (product) => {
-    setForm({ name: product.name, price: product.price, description: product.description, image: product.image })
+    setForm({ 
+      name: product.name, 
+      price: product.price, 
+      description: product.description, 
+      image: product.image,
+      categories: product.categories || []
+    })
     setIsEditing(product.id)
   }
 
@@ -589,6 +606,63 @@ export default function Admin() {
                 onChange={(e) => setForm({ ...form, image: e.target.value })}
                 className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-600"
               />
+
+              {/* Categories Section */}
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Categories</h3>
+                <p className="text-sm text-gray-600 mb-3">Select one or more categories for this product</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                  {categories.map((category) => (
+                    <label
+                      key={category}
+                      className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.categories.includes(category)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setForm({ ...form, categories: [...form.categories, category] })
+                          } else {
+                            setForm({ ...form, categories: form.categories.filter(c => c !== category) })
+                          }
+                        }}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span className="text-sm">{category}</span>
+                    </label>
+                  ))}
+                </div>
+                
+                {/* Add New Category */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add new category (e.g., Versace, Citrus)"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+                        setCategories([...categories, newCategory.trim()])
+                        setNewCategory('')
+                      }
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+                  >
+                    Add Category
+                  </button>
+                </div>
+                {form.categories.length > 0 && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-4">
                 <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
                   <input
