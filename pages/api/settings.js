@@ -13,7 +13,13 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     try {
       const { key, value } = req.body
-      console.log('POST /api/settings - Saving:', { key, value: value?.substring(0, 50) + '...' })
+      // Handle different value types for logging
+      const logValue = typeof value === 'string' 
+        ? value.substring(0, 50) + '...' 
+        : Array.isArray(value) 
+          ? `Array(${value.length})` 
+          : JSON.stringify(value)
+      console.log('POST /api/settings - Saving:', { key, value: logValue })
       const updatedSettings = await updateSettings(key, value)
       console.log('POST /api/settings - Settings saved successfully')
       res.status(200).json({ success: true, settings: updatedSettings })
