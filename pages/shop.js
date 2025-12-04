@@ -137,9 +137,18 @@ export default function Shop() {
                   <Link href="/contact" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                     Contact us
                   </Link>
-                  {user && (
-                    <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-amber-900 transition">
-                      My Orders
+                  {user ? (
+                    <>
+                      <Link href="/profile" className="block text-lg text-gray-700 hover:text-amber-900 transition">
+                        My Profile
+                      </Link>
+                      <Link href="/my-orders" className="block text-lg text-gray-700 hover:text-amber-900 transition">
+                        My Orders
+                      </Link>
+                    </>
+                  ) : (
+                    <Link href="/signin" className="block text-lg text-gray-700 hover:text-amber-900 transition">
+                      Login
                     </Link>
                   )}
                 </nav>
