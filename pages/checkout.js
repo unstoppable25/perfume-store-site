@@ -71,8 +71,9 @@ export default function Checkout() {
     try {
       // Use Paystack for payment
       if (formData.paymentMethod === 'paystack') {
-        if (!paystackLoaded) {
-          alert('Payment system is loading. Please try again in a moment.')
+        // Check if Paystack is available
+        if (!window.PaystackPop) {
+          alert('Payment system is not available. Please refresh the page and try again.')
           setLoading(false)
           return
         }
@@ -182,7 +183,15 @@ export default function Checkout() {
       </Head>
       <Script 
         src="https://js.paystack.co/v1/inline.js" 
-        onLoad={() => setPaystackLoaded(true)}
+        onLoad={() => {
+          console.log('Paystack script loaded')
+          setPaystackLoaded(true)
+        }}
+        onError={(e) => {
+          console.error('Paystack script failed to load:', e)
+          setPaystackLoaded(false)
+        }}
+        strategy="lazyOnload"
       />
       <div className="min-h-screen bg-gray-50">
         {/* Header */}

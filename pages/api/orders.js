@@ -4,7 +4,17 @@ import { sendOrderStatusUpdateEmail } from '../../lib/email'
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      const orders = await getAllOrders()
+      const { email } = req.query
+      
+      // Get all orders
+      const allOrders = await getAllOrders()
+      
+      // If email is provided, filter orders for that user
+      let orders = allOrders
+      if (email) {
+        orders = allOrders.filter(order => order.customerEmail === email)
+      }
+      
       return res.status(200).json({ success: true, orders })
     } catch (err) {
       console.error('Get orders error:', err)
