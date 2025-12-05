@@ -1,16 +1,34 @@
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function OrderConfirmation() {
   const router = useRouter()
-  const { orderId } = router.query
+  const { orderId, reference } = router.query
+  const [orderDetails, setOrderDetails] = useState(null)
 
   useEffect(() => {
-    if (!orderId) {
+    if (!orderId && !reference) {
       router.push('/')
     }
-  }, [orderId, router])
+    
+    // If we have a payment reference, fetch order details
+    if (reference) {
+      fetchOrderByReference(reference)
+    }
+  }, [orderId, reference, router])
+
+  const fetchOrderByReference = async (ref) => {
+    try {
+      const res = await fetch(`/api/orders?reference=${ref}`)
+      const data = await res.json()
+      if (data.success && data.order) {
+        setOrderDetails(data.order)
+      }
+    } catch (err) {
+      console.error('Error fetching order:', err)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -34,16 +52,28 @@ export default function OrderConfirmation() {
           </p>
 
           {/* Order Details */}
-          {orderId && (
+          {(orderId || reference) && (
             <div className="bg-gray-50 rounded-lg p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-2">Order Details</h2>
               <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                <span className="text-gray-600">Order ID:</span>
-                <span className="font-mono text-gray-800">{orderId}</span>
+                <span className="text-gray-600">Order Reference:</span>
+                <span className="font-mono text-gray-800">{reference || orderId}</span>
               </div>
+              {orderDetails && (
+                <>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                    <span className="text-gray-600">Amount Paid:</span>
+                    <span className="font-semibold text-gray-800">₦{parseFloat(orderDetails.total || 0).toLocaleString('en-NG')}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="text-gray-800 capitalize">{orderDetails.paymentMethod || 'Paystack'}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between items-center py-3 border-b border-gray-200">
                 <span className="text-gray-600">Status:</span>
-                <span className="text-yellow-600 font-semibold">Pending</span>
+                <span className="text-green-600 font-semibold">Paid</span>
               </div>
               <div className="flex justify-between items-center py-3">
                 <span className="text-gray-600">Date:</span>

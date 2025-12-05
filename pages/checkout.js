@@ -3,11 +3,13 @@ import { useCart } from '../context/CartContext'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
+import Script from 'next/script'
 
 export default function Checkout() {
   const { cart, getCartTotal, clearCart } = useCart()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [paystackLoaded, setPaystackLoaded] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,7 +19,7 @@ export default function Checkout() {
     city: '',
     state: '',
     zipCode: '',
-    paymentMethod: 'stripe'
+    paymentMethod: 'paystack'
   })
 
   // Check authentication and pre-fill form
@@ -61,54 +63,131 @@ export default function Checkout() {
     setLoading(true)
 
     try {
-      const orderData = {
-        customer: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone
-        },
-        shipping: {
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode
-        },
-        items: cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        total: getCartTotal(),
-        paymentMethod: formData.paymentMethod
-      }
-
-      const res = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      })
-
-      const data = await res.json()
-
-      if (data.success) {
-        // Clear cart
-        clearCart()
-        
-        // Redirect to thank you page or payment page
-        if (data.paymentUrl) {
-          window.location.href = data.paymentUrl
-        } else {
-          router.push(`/order-confirmation?orderId=${data.orderId}`)
+      // Use Paystack for payment
+      if (formData.paymentMethod === 'paystack') {
+        if (!paystackLoaded) {
+          alert('Payment system is loading. Please try again in a moment.')
+          setLoading(false)
+          return
         }
+
+        const total = getCartTotal() + 2000 // Add shipping
+        const amount = total * 100 // Convert to kobo
+
+        const handler = window.PaystackPop.setup({
+          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_live_e025809d9568d6685a0f279c0903ca7d83c50685',
+          email: formData.email,
+          amount: amount,
+          currency: 'NGN',
+          ref: 'ORDER_' + Math.floor(Math.random() * 1000000000) + Date.now(),
+          metadata: {
+            custom_fields: [
+              {
+                display_name: 'Customer Name',
+                variable_name: 'customer_name',
+                value: `${formData.firstName} ${formData.lastName}`
+              },
+              {
+                display_name: 'Phone',
+                variable_name: 'phone',
+                value: formData.phone
+              }
+            ],
+            customer: {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              phone: formData.phone
+            },
+            shipping: {
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode
+            },
+            cart: cart.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            }))
+          },
+          callback: function(response) {
+            // Payment successful
+            verifyPayment(response.reference)
+          },
+          onClose: function() {
+            setLoading(false)
+            alert('Payment cancelled')
+          }
+        })
+
+        handler.openIframe()
       } else {
-        alert(data.message || 'Order failed. Please try again.')
+        // Other payment methods (bank transfer, cash on delivery)
+        const orderData = {
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone
+          },
+          shipping: {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode
+          },
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          total: getCartTotal() + 2000, // Add shipping
+          paymentMethod: formData.paymentMethod
+        }
+
+        const res = await fetch('/api/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        })
+
+        const data = await res.json()
+
+        if (data.success) {
+          clearCart()
+          router.push(`/order-confirmation?orderId=${data.orderId}`)
+        } else {
+          alert(data.message || 'Order failed. Please try again.')
+        }
       }
     } catch (err) {
       console.error('Checkout error:', err)
       alert('Something went wrong. Please try again.')
     } finally {
+      if (formData.paymentMethod !== 'paystack') {
+        setLoading(false)
+      }
+    }
+  }
+
+  const verifyPayment = async (reference) => {
+    try {
+      const res = await fetch(`/api/verify-payment?reference=${reference}`)
+      const data = await res.json()
+
+      if (data.success) {
+        clearCart()
+        router.push(`/order-confirmation?reference=${reference}`)
+      } else {
+        alert('Payment verification failed. Please contact support.')
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error('Verification error:', err)
+      alert('Payment verification failed. Please contact support.')
       setLoading(false)
     }
   }
@@ -136,6 +215,10 @@ export default function Checkout() {
       <Head>
         <title>Checkout — ScentLumus</title>
       </Head>
+      <Script 
+        src="https://js.paystack.co/v1/inline.js" 
+        onLoad={() => setPaystackLoaded(true)}
+      />
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm">
@@ -276,18 +359,18 @@ export default function Checkout() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Method</h2>
                 <div className="space-y-3">
-                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border-2 border-amber-600 rounded cursor-pointer bg-amber-50">
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="stripe"
-                      checked={formData.paymentMethod === 'stripe'}
+                      value="paystack"
+                      checked={formData.paymentMethod === 'paystack'}
                       onChange={handleChange}
                       className="mr-3"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">Credit/Debit Card</div>
-                      <div className="text-sm text-gray-500">Pay securely with Stripe</div>
+                      <div className="font-medium">Pay with Card</div>
+                      <div className="text-sm text-gray-500">Pay securely with Paystack (Recommended)</div>
                     </div>
                   </label>
                   <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50">
@@ -370,7 +453,7 @@ export default function Checkout() {
                   disabled={loading}
                   className="w-full bg-amber-700 text-white py-3 rounded-lg font-semibold hover:bg-amber-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : 'Place Order'}
+                  {loading ? 'Processing...' : formData.paymentMethod === 'paystack' ? 'Pay Now' : 'Place Order'}
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
