@@ -342,6 +342,11 @@ export default function SignUp() {
                   <p className="text-gray-600 text-sm">
                     We sent a 6-digit code to <span className="font-semibold">{formData.email}</span>
                   </p>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800">
+                      📧 <strong>Tip:</strong> If you don't see the email in your inbox, check your spam/junk folder and mark it as "Not Spam"
+                    </p>
+                  </div>
                 </div>
 
                 {error && (

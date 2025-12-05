@@ -165,6 +165,11 @@ export default function ForgotPassword() {
                   <p className="mt-2 text-sm text-gray-500">
                     Enter the 6-digit code sent to {email}
                   </p>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800">
+                      📧 <strong>Tip:</strong> Check your spam/junk folder if you don't see the email
+                    </p>
+                  </div>
                 </div>
 
                 <div>
