@@ -1810,10 +1810,18 @@ export default function Admin() {
                 <p className="text-gray-500">No orders yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {orders
-                    .filter(order => order && order.id) // Filter out orders without ID
-                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                    .map((order) => (
+                  {(() => {
+                    const validOrders = orders.filter(order => order && order.id)
+                    console.log('Total orders:', orders.length, 'Valid orders:', validOrders.length)
+                    console.log('Orders data:', orders)
+                    
+                    if (validOrders.length === 0) {
+                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>
+                    }
+                    
+                    return validOrders
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .map((order) => (
                     <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
                       <div className="flex justify-between items-start mb-3">
                         <div>
@@ -1885,7 +1893,8 @@ export default function Admin() {
                       </div>
                       <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
                     </div>
-                  ))}
+                  ))
+                  })()}
                 </div>
               )}
             </div>
