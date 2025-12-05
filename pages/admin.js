@@ -39,6 +39,13 @@ export default function Admin() {
     total: 0
   })
   const [orderItemForm, setOrderItemForm] = useState({ name: '', price: '', quantity: 1 })
+  const [deliverySettings, setDeliverySettings] = useState({
+    defaultFee: 2000,
+    freeDeliveryThreshold: 0,
+    zones: []
+  })
+  const [newZone, setNewZone] = useState({ name: '', fee: '', states: '' })
+  const [editingZone, setEditingZone] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -152,6 +159,13 @@ export default function Admin() {
           if (data.settings.categories && Array.isArray(data.settings.categories)) {
             setCategories(data.settings.categories)
           }
+          // Load delivery settings
+          const deliveryData = {
+            defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
+            freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
+            zones: data.settings.delivery_zones ? JSON.parse(data.settings.delivery_zones) : []
+          }
+          setDeliverySettings(deliveryData)
         }
       } catch (err) {
         console.error('Failed to load settings:', err)
@@ -724,6 +738,108 @@ export default function Admin() {
     })
   }
 
+  // Delivery Settings Functions
+  const handleUpdateDeliverySettings = async () => {
+    try {
+      // Save default fee
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'delivery_default_fee', value: deliverySettings.defaultFee.toString() })
+      })
+
+      // Save free delivery threshold
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'delivery_free_threshold', value: deliverySettings.freeDeliveryThreshold.toString() })
+      })
+
+      // Save zones
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(deliverySettings.zones) })
+      })
+
+      alert('Delivery settings saved successfully!')
+    } catch (err) {
+      console.error('Failed to save delivery settings', err)
+      alert('Failed to save delivery settings')
+    }
+  }
+
+  const handleAddZone = () => {
+    if (!newZone.name || !newZone.fee) {
+      alert('Please fill in zone name and delivery fee')
+      return
+    }
+
+    const zone = {
+      id: Date.now(),
+      name: newZone.name,
+      fee: parseInt(newZone.fee),
+      states: newZone.states.split(',').map(s => s.trim()).filter(s => s)
+    }
+
+    setDeliverySettings({
+      ...deliverySettings,
+      zones: [...deliverySettings.zones, zone]
+    })
+
+    setNewZone({ name: '', fee: '', states: '' })
+  }
+
+  const handleEditZone = (zone) => {
+    setEditingZone(zone.id)
+    setNewZone({
+      name: zone.name,
+      fee: zone.fee.toString(),
+      states: zone.states.join(', ')
+    })
+  }
+
+  const handleUpdateZone = () => {
+    if (!newZone.name || !newZone.fee) {
+      alert('Please fill in zone name and delivery fee')
+      return
+    }
+
+    const updatedZones = deliverySettings.zones.map(zone => {
+      if (zone.id === editingZone) {
+        return {
+          ...zone,
+          name: newZone.name,
+          fee: parseInt(newZone.fee),
+          states: newZone.states.split(',').map(s => s.trim()).filter(s => s)
+        }
+      }
+      return zone
+    })
+
+    setDeliverySettings({
+      ...deliverySettings,
+      zones: updatedZones
+    })
+
+    setEditingZone(null)
+    setNewZone({ name: '', fee: '', states: '' })
+  }
+
+  const handleDeleteZone = (zoneId) => {
+    if (confirm('Are you sure you want to delete this delivery zone?')) {
+      setDeliverySettings({
+        ...deliverySettings,
+        zones: deliverySettings.zones.filter(zone => zone.id !== zoneId)
+      })
+    }
+  }
+
+  const handleCancelZoneEdit = () => {
+    setEditingZone(null)
+    setNewZone({ name: '', fee: '', states: '' })
+  }
+
   // Get unique customers from orders (filter out orders without customer object)
   const customers = [...new Map(
     orders
@@ -795,6 +911,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Registered Users ({users.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('delivery')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'delivery' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Delivery Settings
               </button>
             </div>
           </div>
@@ -1676,6 +1798,177 @@ export default function Admin() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Delivery Settings Tab */}
+          {activeTab === 'delivery' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-6">Delivery Settings</h2>
+
+              {/* Default Delivery Fee */}
+              <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Default Delivery Fee</h3>
+                <div className="max-w-md">
+                  <label className="block text-sm font-medium mb-2">Default Fee (NGN)</label>
+                  <input
+                    type="number"
+                    value={deliverySettings.defaultFee}
+                    onChange={(e) => setDeliverySettings({ ...deliverySettings, defaultFee: parseInt(e.target.value) || 0 })}
+                    placeholder="2000"
+                    className="w-full px-3 py-2 border rounded-lg mb-4"
+                  />
+                  <p className="text-sm text-gray-600 mb-2">This is the standard delivery fee applied to all orders unless a zone-specific fee applies.</p>
+                </div>
+              </div>
+
+              {/* Free Delivery Threshold */}
+              <div className="mb-8 p-6 bg-green-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Free Delivery Promotion</h3>
+                <div className="max-w-md">
+                  <label className="block text-sm font-medium mb-2">Free Delivery on Orders Above (NGN)</label>
+                  <input
+                    type="number"
+                    value={deliverySettings.freeDeliveryThreshold}
+                    onChange={(e) => setDeliverySettings({ ...deliverySettings, freeDeliveryThreshold: parseInt(e.target.value) || 0 })}
+                    placeholder="0 for no promotion"
+                    className="w-full px-3 py-2 border rounded-lg mb-4"
+                  />
+                  <p className="text-sm text-gray-600">
+                    {deliverySettings.freeDeliveryThreshold > 0 
+                      ? `🎉 FREE DELIVERY on orders above ₦${deliverySettings.freeDeliveryThreshold.toLocaleString('en-NG')}`
+                      : 'Set to 0 to disable free delivery promotion'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Delivery Zones */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Delivery Zones</h3>
+                <p className="text-sm text-gray-600 mb-4">Set custom delivery fees for specific locations or states</p>
+
+                {/* Add/Edit Zone Form */}
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold mb-3">{editingZone ? 'Edit Zone' : 'Add New Zone'}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Zone Name</label>
+                      <input
+                        type="text"
+                        value={newZone.name}
+                        onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
+                        placeholder="e.g., Lagos Island"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Delivery Fee (NGN)</label>
+                      <input
+                        type="number"
+                        value={newZone.fee}
+                        onChange={(e) => setNewZone({ ...newZone, fee: e.target.value })}
+                        placeholder="3000"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">States/Cities (comma-separated)</label>
+                      <input
+                        type="text"
+                        value={newZone.states}
+                        onChange={(e) => setNewZone({ ...newZone, states: e.target.value })}
+                        placeholder="Lagos, Abuja"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    {editingZone ? (
+                      <>
+                        <button
+                          onClick={handleUpdateZone}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Update Zone
+                        </button>
+                        <button
+                          onClick={handleCancelZoneEdit}
+                          className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleAddZone}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        + Add Zone
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Zones List */}
+                <div className="space-y-3">
+                  {deliverySettings.zones.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No delivery zones added yet. Add zones to set custom fees for specific areas.</p>
+                  ) : (
+                    deliverySettings.zones.map(zone => (
+                      <div key={zone.id} className="p-4 border rounded-lg bg-white hover:shadow-md transition">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg">{zone.name}</h4>
+                            <p className="text-amber-700 font-bold">₦{zone.fee.toLocaleString('en-NG')} delivery</p>
+                            {zone.states && zone.states.length > 0 && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                Applies to: {zone.states.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditZone(zone)}
+                              className="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteZone(zone.id)}
+                              className="px-3 py-1 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end pt-6 border-t">
+                <button
+                  onClick={handleUpdateDeliverySettings}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
+                >
+                  💾 Save All Delivery Settings
+                </button>
+              </div>
+
+              {/* Info Box */}
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 mb-2">💡 How It Works:</h4>
+                <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+                  <li>Set a default delivery fee for all orders</li>
+                  <li>Run promotions with free delivery above a certain amount</li>
+                  <li>Create zones for specific locations with custom fees</li>
+                  <li>Zone fees override the default fee when the customer's state matches</li>
+                  <li>Free delivery promotion applies to all zones when threshold is met</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>

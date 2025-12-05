@@ -10,6 +10,8 @@ export default function Checkout() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [paystackLoaded, setPaystackLoaded] = useState(false)
+  const [deliveryFee, setDeliveryFee] = useState(2000)
+  const [deliveryMessage, setDeliveryMessage] = useState('Standard delivery')
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -46,11 +48,48 @@ export default function Checkout() {
   }, [router])
 
   const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
+
+    // Recalculate delivery fee when state or city changes
+    if (name === 'state' || name === 'city') {
+      const newFormData = { ...formData, [name]: value }
+      fetchDeliveryFee(newFormData.state, newFormData.city)
+    }
   }
+
+  // Fetch delivery fee based on location and cart total
+  const fetchDeliveryFee = async (state, city) => {
+    try {
+      const res = await fetch('/api/delivery-fee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          state, 
+          city, 
+          cartTotal: getCartTotal() 
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setDeliveryFee(data.fee)
+        setDeliveryMessage(data.message || 'Delivery fee')
+      }
+    } catch (err) {
+      console.error('Failed to fetch delivery fee', err)
+      // Keep default fee on error
+    }
+  }
+
+  // Update delivery fee when cart total changes
+  useEffect(() => {
+    if (formData.state || formData.city) {
+      fetchDeliveryFee(formData.state, formData.city)
+    }
+  }, [getCartTotal()])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -78,7 +117,7 @@ export default function Checkout() {
           return
         }
 
-        const total = getCartTotal() + 2000 // Add shipping
+        const total = getCartTotal() + deliveryFee // Add shipping
         const amount = total * 100 // Convert to kobo
 
         const handler = window.PaystackPop.setup({
@@ -412,12 +451,19 @@ export default function Checkout() {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
-                    <span>₦2,000</span>
+                    <span className="flex flex-col items-end">
+                      {deliveryFee === 0 ? (
+                        <span className="text-green-600 font-semibold">FREE</span>
+                      ) : (
+                        <span>₦{deliveryFee.toLocaleString('en-NG')}</span>
+                      )}
+                      <span className="text-xs text-gray-500">{deliveryMessage}</span>
+                    </span>
                   </div>
                   <div className="border-t pt-2">
                     <div className="flex justify-between text-lg font-bold text-gray-900">
                       <span>Total</span>
-                      <span>₦{(getCartTotal() + 2000).toLocaleString('en-NG')}</span>
+                      <span>₦{(getCartTotal() + deliveryFee).toLocaleString('en-NG')}</span>
                     </div>
                   </div>
                 </div>

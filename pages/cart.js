@@ -1,12 +1,29 @@
 import { useCart } from '../context/CartContext'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart } = useCart()
   const router = useRouter()
+  const [deliveryPromo, setDeliveryPromo] = useState(null)
+
+  // Fetch delivery settings to check for free delivery promo
+  useEffect(() => {
+    const fetchDeliverySettings = async () => {
+      try {
+        const res = await fetch('/api/delivery-settings')
+        const data = await res.json()
+        if (data.success && data.settings.freeThreshold > 0) {
+          setDeliveryPromo(data.settings.freeThreshold)
+        }
+      } catch (err) {
+        console.error('Failed to fetch delivery settings', err)
+      }
+    }
+    fetchDeliverySettings()
+  }, [])
 
   // No authentication check - anyone can view cart
   // Authentication will be checked at checkout
@@ -49,6 +66,25 @@ export default function Cart() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          {/* Free Delivery Promo Banner */}
+          {deliveryPromo && (
+            <div className="mb-6">
+              {getCartTotal() >= deliveryPromo ? (
+                <div className="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
+                  <p className="text-green-800 font-semibold text-lg">
+                    🎉 Congratulations! You qualify for FREE DELIVERY!
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                  <p className="text-blue-800">
+                    🚚 Add <strong>₦{(deliveryPromo - getCartTotal()).toLocaleString('en-NG')}</strong> more to get <strong>FREE DELIVERY!</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
             {cart.length > 0 && (
