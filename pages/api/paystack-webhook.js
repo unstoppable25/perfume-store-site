@@ -1,6 +1,7 @@
 // Paystack webhook handler
 import crypto from 'crypto'
 import { createOrder } from '../../lib/db'
+import { sendOrderConfirmationEmail } from '../../lib/email'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -30,20 +31,37 @@ export default async function handler(req, res) {
       // Create order in database
       const order = {
         id: reference,
-        customerEmail: customer.email,
-        customerName: metadata.customer_name || customer.email,
-        customerPhone: metadata.customer_phone || '',
-        customerAddress: metadata.customer_address || '',
-        items: metadata.cart_items || [],
+        customer: {
+          email: customer.email,
+          firstName: metadata.customer?.firstName || '',
+          lastName: metadata.customer?.lastName || '',
+          phone: metadata.customer?.phone || ''
+        },
+        shipping: {
+          address: metadata.shipping?.address || '',
+          city: metadata.shipping?.city || '',
+          state: metadata.shipping?.state || '',
+          zipCode: metadata.shipping?.zipCode || ''
+        },
+        items: metadata.cart || [],
         total: amount / 100, // Convert from kobo to naira
-        status: 'Pending',
+        status: 'Processing',
         paymentMethod: 'Paystack',
-        paymentStatus: 'Paid',
+        paymentReference: reference,
         createdAt: new Date().toISOString()
       }
 
       await createOrder(order)
       console.log('Order created successfully:', reference)
+
+      // Send order confirmation email
+      try {
+        await sendOrderConfirmationEmail(order)
+        console.log('Order confirmation email sent to:', customer.email)
+      } catch (emailErr) {
+        console.error('Failed to send order confirmation email:', emailErr)
+        // Don't fail the webhook if email fails
+      }
 
       return res.status(200).json({ message: 'Webhook processed successfully' })
     } catch (err) {

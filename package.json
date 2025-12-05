@@ -14,7 +14,8 @@
     "stripe": "^11.0.0",
     "cloudinary": "^1.41.0",
     "@vercel/kv": "^1.0.1",
-    "@heroicons/react": "^2.0.18"
+    "@heroicons/react": "^2.0.18",
+    "resend": "^3.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",

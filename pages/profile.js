@@ -273,7 +273,11 @@ export default function Profile() {
                   ) : (
                     <div className="space-y-4">
                       {orders.map((order) => (
-                        <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
+                        <Link
+                          key={order.id}
+                          href={`/order/${order.id}`}
+                          className="block border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-amber-300 transition cursor-pointer"
+                        >
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-lg font-semibold text-gray-900">
@@ -306,15 +310,13 @@ export default function Profile() {
                             ))}
                           </div>
 
-                          <div className="flex gap-3 pt-4 border-t">
-                            <Link
-                              href={`/my-orders`}
-                              className="flex-1 text-center bg-amber-700 text-white py-2 rounded-lg hover:bg-amber-800 transition text-sm font-medium"
-                            >
-                              View Details
-                            </Link>
+                          <div className="flex items-center justify-between pt-4 border-t text-amber-700 font-medium">
+                            <span>View Full Details</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   )}
