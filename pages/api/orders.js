@@ -12,7 +12,10 @@ export default async function handler(req, res) {
       // If email is provided, filter orders for that user
       let orders = allOrders
       if (email) {
-        orders = allOrders.filter(order => order.customerEmail === email)
+        // Check both customerEmail (flat) and customer.email (nested)
+        orders = allOrders.filter(order => {
+          return order.customerEmail === email || order.customer?.email === email
+        })
       }
       
       return res.status(200).json({ success: true, orders })
