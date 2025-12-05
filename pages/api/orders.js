@@ -1,5 +1,5 @@
-import { getAllOrders, updateOrderStatus, getOrderById } from '../../lib/db'
-import { sendOrderStatusUpdateEmail } from '../../lib/email'
+import { getAllOrders, updateOrderStatus, getOrderById, createOrder } from '../../lib/db'
+import { sendOrderStatusUpdateEmail, sendOrderConfirmationEmail } from '../../lib/email'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -19,6 +19,31 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('Get orders error:', err)
       return res.status(500).json({ success: false, message: 'Failed to fetch orders' })
+    }
+  }
+
+  if (req.method === 'POST') {
+    try {
+      const orderData = req.body
+
+      if (!orderData.customerEmail || !orderData.items || orderData.items.length === 0) {
+        return res.status(400).json({ success: false, message: 'Missing required order data' })
+      }
+
+      // Create order
+      const newOrder = await createOrder(orderData)
+
+      // Send confirmation email
+      try {
+        await sendOrderConfirmationEmail(newOrder)
+      } catch (emailErr) {
+        console.error('Failed to send order confirmation email:', emailErr)
+      }
+
+      return res.status(201).json({ success: true, order: newOrder, message: 'Order created successfully' })
+    } catch (err) {
+      console.error('Create order error:', err)
+      return res.status(500).json({ success: false, message: 'Failed to create order' })
     }
   }
 

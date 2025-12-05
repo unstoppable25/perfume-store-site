@@ -22,6 +22,23 @@ export default function Admin() {
   const [newCategory, setNewCategory] = useState('')
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCategoryName, setEditCategoryName] = useState('')
+  const [editingOrder, setEditingOrder] = useState(null)
+  const [showAddOrder, setShowAddOrder] = useState(false)
+  const [orderForm, setOrderForm] = useState({
+    customerEmail: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    status: 'Pending',
+    paymentMethod: 'Paystack',
+    items: [],
+    total: 0
+  })
+  const [orderItemForm, setOrderItemForm] = useState({ name: '', price: '', quantity: 1 })
   const router = useRouter()
 
   useEffect(() => {
@@ -508,6 +525,205 @@ export default function Admin() {
     }
   }
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        setOrders(orders.filter(o => o.id !== orderId))
+        alert('Order deleted successfully!')
+      } else {
+        alert('Failed to delete order: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to delete order', err)
+      alert('Failed to delete order')
+    }
+  }
+
+  const handleEditOrder = (order) => {
+    setEditingOrder(order)
+    setOrderForm({
+      customerEmail: order.customerEmail || order.customer?.email || '',
+      firstName: order.firstName || order.customer?.firstName || '',
+      lastName: order.lastName || order.customer?.lastName || '',
+      phone: order.phone || order.customer?.phone || '',
+      address: order.address || order.shipping?.address || '',
+      city: order.city || order.shipping?.city || '',
+      state: order.state || order.shipping?.state || '',
+      zipCode: order.zipCode || order.shipping?.zipCode || '',
+      status: order.status || 'Pending',
+      paymentMethod: order.paymentMethod || 'Paystack',
+      items: order.items || [],
+      total: order.total || 0
+    })
+  }
+
+  const handleUpdateOrder = async (e) => {
+    e.preventDefault()
+
+    if (orderForm.items.length === 0) {
+      alert('Please add at least one item to the order')
+      return
+    }
+
+    try {
+      const updates = {
+        customerEmail: orderForm.customerEmail,
+        customer: {
+          firstName: orderForm.firstName,
+          lastName: orderForm.lastName,
+          email: orderForm.customerEmail,
+          phone: orderForm.phone
+        },
+        shipping: {
+          address: orderForm.address,
+          city: orderForm.city,
+          state: orderForm.state,
+          zipCode: orderForm.zipCode
+        },
+        status: orderForm.status,
+        paymentMethod: orderForm.paymentMethod,
+        items: orderForm.items,
+        total: orderForm.total
+      }
+
+      const res = await fetch(`/api/orders/${editingOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        setOrders(orders.map(o => o.id === editingOrder.id ? data.order : o))
+        setEditingOrder(null)
+        resetOrderForm()
+        alert('Order updated successfully!')
+      } else {
+        alert('Failed to update order: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to update order', err)
+      alert('Failed to update order')
+    }
+  }
+
+  const handleCreateOrder = async (e) => {
+    e.preventDefault()
+
+    if (orderForm.items.length === 0) {
+      alert('Please add at least one item to the order')
+      return
+    }
+
+    try {
+      const orderData = {
+        id: 'ORD_' + Date.now(),
+        customerEmail: orderForm.customerEmail,
+        customer: {
+          firstName: orderForm.firstName,
+          lastName: orderForm.lastName,
+          email: orderForm.customerEmail,
+          phone: orderForm.phone
+        },
+        shipping: {
+          address: orderForm.address,
+          city: orderForm.city,
+          state: orderForm.state,
+          zipCode: orderForm.zipCode
+        },
+        status: orderForm.status,
+        paymentMethod: orderForm.paymentMethod,
+        items: orderForm.items,
+        total: orderForm.total,
+        createdAt: new Date().toISOString()
+      }
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        setOrders([data.order, ...orders])
+        setShowAddOrder(false)
+        resetOrderForm()
+        alert('Order created successfully!')
+      } else {
+        alert('Failed to create order: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to create order', err)
+      alert('Failed to create order')
+    }
+  }
+
+  const resetOrderForm = () => {
+    setOrderForm({
+      customerEmail: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      status: 'Pending',
+      paymentMethod: 'Paystack',
+      items: [],
+      total: 0
+    })
+    setOrderItemForm({ name: '', price: '', quantity: 1 })
+  }
+
+  const addOrderItem = () => {
+    if (!orderItemForm.name || !orderItemForm.price) {
+      alert('Please fill in item name and price')
+      return
+    }
+
+    const newItem = {
+      name: orderItemForm.name,
+      price: parseFloat(orderItemForm.price),
+      quantity: parseInt(orderItemForm.quantity)
+    }
+
+    const newItems = [...orderForm.items, newItem]
+    const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+    setOrderForm({
+      ...orderForm,
+      items: newItems,
+      total: newTotal
+    })
+
+    setOrderItemForm({ name: '', price: '', quantity: 1 })
+  }
+
+  const removeOrderItem = (index) => {
+    const newItems = orderForm.items.filter((_, i) => i !== index)
+    const newTotal = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+    setOrderForm({
+      ...orderForm,
+      items: newItems,
+      total: newTotal
+    })
+  }
+
   // Get unique customers from orders (filter out orders without customer object)
   const customers = [...new Map(
     orders
@@ -987,7 +1203,218 @@ export default function Admin() {
           {/* Orders Tab */}
           {activeTab === 'orders' && (
             <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-semibold mb-4">Orders ({orders.length})</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Orders ({orders.length})</h2>
+                <button
+                  onClick={() => {
+                    resetOrderForm()
+                    setShowAddOrder(true)
+                  }}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  + Add New Order
+                </button>
+              </div>
+
+              {/* Add/Edit Order Form */}
+              {(showAddOrder || editingOrder) && (
+                <div className="mb-6 bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                  <h3 className="text-xl font-semibold mb-4">
+                    {editingOrder ? 'Edit Order' : 'Create New Order'}
+                  </h3>
+                  <form onSubmit={editingOrder ? handleUpdateOrder : handleCreateOrder} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Customer Email *</label>
+                        <input
+                          type="email"
+                          value={orderForm.customerEmail}
+                          onChange={(e) => setOrderForm({...orderForm, customerEmail: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Phone *</label>
+                        <input
+                          type="tel"
+                          value={orderForm.phone}
+                          onChange={(e) => setOrderForm({...orderForm, phone: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">First Name *</label>
+                        <input
+                          type="text"
+                          value={orderForm.firstName}
+                          onChange={(e) => setOrderForm({...orderForm, firstName: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Last Name *</label>
+                        <input
+                          type="text"
+                          value={orderForm.lastName}
+                          onChange={(e) => setOrderForm({...orderForm, lastName: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium mb-1">Address *</label>
+                        <input
+                          type="text"
+                          value={orderForm.address}
+                          onChange={(e) => setOrderForm({...orderForm, address: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">City *</label>
+                        <input
+                          type="text"
+                          value={orderForm.city}
+                          onChange={(e) => setOrderForm({...orderForm, city: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">State *</label>
+                        <input
+                          type="text"
+                          value={orderForm.state}
+                          onChange={(e) => setOrderForm({...orderForm, state: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Zip Code</label>
+                        <input
+                          type="text"
+                          value={orderForm.zipCode}
+                          onChange={(e) => setOrderForm({...orderForm, zipCode: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Status</label>
+                        <select
+                          value={orderForm.status}
+                          onChange={(e) => setOrderForm({...orderForm, status: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Processing">Processing</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Payment Method</label>
+                        <select
+                          value={orderForm.paymentMethod}
+                          onChange={(e) => setOrderForm({...orderForm, paymentMethod: e.target.value})}
+                          className="w-full border px-3 py-2 rounded"
+                        >
+                          <option value="Paystack">Paystack</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                          <option value="Cash on Delivery">Cash on Delivery</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Items Section */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3">Order Items</h4>
+                      
+                      {/* Add Item Form */}
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        <input
+                          type="text"
+                          placeholder="Product name"
+                          value={orderItemForm.name}
+                          onChange={(e) => setOrderItemForm({...orderItemForm, name: e.target.value})}
+                          className="border px-3 py-2 rounded col-span-2"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Price"
+                          value={orderItemForm.price}
+                          onChange={(e) => setOrderItemForm({...orderItemForm, price: e.target.value})}
+                          className="border px-3 py-2 rounded"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          min="1"
+                          value={orderItemForm.quantity}
+                          onChange={(e) => setOrderItemForm({...orderItemForm, quantity: e.target.value})}
+                          className="border px-3 py-2 rounded"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addOrderItem}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm mb-3"
+                      >
+                        + Add Item
+                      </button>
+
+                      {/* Items List */}
+                      {orderForm.items.length > 0 && (
+                        <div className="space-y-2">
+                          {orderForm.items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center bg-white p-2 rounded border">
+                              <span>{item.name} x{item.quantity}</span>
+                              <span className="font-semibold">₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeOrderItem(idx)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center font-bold text-lg pt-2 border-t">
+                            <span>Total:</span>
+                            <span className="text-purple-600">₦{orderForm.total.toLocaleString('en-NG')}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+                      >
+                        {editingOrder ? 'Update Order' : 'Create Order'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingOrder(null)
+                          setShowAddOrder(false)
+                          resetOrderForm()
+                        }}
+                        className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
               {orders.length === 0 ? (
                 <p className="text-gray-500">No orders yet.</p>
               ) : (
@@ -996,7 +1423,7 @@ export default function Admin() {
                     <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-semibold text-lg">Order #{order.id}</h3>
+                          <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
                           <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
                           {order.updatedAt && order.updatedAt !== order.createdAt && (
                             <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
@@ -1020,11 +1447,20 @@ export default function Admin() {
                             <option value="Delivered">✅ Delivered</option>
                             <option value="Cancelled">❌ Cancelled</option>
                           </select>
-                          {['Processing', 'Shipped', 'Delivered'].includes(order.status) && (
-                            <span className="text-xs text-gray-500 italic">
-                              🔒 Status locked - Contact customer first
-                            </span>
-                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditOrder(order)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOrder(order.id)}
+                              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-3">
