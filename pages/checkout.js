@@ -188,6 +188,62 @@ export default function Checkout() {
     setLoading(true)
 
     try {
+      const finalTotal = getDiscountedTotal()
+      
+      // If total is ₦0, create order without payment
+      if (finalTotal === 0) {
+        const orderData = {
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone
+          },
+          shipping: deliveryMethod === 'pickup' ? {
+            address: 'Self Pickup',
+            city: 'Self Pickup',
+            state: 'Self Pickup',
+            zipCode: ''
+          } : {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode
+          },
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          total: 0,
+          deliveryFee,
+          promoCode: appliedPromo?.code || null,
+          promoDiscount: appliedPromo?.discountAmount || 0,
+          deliveryMethod,
+          status: 'Pending',
+          paymentMethod: 'Free Order (100% Discount)',
+          paymentReference: 'FREE_' + Date.now()
+        }
+
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        })
+
+        const data = await res.json()
+        if (data.success) {
+          clearCart()
+          alert('🎉 Order placed successfully! Total: ₦0 (100% discount applied)')
+          router.push('/profile')
+        } else {
+          alert('Failed to place order. Please try again.')
+        }
+        setLoading(false)
+        return
+      }
+      
       // Handle Cash on Delivery
       if (formData.paymentMethod === 'cash_on_delivery') {
         // Create order directly without payment
