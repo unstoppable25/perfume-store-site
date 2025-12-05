@@ -2083,7 +2083,17 @@ export default function Admin() {
                   <input
                     type="number"
                     value={deliverySettings.defaultFee}
-                    onChange={(e) => setDeliverySettings({ ...deliverySettings, defaultFee: parseInt(e.target.value) || 0 })}
+                    onChange={async (e) => {
+                      const newFee = parseInt(e.target.value) || 0
+                      setDeliverySettings({ ...deliverySettings, defaultFee: newFee })
+                      // Auto-save
+                      await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: 'delivery_default_fee', value: newFee.toString() })
+                      })
+                      console.log('Default fee saved:', newFee)
+                    }}
                     placeholder="2000"
                     className="w-full px-3 py-2 border rounded-lg mb-4"
                   />
@@ -2099,7 +2109,17 @@ export default function Admin() {
                   <input
                     type="number"
                     value={deliverySettings.freeDeliveryThreshold}
-                    onChange={(e) => setDeliverySettings({ ...deliverySettings, freeDeliveryThreshold: parseInt(e.target.value) || 0 })}
+                    onChange={async (e) => {
+                      const newThreshold = parseInt(e.target.value) || 0
+                      setDeliverySettings({ ...deliverySettings, freeDeliveryThreshold: newThreshold })
+                      // Auto-save
+                      await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: 'delivery_free_threshold', value: newThreshold.toString() })
+                      })
+                      console.log('Free delivery threshold saved:', newThreshold)
+                    }}
                     placeholder="0 for no promotion"
                     className="w-full px-3 py-2 border rounded-lg mb-4"
                   />
@@ -2120,7 +2140,17 @@ export default function Admin() {
                     <input
                       type="checkbox"
                       checked={deliverySettings.selfPickupEnabled}
-                      onChange={(e) => setDeliverySettings({ ...deliverySettings, selfPickupEnabled: e.target.checked })}
+                      onChange={async (e) => {
+                        const isEnabled = e.target.checked
+                        setDeliverySettings({ ...deliverySettings, selfPickupEnabled: isEnabled })
+                        // Auto-save
+                        await fetch('/api/settings', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ key: 'self_pickup_enabled', value: isEnabled.toString() })
+                        })
+                        console.log('Self pickup enabled saved:', isEnabled)
+                      }}
                       className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     />
                     <span className="text-sm font-medium">Enable Self-Pickup (Zero Delivery Fee)</span>
