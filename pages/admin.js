@@ -16,6 +16,13 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [resetPasswordUser, setResetPasswordUser] = useState(null)
   const [newPassword, setNewPassword] = useState('')
+  const [editingUser, setEditingUser] = useState(null)
+  const [userForm, setUserForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: ''
+  })
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
   const [categories, setCategories] = useState([])
@@ -368,6 +375,41 @@ export default function Admin() {
     } catch (err) {
       console.error('Failed to reset password', err)
       alert('Failed to reset password')
+    }
+  }
+
+  const handleEditUser = (user) => {
+    setEditingUser(user.id)
+    setUserForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || ''
+    })
+  }
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/users/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: editingUser, ...userForm })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        setUsers(prev => prev.map(u => u.id === editingUser ? { ...u, ...userForm } : u))
+        setEditingUser(null)
+        setUserForm({ firstName: '', lastName: '', email: '', phone: '' })
+        alert('User updated successfully')
+      } else {
+        alert('Failed to update user: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to update user', err)
+      alert('Failed to update user')
     }
   }
 
@@ -1124,21 +1166,30 @@ export default function Admin() {
         <title>Admin — ScentLumus</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <main className="min-h-screen bg-gray-100 p-6">
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <button 
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-800 font-semibold"
-            >
-              Logout
-            </button>
+          {/* Professional Header */}
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-b-lg shadow-lg mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-1">Admin Dashboard</h1>
+                <p className="text-purple-100 text-sm">ScentLumus Management Portal</p>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-purple-50 transition flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="bg-white rounded-lg shadow mb-6">
-            <div className="flex border-b">
+          <div className="bg-white rounded-lg shadow-md mb-6 overflow-x-auto">
+            <div className="flex border-b min-w-max">
               <button
                 onClick={() => { setActiveTab('products'); window.location.hash = 'products' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'products' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
@@ -1997,6 +2048,73 @@ export default function Admin() {
           {activeTab === 'users' && (
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-2xl font-semibold mb-4">Registered Users ({users.length})</h2>
+              
+              {/* Edit User Form */}
+              {editingUser && (
+                <div className="mb-6 bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                  <h3 className="text-xl font-semibold mb-4">Edit User</h3>
+                  <form onSubmit={handleUpdateUser} className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        value={userForm.firstName}
+                        onChange={(e) => setUserForm({...userForm, firstName: e.target.value})}
+                        className="w-full border px-3 py-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Last Name *</label>
+                      <input
+                        type="text"
+                        value={userForm.lastName}
+                        onChange={(e) => setUserForm({...userForm, lastName: e.target.value})}
+                        className="w-full border px-3 py-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Email *</label>
+                      <input
+                        type="email"
+                        value={userForm.email}
+                        onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                        className="w-full border px-3 py-2 rounded"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        value={userForm.phone}
+                        onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                        className="w-full border px-3 py-2 rounded"
+                      />
+                    </div>
+                    <div className="col-span-2 flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingUser(null)
+                          setUserForm({ firstName: '', lastName: '', email: '', phone: '' })
+                        }}
+                        className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                      >
+                        Update User
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+              
               {users.length === 0 ? (
                 <p className="text-gray-500">No registered users yet.</p>
               ) : (
@@ -2013,26 +2131,34 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((user, idx) => (
-                        <tr key={idx} className="border-b">
+                        <tr key={idx} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3">{user.firstName} {user.lastName}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{user.email}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{user.phone}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{user.phone || 'N/A'}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
-                            <button
-                              onClick={() => setResetPasswordUser(user)}
-                              className="text-blue-600 hover:text-blue-800 text-sm mr-3"
-                            >
-                              Reset Password
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-800 text-sm"
-                            >
-                              Delete
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditUser(user)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setResetPasswordUser(user)}
+                                className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                              >
+                                Reset Password
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
