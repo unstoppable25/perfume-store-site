@@ -42,10 +42,22 @@ export default function Admin() {
   const [deliverySettings, setDeliverySettings] = useState({
     defaultFee: 2000,
     freeDeliveryThreshold: 0,
+    selfPickupEnabled: false,
     zones: []
   })
   const [newZone, setNewZone] = useState({ name: '', fee: '', states: '' })
   const [editingZone, setEditingZone] = useState(null)
+  const [promoCodes, setPromoCodes] = useState([])
+  const [newPromo, setNewPromo] = useState({
+    code: '',
+    discountType: 'percentage',
+    discountValue: '',
+    minOrder: '',
+    maxUses: '',
+    expiryDate: '',
+    active: true
+  })
+  const [editingPromo, setEditingPromo] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -163,9 +175,14 @@ export default function Admin() {
           const deliveryData = {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
+            selfPickupEnabled: data.settings.self_pickup_enabled === 'true',
             zones: data.settings.delivery_zones ? JSON.parse(data.settings.delivery_zones) : []
           }
           setDeliverySettings(deliveryData)
+          // Load promo codes
+          if (data.settings.promo_codes) {
+            setPromoCodes(JSON.parse(data.settings.promo_codes))
+          }
         }
       } catch (err) {
         console.error('Failed to load settings:', err)
@@ -755,6 +772,13 @@ export default function Admin() {
         body: JSON.stringify({ key: 'delivery_free_threshold', value: deliverySettings.freeDeliveryThreshold.toString() })
       })
 
+      // Save self pickup enabled
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'self_pickup_enabled', value: deliverySettings.selfPickupEnabled.toString() })
+      })
+
       // Save zones
       await fetch('/api/settings', {
         method: 'POST',
@@ -840,6 +864,128 @@ export default function Admin() {
     setNewZone({ name: '', fee: '', states: '' })
   }
 
+  // Promo Code Functions
+  const handleSavePromoCodes = async () => {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'promo_codes', value: JSON.stringify(promoCodes) })
+      })
+      alert('Promo codes saved successfully!')
+    } catch (err) {
+      console.error('Failed to save promo codes', err)
+      alert('Failed to save promo codes')
+    }
+  }
+
+  const handleAddPromo = () => {
+    if (!newPromo.code || !newPromo.discountValue) {
+      alert('Please fill in promo code and discount value')
+      return
+    }
+
+    const promo = {
+      id: Date.now(),
+      code: newPromo.code.toUpperCase().trim(),
+      discountType: newPromo.discountType,
+      discountValue: parseFloat(newPromo.discountValue),
+      minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
+      maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
+      usedCount: 0,
+      expiryDate: newPromo.expiryDate || null,
+      active: newPromo.active,
+      createdAt: new Date().toISOString()
+    }
+
+    setPromoCodes([...promoCodes, promo])
+    setNewPromo({
+      code: '',
+      discountType: 'percentage',
+      discountValue: '',
+      minOrder: '',
+      maxUses: '',
+      expiryDate: '',
+      active: true
+    })
+  }
+
+  const handleEditPromo = (promo) => {
+    setEditingPromo(promo.id)
+    setNewPromo({
+      code: promo.code,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue.toString(),
+      minOrder: promo.minOrder ? promo.minOrder.toString() : '',
+      maxUses: promo.maxUses ? promo.maxUses.toString() : '',
+      expiryDate: promo.expiryDate || '',
+      active: promo.active
+    })
+  }
+
+  const handleUpdatePromo = () => {
+    if (!newPromo.code || !newPromo.discountValue) {
+      alert('Please fill in promo code and discount value')
+      return
+    }
+
+    const updatedPromos = promoCodes.map(promo => {
+      if (promo.id === editingPromo) {
+        return {
+          ...promo,
+          code: newPromo.code.toUpperCase().trim(),
+          discountType: newPromo.discountType,
+          discountValue: parseFloat(newPromo.discountValue),
+          minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
+          maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
+          expiryDate: newPromo.expiryDate || null,
+          active: newPromo.active
+        }
+      }
+      return promo
+    })
+
+    setPromoCodes(updatedPromos)
+    setEditingPromo(null)
+    setNewPromo({
+      code: '',
+      discountType: 'percentage',
+      discountValue: '',
+      minOrder: '',
+      maxUses: '',
+      expiryDate: '',
+      active: true
+    })
+  }
+
+  const handleDeletePromo = (promoId) => {
+    if (confirm('Are you sure you want to delete this promo code?')) {
+      setPromoCodes(promoCodes.filter(promo => promo.id !== promoId))
+    }
+  }
+
+  const handleTogglePromo = (promoId) => {
+    setPromoCodes(promoCodes.map(promo => {
+      if (promo.id === promoId) {
+        return { ...promo, active: !promo.active }
+      }
+      return promo
+    }))
+  }
+
+  const handleCancelPromoEdit = () => {
+    setEditingPromo(null)
+    setNewPromo({
+      code: '',
+      discountType: 'percentage',
+      discountValue: '',
+      minOrder: '',
+      maxUses: '',
+      expiryDate: '',
+      active: true
+    })
+  }
+
   // Get unique customers from orders (filter out orders without customer object)
   const customers = [...new Map(
     orders
@@ -917,6 +1063,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'delivery' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Delivery Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('promotions')}
+                className={`px-6 py-3 font-semibold ${activeTab === 'promotions' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Promo Codes ({promoCodes.length})
               </button>
             </div>
           </div>
@@ -1843,6 +1995,28 @@ export default function Admin() {
                 </div>
               </div>
 
+              {/* Self Pickup Option */}
+              <div className="mb-8 p-6 bg-blue-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Self Pickup Option</h3>
+                <div className="max-w-md">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={deliverySettings.selfPickupEnabled}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, selfPickupEnabled: e.target.checked })}
+                      className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium">Enable Self-Pickup (Zero Delivery Fee)</span>
+                  </label>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {deliverySettings.selfPickupEnabled 
+                      ? '✅ Customers can choose to pick up orders themselves for FREE'
+                      : 'Self-pickup option is disabled'
+                    }
+                  </p>
+                </div>
+              </div>
+
               {/* Delivery Zones */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold mb-4">Delivery Zones</h3>
@@ -1964,9 +2138,216 @@ export default function Admin() {
                 <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
                   <li>Set a default delivery fee for all orders</li>
                   <li>Run promotions with free delivery above a certain amount</li>
+                  <li>Enable self-pickup for customers to collect orders for free</li>
                   <li>Create zones for specific locations with custom fees</li>
                   <li>Zone fees override the default fee when the customer's state matches</li>
                   <li>Free delivery promotion applies to all zones when threshold is met</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Promotions Tab */}
+          {activeTab === 'promotions' && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-6">Promo Codes & Discounts</h2>
+
+              {/* Add/Edit Promo Form */}
+              <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">{editingPromo ? 'Edit Promo Code' : 'Create New Promo Code'}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Promo Code *</label>
+                    <input
+                      type="text"
+                      value={newPromo.code}
+                      onChange={(e) => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })}
+                      placeholder="SAVE20"
+                      className="w-full px-3 py-2 border rounded-lg uppercase"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Discount Type *</label>
+                    <select
+                      value={newPromo.discountType}
+                      onChange={(e) => setNewPromo({ ...newPromo, discountType: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    >
+                      <option value="percentage">Percentage (%)</option>
+                      <option value="fixed">Fixed Amount (₦)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Discount Value *</label>
+                    <input
+                      type="number"
+                      value={newPromo.discountValue}
+                      onChange={(e) => setNewPromo({ ...newPromo, discountValue: e.target.value })}
+                      placeholder={newPromo.discountType === 'percentage' ? '20' : '5000'}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {newPromo.discountType === 'percentage' ? 'Enter percentage (e.g., 20 for 20%)' : 'Enter amount in Naira'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Minimum Order (NGN)</label>
+                    <input
+                      type="number"
+                      value={newPromo.minOrder}
+                      onChange={(e) => setNewPromo({ ...newPromo, minOrder: e.target.value })}
+                      placeholder="0 for no minimum"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Max Uses</label>
+                    <input
+                      type="number"
+                      value={newPromo.maxUses}
+                      onChange={(e) => setNewPromo({ ...newPromo, maxUses: e.target.value })}
+                      placeholder="Unlimited"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Expiry Date</label>
+                    <input
+                      type="date"
+                      value={newPromo.expiryDate}
+                      onChange={(e) => setNewPromo({ ...newPromo, expiryDate: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newPromo.active}
+                      onChange={(e) => setNewPromo({ ...newPromo, active: e.target.checked })}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium">Active</span>
+                  </label>
+                  <div className="flex-1"></div>
+                  {editingPromo ? (
+                    <>
+                      <button
+                        onClick={handleUpdatePromo}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                      >
+                        Update Promo
+                      </button>
+                      <button
+                        onClick={handleCancelPromoEdit}
+                        className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={handleAddPromo}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                    >
+                      + Add Promo Code
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Promo Codes List */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Active & Inactive Promo Codes</h3>
+                {promoCodes.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No promo codes yet. Create your first promo code above!</p>
+                ) : (
+                  <div className="space-y-3">
+                    {promoCodes.map(promo => {
+                      const isExpired = promo.expiryDate && new Date(promo.expiryDate) < new Date()
+                      const isMaxedOut = promo.maxUses && promo.usedCount >= promo.maxUses
+                      
+                      return (
+                        <div key={promo.id} className={`p-4 border-2 rounded-lg ${
+                          !promo.active ? 'bg-gray-100 border-gray-300' :
+                          isExpired || isMaxedOut ? 'bg-red-50 border-red-300' :
+                          'bg-white border-green-300'
+                        }`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-2xl font-bold text-amber-700">{promo.code}</span>
+                                {!promo.active && <span className="px-2 py-1 bg-gray-500 text-white text-xs rounded">DISABLED</span>}
+                                {isExpired && <span className="px-2 py-1 bg-red-500 text-white text-xs rounded">EXPIRED</span>}
+                                {isMaxedOut && <span className="px-2 py-1 bg-red-500 text-white text-xs rounded">MAX USES REACHED</span>}
+                              </div>
+                              <p className="text-lg font-semibold text-green-700">
+                                {promo.discountType === 'percentage' 
+                                  ? `${promo.discountValue}% OFF` 
+                                  : `₦${promo.discountValue.toLocaleString('en-NG')} OFF`
+                                }
+                              </p>
+                              <div className="text-sm text-gray-600 mt-2 space-y-1">
+                                {promo.minOrder > 0 && <p>Min. order: ₦{promo.minOrder.toLocaleString('en-NG')}</p>}
+                                {promo.maxUses && <p>Uses: {promo.usedCount || 0} / {promo.maxUses}</p>}
+                                {promo.expiryDate && <p>Expires: {new Date(promo.expiryDate).toLocaleDateString()}</p>}
+                                <p className="text-xs text-gray-400">Created: {new Date(promo.createdAt).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <button
+                                onClick={() => handleTogglePromo(promo.id)}
+                                className={`px-3 py-1 rounded text-sm font-medium ${
+                                  promo.active 
+                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                                    : 'bg-green-200 text-green-800 hover:bg-green-300'
+                                }`}
+                              >
+                                {promo.active ? 'Disable' : 'Enable'}
+                              </button>
+                              <button
+                                onClick={() => handleEditPromo(promo)}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeletePromo(promo.id)}
+                                className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end pt-6 border-t">
+                <button
+                  onClick={handleSavePromoCodes}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
+                >
+                  💾 Save All Promo Codes
+                </button>
+              </div>
+
+              {/* Info Box */}
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">💡 How Promo Codes Work:</h4>
+                <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                  <li><strong>Percentage:</strong> Takes off a % of the cart total (e.g., 20% off)</li>
+                  <li><strong>Fixed Amount:</strong> Deducts a specific amount (e.g., ₦5,000 off)</li>
+                  <li><strong>Minimum Order:</strong> Code only works if cart meets minimum amount</li>
+                  <li><strong>Max Uses:</strong> Limit how many times a code can be used (leave empty for unlimited)</li>
+                  <li><strong>Expiry Date:</strong> Code becomes invalid after this date</li>
+                  <li><strong>Active/Disabled:</strong> Toggle codes on/off without deleting them</li>
+                  <li>Customers enter codes at checkout to get instant discounts!</li>
                 </ul>
               </div>
             </div>

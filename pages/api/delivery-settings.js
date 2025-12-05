@@ -8,6 +8,7 @@ export default async function handler(req, res) {
       const deliverySettings = {
         defaultFee: settings.delivery_default_fee ? parseInt(settings.delivery_default_fee) : 2000,
         freeThreshold: settings.delivery_free_threshold ? parseInt(settings.delivery_free_threshold) : 0,
+        selfPickupEnabled: settings.self_pickup_enabled === 'true',
         zones: settings.delivery_zones ? JSON.parse(settings.delivery_zones) : []
       }
 

@@ -32,13 +32,9 @@ export default function Profile() {
 
   const fetchOrders = async (email) => {
     try {
-      console.log('Profile - Fetching orders for email:', email)
       const res = await fetch(`/api/orders?email=${email}`)
-      console.log('Profile - API response status:', res.status)
       if (res.ok) {
         const data = await res.json()
-        console.log('Profile - Orders received:', data.orders?.length || 0)
-        console.log('Profile - Orders data:', data.orders)
         setOrders(data.orders || [])
       }
     } catch (err) {

@@ -6,31 +6,16 @@ export default async function handler(req, res) {
     try {
       const { email } = req.query
       
-      console.log('Orders API - Fetching orders for email:', email)
-      
       // Get all orders
       const allOrders = await getAllOrders()
-      
-      console.log('Orders API - Total orders in database:', allOrders.length)
-      console.log('Orders API - Sample order structure:', allOrders[0] ? {
-        hasCustomerEmail: !!allOrders[0].customerEmail,
-        hasCustomerObject: !!allOrders[0].customer,
-        customerEmail: allOrders[0].customerEmail,
-        customerObjectEmail: allOrders[0].customer?.email
-      } : 'No orders')
       
       // If email is provided, filter orders for that user
       let orders = allOrders
       if (email) {
         // Check both customerEmail (flat) and customer.email (nested)
         orders = allOrders.filter(order => {
-          const matches = order.customerEmail === email || order.customer?.email === email
-          if (matches) {
-            console.log('Orders API - Found matching order:', order.id)
-          }
-          return matches
+          return order.customerEmail === email || order.customer?.email === email
         })
-        console.log('Orders API - Filtered orders count:', orders.length)
       }
       
       return res.status(200).json({ success: true, orders })
