@@ -57,7 +57,10 @@ export default function Checkout() {
       try {
         const res = await fetch('/api/delivery-settings')
         const data = await res.json()
+        console.log('Checkout - delivery settings response:', data)
         if (data.success && data.settings) {
+          console.log('Self pickup enabled:', data.settings.selfPickupEnabled)
+          console.log('Free threshold:', data.settings.freeThreshold)
           setSelfPickupEnabled(data.settings.selfPickupEnabled || false)
           // Set default delivery fee from settings
           if (deliveryMethod === 'delivery') {

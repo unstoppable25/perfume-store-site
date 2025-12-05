@@ -26,6 +26,9 @@ export default async function handler(req, res) {
         selfPickupEnabled: settings.self_pickup_enabled === 'true',
         zones: zones
       }
+      
+      console.log('Delivery settings API response:', deliverySettings)
+      console.log('Raw self_pickup_enabled value:', settings.self_pickup_enabled, 'Type:', typeof settings.self_pickup_enabled)
 
       return res.status(200).json({
         success: true,
