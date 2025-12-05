@@ -16,6 +16,7 @@ export default function Shop() {
 
   // Group products by categories
   const [categorizedProducts, setCategorizedProducts] = useState({})
+  const [categoryOrder, setCategoryOrder] = useState([])
 
   // Check if user is logged in (optional)
   useEffect(() => {
@@ -34,21 +35,34 @@ export default function Shop() {
   }
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/products')
-        const data = await res.json()
+        // Fetch products
+        const productsRes = await fetch('/api/products')
+        const productsData = await productsRes.json()
         
-        // Always use server data, even if empty
-        setProducts(data || [])
-        groupProductsByCategories(data || [])
+        // Fetch categories order
+        const settingsRes = await fetch('/api/settings')
+        const settingsData = await settingsRes.json()
+        const categories = settingsData?.settings?.categories || []
         
-        // Update localStorage backup with server data
-        if (data && data.length > 0) {
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(data))
+        // Sort products by their order field
+        const sortedProducts = (productsData || []).sort((a, b) => {
+          const orderA = a.order !== undefined ? a.order : 999999
+          const orderB = b.order !== undefined ? b.order : 999999
+          return orderA - orderB
+        })
+        
+        setProducts(sortedProducts)
+        setCategoryOrder(categories)
+        groupProductsByCategories(sortedProducts)
+        
+        // Update localStorage backup
+        if (sortedProducts.length > 0) {
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(sortedProducts))
         }
       } catch (err) {
-        console.error('Failed to load products', err)
+        console.error('Failed to load data', err)
         // Only use backup if server is unreachable
         const backup = localStorage.getItem('scentlumus_products_backup')
         if (backup) {
@@ -58,7 +72,7 @@ export default function Shop() {
         }
       }
     }
-    fetchProducts()
+    fetchData()
   }, [])
 
   const groupProductsByCategories = (productList) => {
@@ -275,7 +289,13 @@ export default function Shop() {
               </div>
             ) : (
               <div className="space-y-12">
-                {Object.keys(getFilteredCategories()).sort().map((category) => (
+                {(() => {
+                  const filtered = getFilteredCategories()
+                  // Use category order from admin, fallback to sorted keys for uncategorized
+                  const orderedCategories = categoryOrder.filter(cat => filtered[cat])
+                  const remainingCategories = Object.keys(filtered).filter(cat => !categoryOrder.includes(cat))
+                  return [...orderedCategories, ...remainingCategories.sort()]
+                })().map((category) => (
                   <div key={category} className="category-section">
                     {/* Category Header with Underline */}
                     <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-700 inline-block">
