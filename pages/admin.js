@@ -62,7 +62,7 @@ export default function Admin() {
 
   useEffect(() => {
     // Check authentication
-    const isAuth = sessionStorage.getItem('admin_gate_passed')
+    const isAuth = localStorage.getItem('admin_gate_passed')
     if (isAuth !== 'true') {
       // Redirect to security gate
       router.push('/secure8893')
@@ -172,16 +172,35 @@ export default function Admin() {
             setCategories(data.settings.categories)
           }
           // Load delivery settings
+          let parsedZones = []
+          try {
+            if (data.settings.delivery_zones) {
+              parsedZones = JSON.parse(data.settings.delivery_zones)
+            }
+          } catch (err) {
+            console.error('Failed to parse delivery zones:', err)
+            parsedZones = []
+          }
+          
           const deliveryData = {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
             selfPickupEnabled: data.settings.self_pickup_enabled === 'true',
-            zones: data.settings.delivery_zones ? JSON.parse(data.settings.delivery_zones) : []
+            zones: parsedZones
           }
+          console.log('Loaded delivery settings:', deliveryData)
           setDeliverySettings(deliveryData)
+          
           // Load promo codes
           if (data.settings.promo_codes) {
-            setPromoCodes(JSON.parse(data.settings.promo_codes))
+            try {
+              const loadedPromos = JSON.parse(data.settings.promo_codes)
+              console.log('Loaded promo codes:', loadedPromos)
+              setPromoCodes(loadedPromos)
+            } catch (err) {
+              console.error('Failed to parse promo codes:', err)
+              setPromoCodes([])
+            }
           }
         }
       } catch (err) {
@@ -509,7 +528,7 @@ export default function Admin() {
   }
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_gate_passed')
+    localStorage.removeItem('admin_gate_passed')
     router.push('/')
   }
 
@@ -813,11 +832,17 @@ export default function Admin() {
     setDeliverySettings(updatedSettings)
 
     // Auto-save zones
-    await fetch('/api/settings', {
+    console.log('Saving zones:', updatedSettings.zones)
+    const zonesString = JSON.stringify(updatedSettings.zones)
+    console.log('Zones as JSON string:', zonesString)
+    
+    const response = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedSettings.zones) })
+      body: JSON.stringify({ key: 'delivery_zones', value: zonesString })
     })
+    const result = await response.json()
+    console.log('Save response:', result)
 
     setNewZone({ name: '', fee: '', states: '' })
     alert('Delivery zone added successfully!')
@@ -856,10 +881,13 @@ export default function Admin() {
     })
 
     // Auto-save zones
+    console.log('Updating zones:', updatedZones)
+    const zonesString = JSON.stringify(updatedZones)
+    
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedZones) })
+      body: JSON.stringify({ key: 'delivery_zones', value: zonesString })
     })
 
     setEditingZone(null)
@@ -876,10 +904,13 @@ export default function Admin() {
       })
 
       // Auto-save zones
+      console.log('Deleting zone, remaining zones:', updatedZones)
+      const zonesString = JSON.stringify(updatedZones)
+      
       await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedZones) })
+        body: JSON.stringify({ key: 'delivery_zones', value: zonesString })
       })
 
       alert('Delivery zone deleted successfully!')

@@ -10,7 +10,7 @@ export default function SecureGate() {
   const router = useRouter()
 
   useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('admin_gate_passed')
+    const isAuthenticated = localStorage.getItem('admin_gate_passed')
     if (isAuthenticated === 'true') {
       router.push('/admin')
       return
@@ -54,7 +54,7 @@ export default function SecureGate() {
 
       if (data.success) {
         localStorage.removeItem('admin_lockout')
-        sessionStorage.setItem('admin_gate_passed', 'true')
+        localStorage.setItem('admin_gate_passed', 'true')
         router.push('/admin')
       } else {
         const newAttempts = attempts + 1
