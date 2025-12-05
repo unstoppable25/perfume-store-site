@@ -10,8 +10,8 @@ export default function Checkout() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [paystackLoaded, setPaystackLoaded] = useState(false)
-  const [deliveryFee, setDeliveryFee] = useState(2000)
-  const [deliveryMessage, setDeliveryMessage] = useState('Standard delivery')
+  const [deliveryFee, setDeliveryFee] = useState(0)
+  const [deliveryMessage, setDeliveryMessage] = useState('Loading...')
   const [deliveryMethod, setDeliveryMethod] = useState('delivery') // 'delivery' or 'pickup'
   const [selfPickupEnabled, setSelfPickupEnabled] = useState(false)
   const [promoCode, setPromoCode] = useState('')
@@ -59,6 +59,11 @@ export default function Checkout() {
         const data = await res.json()
         if (data.success && data.settings) {
           setSelfPickupEnabled(data.settings.selfPickupEnabled || false)
+          // Set default delivery fee from settings
+          if (deliveryMethod === 'delivery') {
+            setDeliveryFee(data.settings.defaultFee || 2000)
+            setDeliveryMessage('Standard delivery')
+          }
         }
       } catch (err) {
         console.error('Failed to fetch delivery settings', err)
@@ -177,15 +182,64 @@ export default function Checkout() {
       return
     }
 
-    // Check if cash on delivery is selected
-    if (formData.paymentMethod === 'cash_on_delivery') {
-      alert('Cash on Delivery is currently unavailable. Please stay in touch for updates!')
-      return
-    }
-
     setLoading(true)
 
     try {
+      // Handle Cash on Delivery
+      if (formData.paymentMethod === 'cash_on_delivery') {
+        // Create order directly without payment
+        const orderData = {
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone
+          },
+          shipping: deliveryMethod === 'pickup' ? {
+            address: 'Self Pickup',
+            city: 'Self Pickup',
+            state: 'Self Pickup',
+            zipCode: ''
+          } : {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode
+          },
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          total: getDiscountedTotal(),
+          deliveryFee,
+          promoCode: appliedPromo?.code || null,
+          promoDiscount: appliedPromo?.discountAmount || 0,
+          deliveryMethod,
+          status: 'Pending',
+          paymentMethod: 'Cash on Delivery',
+          paymentReference: 'COD_' + Date.now()
+        }
+
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        })
+
+        const data = await res.json()
+        if (data.success) {
+          clearCart()
+          alert('Order placed successfully! We will contact you to confirm delivery.')
+          router.push('/profile')
+        } else {
+          alert('Failed to place order. Please try again.')
+        }
+        setLoading(false)
+        return
+      }
+
       // Use Paystack for payment
       if (formData.paymentMethod === 'paystack') {
         // Check if Paystack is available
@@ -547,46 +601,34 @@ export default function Checkout() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Method</h2>
                 <div className="space-y-3">
-                  <label className="flex items-center p-4 border-2 border-amber-600 rounded cursor-pointer bg-amber-50">
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                    style={{ borderColor: formData.paymentMethod === 'paystack' ? '#b45309' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="paystack"
                       checked={formData.paymentMethod === 'paystack'}
                       onChange={handleChange}
-                      className="mr-3"
+                      className="w-4 h-4 text-amber-600"
                     />
-                    <div className="flex-1">
-                      <div className="font-medium">Pay with Card</div>
-                      <div className="text-sm text-gray-500">Pay securely with Paystack (Recommended)</div>
+                    <div className="ml-3 flex-1">
+                      <div className="font-medium">💳 Pay with Card</div>
+                      <div className="text-sm text-gray-500">Pay securely with Paystack</div>
                     </div>
                   </label>
-                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50 opacity-60">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="bank_transfer"
-                      checked={formData.paymentMethod === 'bank_transfer'}
-                      onChange={handleChange}
-                      className="mr-3"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">Bank Transfer</div>
-                      <div className="text-sm text-gray-500">Currently unavailable - Stay in touch!</div>
-                    </div>
-                  </label>
-                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50 opacity-60">
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                    style={{ borderColor: formData.paymentMethod === 'cash_on_delivery' ? '#b45309' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="cash_on_delivery"
                       checked={formData.paymentMethod === 'cash_on_delivery'}
                       onChange={handleChange}
-                      className="mr-3"
+                      className="w-4 h-4 text-amber-600"
                     />
-                    <div className="flex-1">
-                      <div className="font-medium">Cash on Delivery</div>
-                      <div className="text-sm text-gray-500">Currently unavailable - Stay in touch!</div>
+                    <div className="ml-3 flex-1">
+                      <div className="font-medium">💵 Cash on Delivery</div>
+                      <div className="text-sm text-gray-500">Pay when you receive your order</div>
                     </div>
                   </label>
                 </div>
