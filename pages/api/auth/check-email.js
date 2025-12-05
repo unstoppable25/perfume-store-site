@@ -1,4 +1,4 @@
-import { getUserByEmail } from '../../../lib/db'
+import { getUserByEmailOrPhone } from '../../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const user = await getUserByEmail(email)
+    const user = await getUserByEmailOrPhone(email)
     
     return res.status(200).json({
       exists: !!user
