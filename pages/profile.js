@@ -272,7 +272,9 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {orders.map((order) => (
+                      {orders
+                        .filter(order => order && order.id) // Filter out orders without ID
+                        .map((order) => (
                         <Link
                           key={order.id}
                           href={`/order/${order.id}`}

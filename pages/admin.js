@@ -1810,7 +1810,10 @@ export default function Admin() {
                 <p className="text-gray-500">No orders yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((order) => (
+                  {orders
+                    .filter(order => order && order.id) // Filter out orders without ID
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                    .map((order) => (
                     <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
                       <div className="flex justify-between items-start mb-3">
                         <div>
