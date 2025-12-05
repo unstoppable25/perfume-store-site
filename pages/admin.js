@@ -793,7 +793,7 @@ export default function Admin() {
     }
   }
 
-  const handleAddZone = () => {
+  const handleAddZone = async () => {
     if (!newZone.name || !newZone.fee) {
       alert('Please fill in zone name and delivery fee')
       return
@@ -806,12 +806,21 @@ export default function Admin() {
       states: newZone.states.split(',').map(s => s.trim()).filter(s => s)
     }
 
-    setDeliverySettings({
+    const updatedSettings = {
       ...deliverySettings,
       zones: [...deliverySettings.zones, zone]
+    }
+    setDeliverySettings(updatedSettings)
+
+    // Auto-save zones
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedSettings.zones) })
     })
 
     setNewZone({ name: '', fee: '', states: '' })
+    alert('Delivery zone added successfully!')
   }
 
   const handleEditZone = (zone) => {
@@ -823,7 +832,7 @@ export default function Admin() {
     })
   }
 
-  const handleUpdateZone = () => {
+  const handleUpdateZone = async () => {
     if (!newZone.name || !newZone.fee) {
       alert('Please fill in zone name and delivery fee')
       return
@@ -846,16 +855,34 @@ export default function Admin() {
       zones: updatedZones
     })
 
+    // Auto-save zones
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedZones) })
+    })
+
     setEditingZone(null)
     setNewZone({ name: '', fee: '', states: '' })
+    alert('Delivery zone updated successfully!')
   }
 
-  const handleDeleteZone = (zoneId) => {
+  const handleDeleteZone = async (zoneId) => {
     if (confirm('Are you sure you want to delete this delivery zone?')) {
+      const updatedZones = deliverySettings.zones.filter(zone => zone.id !== zoneId)
       setDeliverySettings({
         ...deliverySettings,
-        zones: deliverySettings.zones.filter(zone => zone.id !== zoneId)
+        zones: updatedZones
       })
+
+      // Auto-save zones
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'delivery_zones', value: JSON.stringify(updatedZones) })
+      })
+
+      alert('Delivery zone deleted successfully!')
     }
   }
 
@@ -879,7 +906,7 @@ export default function Admin() {
     }
   }
 
-  const handleAddPromo = () => {
+  const handleAddPromo = async () => {
     if (!newPromo.code || !newPromo.discountValue) {
       alert('Please fill in promo code and discount value')
       return
@@ -898,7 +925,16 @@ export default function Admin() {
       createdAt: new Date().toISOString()
     }
 
-    setPromoCodes([...promoCodes, promo])
+    const updatedPromos = [...promoCodes, promo]
+    setPromoCodes(updatedPromos)
+
+    // Auto-save promo codes
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'promo_codes', value: JSON.stringify(updatedPromos) })
+    })
+
     setNewPromo({
       code: '',
       discountType: 'percentage',
@@ -908,6 +944,7 @@ export default function Admin() {
       expiryDate: '',
       active: true
     })
+    alert('Promo code added successfully!')
   }
 
   const handleEditPromo = (promo) => {
@@ -923,7 +960,7 @@ export default function Admin() {
     })
   }
 
-  const handleUpdatePromo = () => {
+  const handleUpdatePromo = async () => {
     if (!newPromo.code || !newPromo.discountValue) {
       alert('Please fill in promo code and discount value')
       return
@@ -946,6 +983,14 @@ export default function Admin() {
     })
 
     setPromoCodes(updatedPromos)
+
+    // Auto-save promo codes
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'promo_codes', value: JSON.stringify(updatedPromos) })
+    })
+
     setEditingPromo(null)
     setNewPromo({
       code: '',
@@ -956,21 +1001,40 @@ export default function Admin() {
       expiryDate: '',
       active: true
     })
+    alert('Promo code updated successfully!')
   }
 
-  const handleDeletePromo = (promoId) => {
+  const handleDeletePromo = async (promoId) => {
     if (confirm('Are you sure you want to delete this promo code?')) {
-      setPromoCodes(promoCodes.filter(promo => promo.id !== promoId))
+      const updatedPromos = promoCodes.filter(promo => promo.id !== promoId)
+      setPromoCodes(updatedPromos)
+
+      // Auto-save promo codes
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'promo_codes', value: JSON.stringify(updatedPromos) })
+      })
+
+      alert('Promo code deleted successfully!')
     }
   }
 
-  const handleTogglePromo = (promoId) => {
-    setPromoCodes(promoCodes.map(promo => {
+  const handleTogglePromo = async (promoId) => {
+    const updatedPromos = promoCodes.map(promo => {
       if (promo.id === promoId) {
         return { ...promo, active: !promo.active }
       }
       return promo
-    }))
+    })
+    setPromoCodes(updatedPromos)
+
+    // Auto-save promo codes
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'promo_codes', value: JSON.stringify(updatedPromos) })
+    })
   }
 
   const handleCancelPromoEdit = () => {
