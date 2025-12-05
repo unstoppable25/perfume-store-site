@@ -517,6 +517,90 @@ export default function Admin() {
     }
   }
 
+  const handleMoveCategoryUp = async (index) => {
+    if (index === 0) return
+    const newCategories = [...categories]
+    const temp = newCategories[index]
+    newCategories[index] = newCategories[index - 1]
+    newCategories[index - 1] = temp
+    
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: newCategories })
+      })
+      if (res.ok) {
+        setCategories(newCategories)
+      }
+    } catch (err) {
+      console.error('Failed to reorder category:', err)
+    }
+  }
+
+  const handleMoveCategoryDown = async (index) => {
+    if (index === categories.length - 1) return
+    const newCategories = [...categories]
+    const temp = newCategories[index]
+    newCategories[index] = newCategories[index + 1]
+    newCategories[index + 1] = temp
+    
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: newCategories })
+      })
+      if (res.ok) {
+        setCategories(newCategories)
+      }
+    } catch (err) {
+      console.error('Failed to reorder category:', err)
+    }
+  }
+
+  const handleMoveProductUp = async (index) => {
+    if (index === 0) return
+    const newProducts = [...products]
+    const temp = newProducts[index]
+    newProducts[index] = newProducts[index - 1]
+    newProducts[index - 1] = temp
+    
+    try {
+      // Update order field
+      newProducts.forEach((p, i) => { p.order = i })
+      await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: newProducts })
+      })
+      setProducts(newProducts)
+    } catch (err) {
+      console.error('Failed to reorder product:', err)
+    }
+  }
+
+  const handleMoveProductDown = async (index) => {
+    if (index === products.length - 1) return
+    const newProducts = [...products]
+    const temp = newProducts[index]
+    newProducts[index] = newProducts[index + 1]
+    newProducts[index + 1] = temp
+    
+    try {
+      // Update order field
+      newProducts.forEach((p, i) => { p.order = i })
+      await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: newProducts })
+      })
+      setProducts(newProducts)
+    } catch (err) {
+      console.error('Failed to reorder product:', err)
+    }
+  }
+
   const handleShopBgUpload = (e) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -1429,7 +1513,7 @@ export default function Admin() {
                   <div className="border-t pt-3">
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
-                      {categories.map((category) => (
+                      {categories.map((category, index) => (
                         <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                           {editingCategory === category ? (
                             <>
@@ -1460,6 +1544,30 @@ export default function Admin() {
                             </>
                           ) : (
                             <>
+                              <div className="flex flex-col gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveCategoryUp(index)}
+                                  disabled={index === 0}
+                                  className={`text-gray-600 hover:text-gray-900 ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                  title="Move up"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveCategoryDown(index)}
+                                  disabled={index === categories.length - 1}
+                                  className={`text-gray-600 hover:text-gray-900 ${index === categories.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                  title="Move down"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </button>
+                              </div>
                               <span className="flex-1 text-sm font-medium">{category}</span>
                               <button
                                 type="button"
@@ -1610,9 +1718,31 @@ export default function Admin() {
               <p className="text-gray-500">No products yet. Add one above!</p>
             ) : (
               <div className="space-y-4">
-                {products.map((product) => (
+                {products.map((product, index) => (
                   <div key={product.id} className="border p-4 rounded-lg bg-gray-50">
                     <div className="flex gap-4">
+                      <div className="flex flex-col gap-1 justify-center">
+                        <button
+                          onClick={() => handleMoveProductUp(index)}
+                          disabled={index === 0}
+                          className={`text-gray-600 hover:text-gray-900 p-1 ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          title="Move up"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleMoveProductDown(index)}
+                          disabled={index === products.length - 1}
+                          className={`text-gray-600 hover:text-gray-900 p-1 ${index === products.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          title="Move down"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
                       {product.image && <img src={product.image} alt={product.name} className="h-20 w-20 object-cover rounded" />}
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{product.name}</h3>
