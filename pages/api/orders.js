@@ -28,8 +28,12 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const orderData = req.body
+      
+      // Extract email from either customerEmail or customer.email
+      const email = orderData.customerEmail || orderData.customer?.email
 
-      if (!orderData.customerEmail || !orderData.items || orderData.items.length === 0) {
+      if (!email || !orderData.items || orderData.items.length === 0) {
+        console.error('Order validation failed:', { email, itemsCount: orderData.items?.length })
         return res.status(400).json({ success: false, message: 'Missing required order data' })
       }
 
