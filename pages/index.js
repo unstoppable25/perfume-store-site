@@ -111,7 +111,7 @@ export default function Home() {
         </header>
 
         {/* Hero Section - Full screen gradient */}
-        <div className="flex-1 bg-gradient-to-r from-amber-700 to-amber-900 text-white flex items-center justify-center px-4 min-h-[calc(100vh-16rem)]">
+        <div className="flex-1 bg-gradient-to-r from-amber-700 to-amber-900 text-white flex items-center justify-center px-4 py-12">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-light mb-12 text-gray-900">
               <span className="font-serif italic font-semibold">ScentLumus</span>
