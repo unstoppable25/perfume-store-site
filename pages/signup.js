@@ -42,40 +42,33 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      // First, create the account
-      const res = await fetch('/api/auth/signup', {
+      // First, check if email already exists
+      const checkRes = await fetch('/api/auth/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password
-        })
+        body: JSON.stringify({ email: formData.email })
       })
 
-      const data = await res.json()
+      const checkData = await checkRes.json()
 
-      if (res.ok) {
-        // Account created, now send verification email
-        const verifyRes = await fetch('/api/send-verification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email })
-        })
+      if (checkData.exists) {
+        setError('Email already registered. Please sign in.')
+        setLoading(false)
+        return
+      }
 
-        if (verifyRes.ok) {
-          setSuccess('Account created! Check your email for verification code.')
-          setStep(2) // Move to verification step
-        } else {
-          // Account created but email failed - still let them in
-          sessionStorage.setItem('user_authenticated', 'true')
-          sessionStorage.setItem('user_data', JSON.stringify(data.user))
-          router.push('/')
-        }
+      // Send verification email (don't create account yet)
+      const verifyRes = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      })
+
+      if (verifyRes.ok) {
+        setSuccess('Verification code sent! Check your email.')
+        setStep(2) // Move to verification step
       } else {
-        setError(data.message || 'Failed to create account')
+        setError('Failed to send verification code. Please try again.')
       }
     } catch (err) {
       setError('Failed to sign up. Please try again.')
@@ -91,7 +84,8 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/verify-code', {
+      // First verify the code
+      const verifyRes = await fetch('/api/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -100,16 +94,37 @@ export default function SignUp() {
         })
       })
 
-      const data = await res.json()
+      const verifyData = await verifyRes.json()
 
-      if (res.ok) {
-        // Email verified, log them in
+      if (!verifyRes.ok) {
+        setError(verifyData.message || 'Invalid verification code')
+        setLoading(false)
+        return
+      }
+
+      // Code is valid, NOW create the account
+      const signupRes = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password
+        })
+      })
+
+      const signupData = await signupRes.json()
+
+      if (signupRes.ok) {
+        // Account created successfully, log them in
         sessionStorage.setItem('user_authenticated', 'true')
-        sessionStorage.setItem('user_data', JSON.stringify(data.user))
-        setSuccess('Email verified! Redirecting...')
+        sessionStorage.setItem('user_data', JSON.stringify(signupData.user))
+        setSuccess('Email verified! Account created. Redirecting...')
         setTimeout(() => router.push('/'), 1500)
       } else {
-        setError(data.message || 'Invalid verification code')
+        setError(signupData.message || 'Failed to create account')
       }
     } catch (err) {
       setError('Verification failed. Please try again.')

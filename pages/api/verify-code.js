@@ -1,5 +1,4 @@
 import { verifyCode } from '../../lib/db'
-import { getUserByEmailOrPhone } from '../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,23 +16,10 @@ export default async function handler(req, res) {
     const result = await verifyCode(email, code, 'email_verification')
 
     if (result.success) {
-      // Mark user as verified (update user in database)
-      const user = await getUserByEmailOrPhone(email)
-      
-      if (user) {
-        // User exists, mark as verified
-        // Note: You may want to add a verified field to user records
-        return res.status(200).json({
-          success: true,
-          message: 'Email verified successfully',
-          user
-        })
-      } else {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        })
-      }
+      return res.status(200).json({
+        success: true,
+        message: 'Email verified successfully'
+      })
     } else {
       return res.status(400).json({
         success: false,
