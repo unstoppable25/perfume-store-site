@@ -115,7 +115,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-light mb-12 text-gray-900">
               <span className="font-serif italic font-semibold">ScentLumus</span>
-              <span className="block mt-2 text-lg sm:text-xl text-gray-700 tracking-wide">
+              <span className="block mt-2 text-lg sm:text-xl text-gray-900 tracking-wide font-medium">
                 destination for luxury fragrances
               </span>
             </h1>
@@ -157,7 +157,7 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12">
+        <footer className="bg-gray-900 text-white py-8 mt-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-3 gap-8 mb-8">
               <div>
