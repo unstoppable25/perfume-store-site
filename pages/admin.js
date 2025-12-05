@@ -178,13 +178,22 @@ export default function Admin() {
             setCategories(data.settings.categories)
           }
           // Load delivery settings
+          console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
+          console.log('Raw promo_codes from DB:', data.settings.promo_codes)
+          
           let parsedZones = []
           try {
             if (data.settings.delivery_zones) {
-              parsedZones = JSON.parse(data.settings.delivery_zones)
+              const zonesValue = data.settings.delivery_zones
+              // Check if it's already an array or needs parsing
+              if (Array.isArray(zonesValue)) {
+                parsedZones = zonesValue
+              } else if (typeof zonesValue === 'string' && zonesValue.trim()) {
+                parsedZones = JSON.parse(zonesValue)
+              }
             }
           } catch (err) {
-            console.error('Failed to parse delivery zones:', err)
+            console.error('Failed to parse delivery zones:', err, 'Value was:', data.settings.delivery_zones)
             parsedZones = []
           }
           
@@ -198,16 +207,23 @@ export default function Admin() {
           setDeliverySettings(deliveryData)
           
           // Load promo codes
-          if (data.settings.promo_codes) {
-            try {
-              const loadedPromos = JSON.parse(data.settings.promo_codes)
-              console.log('Loaded promo codes:', loadedPromos)
-              setPromoCodes(loadedPromos)
-            } catch (err) {
-              console.error('Failed to parse promo codes:', err)
-              setPromoCodes([])
+          let parsedPromos = []
+          try {
+            if (data.settings.promo_codes) {
+              const promosValue = data.settings.promo_codes
+              // Check if it's already an array or needs parsing
+              if (Array.isArray(promosValue)) {
+                parsedPromos = promosValue
+              } else if (typeof promosValue === 'string' && promosValue.trim()) {
+                parsedPromos = JSON.parse(promosValue)
+              }
             }
+          } catch (err) {
+            console.error('Failed to parse promo codes:', err, 'Value was:', data.settings.promo_codes)
+            parsedPromos = []
           }
+          console.log('Loaded promo codes:', parsedPromos)
+          setPromoCodes(parsedPromos)
         }
       } catch (err) {
         console.error('Failed to load settings:', err)
