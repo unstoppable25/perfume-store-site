@@ -1,4 +1,4 @@
-import { getProducts, getSettings, updateSettings } from '../../../lib/db'
+import { initKV, kv } from '../../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,14 +12,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Products must be an array' })
     }
 
-    // Get current settings to preserve other data
-    const settings = await getSettings()
+    // Initialize KV connection
+    await initKV()
 
-    // Update the settings with new product order
-    await updateSettings({
-      ...settings,
-      products: products
-    })
+    // Update the products with new order
+    if (kv) {
+      await kv.set('products', products)
+    }
 
     return res.status(200).json({ 
       success: true,
