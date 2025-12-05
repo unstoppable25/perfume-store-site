@@ -113,8 +113,11 @@ export default function Home() {
         {/* Hero Section - Full screen gradient */}
         <div className="flex-1 bg-gradient-to-r from-amber-700 to-amber-900 text-white flex items-center justify-center px-4 min-h-[calc(100vh-16rem)]">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-12">
-              ScentLumus: destination for luxury fragrances
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-light mb-12 text-gray-700">
+              <span className="font-serif italic">ScentLumus</span>
+              <span className="block mt-2 text-lg sm:text-xl text-gray-500 tracking-wide">
+                destination for luxury fragrances
+              </span>
             </h1>
             
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
