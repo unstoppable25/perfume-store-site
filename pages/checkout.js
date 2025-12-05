@@ -755,7 +755,7 @@ export default function Checkout() {
                   disabled={loading}
                   className="w-full bg-amber-700 text-white py-3 rounded-lg font-semibold hover:bg-amber-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : formData.paymentMethod === 'paystack' ? 'Pay Now' : 'Place Order'}
+                  {loading ? 'Processing...' : getDiscountedTotal() === 0 ? '🎉 Complete Free Order' : formData.paymentMethod === 'paystack' ? 'Pay Now' : 'Place Order'}
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
