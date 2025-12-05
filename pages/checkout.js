@@ -60,6 +60,12 @@ export default function Checkout() {
       return
     }
 
+    // Check if cash on delivery is selected
+    if (formData.paymentMethod === 'cash_on_delivery') {
+      alert('Cash on Delivery is currently unavailable. Please stay in touch for updates!')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -123,53 +129,12 @@ export default function Checkout() {
         })
 
         handler.openIframe()
-      } else {
-        // Other payment methods (bank transfer, cash on delivery)
-        const orderData = {
-          customer: {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone
-          },
-          shipping: {
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode
-          },
-          items: cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-          })),
-          total: getCartTotal() + 2000, // Add shipping
-          paymentMethod: formData.paymentMethod
-        }
-
-        const res = await fetch('/api/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
-        })
-
-        const data = await res.json()
-
-        if (data.success) {
-          clearCart()
-          router.push(`/order-confirmation?orderId=${data.orderId}`)
-        } else {
-          alert(data.message || 'Order failed. Please try again.')
-        }
       }
     } catch (err) {
       console.error('Checkout error:', err)
       alert('Something went wrong. Please try again.')
     } finally {
-      if (formData.paymentMethod !== 'paystack') {
-        setLoading(false)
-      }
+      setLoading(false)
     }
   }
 
@@ -373,7 +338,7 @@ export default function Checkout() {
                       <div className="text-sm text-gray-500">Pay securely with Paystack (Recommended)</div>
                     </div>
                   </label>
-                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50 opacity-60">
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -384,10 +349,10 @@ export default function Checkout() {
                     />
                     <div className="flex-1">
                       <div className="font-medium">Bank Transfer</div>
-                      <div className="text-sm text-gray-500">Transfer directly to our bank account</div>
+                      <div className="text-sm text-gray-500">Currently unavailable - Stay in touch!</div>
                     </div>
                   </label>
-                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border rounded cursor-pointer hover:bg-gray-50 opacity-60">
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -398,7 +363,7 @@ export default function Checkout() {
                     />
                     <div className="flex-1">
                       <div className="font-medium">Cash on Delivery</div>
-                      <div className="text-sm text-gray-500">Pay when you receive your order</div>
+                      <div className="text-sm text-gray-500">Currently unavailable - Stay in touch!</div>
                     </div>
                   </label>
                 </div>
