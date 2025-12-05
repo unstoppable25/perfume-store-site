@@ -7,10 +7,30 @@ export default async function handler(req, res) {
 
       // Get delivery settings from database
       const settings = await getSettings()
+      console.log('Delivery fee calc - raw settings:', {
+        default_fee: settings.delivery_default_fee,
+        free_threshold: settings.delivery_free_threshold,
+        zones: settings.delivery_zones
+      })
       
       const defaultFee = settings.delivery_default_fee ? parseInt(settings.delivery_default_fee) : 2000
       const freeThreshold = settings.delivery_free_threshold ? parseInt(settings.delivery_free_threshold) : 0
-      const zones = settings.delivery_zones ? JSON.parse(settings.delivery_zones) : []
+      
+      let zones = []
+      try {
+        if (settings.delivery_zones) {
+          if (Array.isArray(settings.delivery_zones)) {
+            zones = settings.delivery_zones
+          } else if (typeof settings.delivery_zones === 'string' && settings.delivery_zones.trim()) {
+            zones = JSON.parse(settings.delivery_zones)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse delivery zones in fee calc:', err)
+        zones = []
+      }
+      
+      console.log('Delivery fee calc - parsed:', { defaultFee, freeThreshold, zonesCount: zones.length })
 
       // Check if free delivery applies
       if (freeThreshold > 0 && cartTotal >= freeThreshold) {

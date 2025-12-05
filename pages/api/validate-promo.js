@@ -11,7 +11,27 @@ export default async function handler(req, res) {
 
       // Get promo codes from settings
       const settings = await getSettings()
-      const promoCodes = settings.promo_codes ? JSON.parse(settings.promo_codes) : []
+      console.log('Promo validation - raw promo_codes:', settings.promo_codes)
+      
+      let promoCodes = []
+      try {
+        if (settings.promo_codes) {
+          if (Array.isArray(settings.promo_codes)) {
+            promoCodes = settings.promo_codes
+          } else if (typeof settings.promo_codes === 'string' && settings.promo_codes.trim()) {
+            promoCodes = JSON.parse(settings.promo_codes)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse promo codes in validation:', err)
+        promoCodes = []
+      }
+      
+      console.log('Promo validation - parsed promo codes:', promoCodes)
+
+      if (promoCodes.length === 0) {
+        return res.status(404).json({ success: false, message: 'No promo codes available' })
+      }
 
       // Find the promo code (case-insensitive)
       const promo = promoCodes.find(p => p.code.toUpperCase() === code.toUpperCase())
