@@ -69,6 +69,12 @@ export default function Admin() {
       return
     }
     setAuthenticated(true)
+    
+    // Set active tab from URL hash
+    const hash = window.location.hash.slice(1)
+    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions'].includes(hash)) {
+      setActiveTab(hash)
+    }
   }, [router])
 
   useEffect(() => {
@@ -1118,49 +1124,49 @@ export default function Admin() {
           <div className="bg-white rounded-lg shadow mb-6">
             <div className="flex border-b">
               <button
-                onClick={() => setActiveTab('products')}
+                onClick={() => { setActiveTab('products'); window.location.hash = 'products' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'products' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Products ({products.length})
               </button>
               <button
-                onClick={() => setActiveTab('orders')}
+                onClick={() => { setActiveTab('orders'); window.location.hash = 'orders' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'orders' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Orders ({orders.length})
               </button>
               <button
-                onClick={() => setActiveTab('customers')}
+                onClick={() => { setActiveTab('customers'); window.location.hash = 'customers' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'customers' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Customers ({customers.length})
               </button>
               <button
-                onClick={() => setActiveTab('messages')}
+                onClick={() => { setActiveTab('messages'); window.location.hash = 'messages' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'messages' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Messages ({messages.length})
               </button>
               <button
-                onClick={() => setActiveTab('subscribers')}
+                onClick={() => { setActiveTab('subscribers'); window.location.hash = 'subscribers' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'subscribers' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Subscribers ({subscribers.length})
               </button>
               <button
-                onClick={() => setActiveTab('users')}
+                onClick={() => { setActiveTab('users'); window.location.hash = 'users' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'users' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Registered Users ({users.length})
               </button>
               <button
-                onClick={() => setActiveTab('delivery')}
+                onClick={() => { setActiveTab('delivery'); window.location.hash = 'delivery' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'delivery' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Delivery Settings
               </button>
               <button
-                onClick={() => setActiveTab('promotions')}
+                onClick={() => { setActiveTab('promotions'); window.location.hash = 'promotions' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'promotions' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Promo Codes ({promoCodes.length})
