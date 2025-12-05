@@ -200,7 +200,7 @@ export default function Admin() {
           const deliveryData = {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
-            selfPickupEnabled: data.settings.self_pickup_enabled === 'true',
+            selfPickupEnabled: data.settings.self_pickup_enabled === 'true' || data.settings.self_pickup_enabled === true,
             zones: parsedZones
           }
           console.log('Loaded delivery settings:', deliveryData)
