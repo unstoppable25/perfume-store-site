@@ -2144,12 +2144,20 @@ export default function Admin() {
                         const isEnabled = e.target.checked
                         setDeliverySettings({ ...deliverySettings, selfPickupEnabled: isEnabled })
                         // Auto-save
-                        await fetch('/api/settings', {
+                        const response = await fetch('/api/settings', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ key: 'self_pickup_enabled', value: isEnabled.toString() })
                         })
-                        console.log('Self pickup enabled saved:', isEnabled)
+                        const result = await response.json()
+                        console.log('Self pickup saved:', isEnabled, 'Response:', result)
+                        
+                        // Verify it was saved
+                        const verifyRes = await fetch('/api/settings')
+                        const verifyData = await verifyRes.json()
+                        console.log('Verification - self_pickup_enabled in DB:', verifyData.settings.self_pickup_enabled)
+                        
+                        alert(`Self-pickup ${isEnabled ? 'ENABLED' : 'DISABLED'} successfully!`)
                       }}
                       className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     />
@@ -2158,7 +2166,7 @@ export default function Admin() {
                   <p className="text-sm text-gray-600 mt-2">
                     {deliverySettings.selfPickupEnabled 
                       ? '✅ Customers can choose to pick up orders themselves for FREE'
-                      : 'Self-pickup option is disabled'
+                      : '❌ Self-pickup option is disabled'
                     }
                   </p>
                 </div>

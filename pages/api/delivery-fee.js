@@ -33,7 +33,9 @@ export default async function handler(req, res) {
       console.log('Delivery fee calc - parsed:', { defaultFee, freeThreshold, zonesCount: zones.length })
 
       // Check if free delivery applies
+      console.log('Checking free delivery: cartTotal =', cartTotal, 'freeThreshold =', freeThreshold)
       if (freeThreshold > 0 && cartTotal >= freeThreshold) {
+        console.log('FREE DELIVERY APPLIED!')
         return res.status(200).json({
           success: true,
           fee: 0,
