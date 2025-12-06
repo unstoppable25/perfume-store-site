@@ -93,6 +93,16 @@ export default function Shop() {
         grouped['Uncategorized'].push(product)
       }
     })
+    
+    // Sort products within each category by their order field
+    Object.keys(grouped).forEach(category => {
+      grouped[category].sort((a, b) => {
+        const orderA = a.order !== undefined ? a.order : 999999
+        const orderB = b.order !== undefined ? b.order : 999999
+        return orderA - orderB
+      })
+    })
+    
     setCategorizedProducts(grouped)
   }
 
