@@ -323,12 +323,13 @@ export default function Shop() {
                             >
                               {/* Product Card */}
                               <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-                                <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-video">
+                                <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-[4/3]">
                                   {product.image ? (
                                     <img
                                       src={product.image}
                                       alt={product.name}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                      className="w-full object-cover group-hover:scale-105 transition duration-300 rounded-lg"
+                                      style={{ aspectRatio: '4/3', height: 'auto' }}
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-400">
