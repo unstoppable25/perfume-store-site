@@ -323,7 +323,7 @@ export default function Shop() {
                             >
                               {/* Product Card */}
                               <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-                                <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-square">
+                                <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-video">
                                   {product.image ? (
                                     <img
                                       src={product.image}
@@ -338,27 +338,27 @@ export default function Shop() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="p-4">
-                                  <h3 className="text-lg font-semibold text-gray-800 mb-2 truncate">
+                                <div className="p-3">
+                                  <h3 className="text-base font-semibold text-gray-800 mb-1 truncate">
                                     {product.name}
                                   </h3>
-                                  <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10">
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-2 h-10">
                                     {product.description}
                                   </p>
                                   <div className="mb-2">
                                     {product.oldPrice && parseFloat(product.oldPrice) > 0 && (
-                                      <div className="text-sm text-gray-500 line-through mb-1">
+                                      <div className="text-xs text-gray-500 line-through mb-0.5">
                                         NGN {parseFloat(product.oldPrice).toLocaleString()}
                                       </div>
                                     )}
-                                    <div className="text-xl font-bold text-amber-900">
+                                    <div className="text-lg font-bold text-amber-900">
                                       NGN {parseFloat(product.price).toLocaleString()}
                                     </div>
                                   </div>
                                   <div className="flex items-center justify-between">
                                     <button
                                       onClick={() => handleAddToCart(product)}
-                                      className="bg-amber-700 text-white px-4 py-2 rounded-md hover:bg-amber-800 transition text-sm font-medium whitespace-nowrap w-full"
+                                      className="bg-amber-700 text-white px-3 py-1.5 rounded-md hover:bg-amber-800 transition text-sm font-medium whitespace-nowrap w-full"
                                     >
                                       Add to Cart
                                     </button>
