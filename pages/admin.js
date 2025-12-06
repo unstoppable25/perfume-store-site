@@ -563,29 +563,51 @@ export default function Admin() {
   const handleMoveProductUp = async (index) => {
     if (index === 0) return
     const filteredProducts = getFilteredProducts()
-    const newProducts = [...products]
     
-    // Find the actual product in the full list
-    const productToMove = filteredProducts[index]
-    const actualIndex = newProducts.findIndex(p => p.id === productToMove.id)
-    
-    if (actualIndex <= 0) return
-    
-    const temp = newProducts[actualIndex]
-    newProducts[actualIndex] = newProducts[actualIndex - 1]
-    newProducts[actualIndex - 1] = temp
-    
-    try {
-      // Update order field
-      newProducts.forEach((p, i) => { p.order = i })
-      await fetch('/api/products/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: newProducts })
+    // If filtering by category, reorder within that category only
+    if (categoryFilter !== 'all') {
+      const productToMove = filteredProducts[index]
+      const productAbove = filteredProducts[index - 1]
+      
+      // Swap the order values
+      const tempOrder = productToMove.order || index
+      productToMove.order = productAbove.order || (index - 1)
+      productAbove.order = tempOrder
+      
+      const newProducts = products.map(p => {
+        if (p.id === productToMove.id) return productToMove
+        if (p.id === productAbove.id) return productAbove
+        return p
       })
-      setProducts(newProducts)
-    } catch (err) {
-      console.error('Failed to reorder product:', err)
+      
+      try {
+        await fetch('/api/products/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ products: newProducts })
+        })
+        setProducts(newProducts)
+      } catch (err) {
+        console.error('Failed to reorder product:', err)
+      }
+    } else {
+      // Global reorder
+      const newProducts = [...products]
+      const temp = newProducts[index]
+      newProducts[index] = newProducts[index - 1]
+      newProducts[index - 1] = temp
+      
+      try {
+        newProducts.forEach((p, i) => { p.order = i })
+        await fetch('/api/products/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ products: newProducts })
+        })
+        setProducts(newProducts)
+      } catch (err) {
+        console.error('Failed to reorder product:', err)
+      }
     }
   }
 
@@ -593,29 +615,50 @@ export default function Admin() {
     const filteredProducts = getFilteredProducts()
     if (index === filteredProducts.length - 1) return
     
-    const newProducts = [...products]
-    
-    // Find the actual product in the full list
-    const productToMove = filteredProducts[index]
-    const actualIndex = newProducts.findIndex(p => p.id === productToMove.id)
-    
-    if (actualIndex >= newProducts.length - 1) return
-    
-    const temp = newProducts[actualIndex]
-    newProducts[actualIndex] = newProducts[actualIndex + 1]
-    newProducts[actualIndex + 1] = temp
-    
-    try {
-      // Update order field
-      newProducts.forEach((p, i) => { p.order = i })
-      await fetch('/api/products/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: newProducts })
+    // If filtering by category, reorder within that category only
+    if (categoryFilter !== 'all') {
+      const productToMove = filteredProducts[index]
+      const productBelow = filteredProducts[index + 1]
+      
+      // Swap the order values
+      const tempOrder = productToMove.order || index
+      productToMove.order = productBelow.order || (index + 1)
+      productBelow.order = tempOrder
+      
+      const newProducts = products.map(p => {
+        if (p.id === productToMove.id) return productToMove
+        if (p.id === productBelow.id) return productBelow
+        return p
       })
-      setProducts(newProducts)
-    } catch (err) {
-      console.error('Failed to reorder product:', err)
+      
+      try {
+        await fetch('/api/products/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ products: newProducts })
+        })
+        setProducts(newProducts)
+      } catch (err) {
+        console.error('Failed to reorder product:', err)
+      }
+    } else {
+      // Global reorder
+      const newProducts = [...products]
+      const temp = newProducts[index]
+      newProducts[index] = newProducts[index + 1]
+      newProducts[index + 1] = temp
+      
+      try {
+        newProducts.forEach((p, i) => { p.order = i })
+        await fetch('/api/products/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ products: newProducts })
+        })
+        setProducts(newProducts)
+      } catch (err) {
+        console.error('Failed to reorder product:', err)
+      }
     }
   }
 
