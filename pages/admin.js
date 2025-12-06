@@ -563,51 +563,42 @@ export default function Admin() {
   const handleMoveProductUp = async (index) => {
     if (index === 0) return
     const filteredProducts = getFilteredProducts()
+    const productToMove = filteredProducts[index]
+    const productAbove = filteredProducts[index - 1]
     
-    // If filtering by category, reorder within that category only
-    if (categoryFilter !== 'all') {
-      const productToMove = filteredProducts[index]
-      const productAbove = filteredProducts[index - 1]
-      
-      // Swap the order values
-      const tempOrder = productToMove.order || index
-      productToMove.order = productAbove.order || (index - 1)
-      productAbove.order = tempOrder
-      
-      const newProducts = products.map(p => {
-        if (p.id === productToMove.id) return productToMove
-        if (p.id === productAbove.id) return productAbove
-        return p
-      })
-      
-      try {
-        await fetch('/api/products/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ products: newProducts })
-        })
-        setProducts(newProducts)
-      } catch (err) {
-        console.error('Failed to reorder product:', err)
-      }
+    // Store category-specific order in the product
+    const currentCategory = categoryFilter === 'all' ? null : categoryFilter
+    
+    if (!productToMove.categoryOrder) productToMove.categoryOrder = {}
+    if (!productAbove.categoryOrder) productAbove.categoryOrder = {}
+    
+    if (currentCategory) {
+      // Swap positions within this specific category
+      const tempOrder = productToMove.categoryOrder[currentCategory] || index
+      productToMove.categoryOrder[currentCategory] = productAbove.categoryOrder[currentCategory] || (index - 1)
+      productAbove.categoryOrder[currentCategory] = tempOrder
     } else {
-      // Global reorder
-      const newProducts = [...products]
-      const temp = newProducts[index]
-      newProducts[index] = newProducts[index - 1]
-      newProducts[index - 1] = temp
-      
-      try {
-        newProducts.forEach((p, i) => { p.order = i })
-        await fetch('/api/products/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ products: newProducts })
-        })
-        setProducts(newProducts)
-      } catch (err) {
-        console.error('Failed to reorder product:', err)
-      }
+      // Global swap
+      const temp = productToMove.order || index
+      productToMove.order = productAbove.order || (index - 1)
+      productAbove.order = temp
+    }
+    
+    const newProducts = products.map(p => {
+      if (p.id === productToMove.id) return productToMove
+      if (p.id === productAbove.id) return productAbove
+      return p
+    })
+    
+    try {
+      await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: newProducts })
+      })
+      setProducts(newProducts)
+    } catch (err) {
+      console.error('Failed to reorder product:', err)
     }
   }
 
@@ -615,61 +606,73 @@ export default function Admin() {
     const filteredProducts = getFilteredProducts()
     if (index === filteredProducts.length - 1) return
     
-    // If filtering by category, reorder within that category only
-    if (categoryFilter !== 'all') {
-      const productToMove = filteredProducts[index]
-      const productBelow = filteredProducts[index + 1]
-      
-      // Swap the order values
-      const tempOrder = productToMove.order || index
-      productToMove.order = productBelow.order || (index + 1)
-      productBelow.order = tempOrder
-      
-      const newProducts = products.map(p => {
-        if (p.id === productToMove.id) return productToMove
-        if (p.id === productBelow.id) return productBelow
-        return p
-      })
-      
-      try {
-        await fetch('/api/products/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ products: newProducts })
-        })
-        setProducts(newProducts)
-      } catch (err) {
-        console.error('Failed to reorder product:', err)
-      }
+    const productToMove = filteredProducts[index]
+    const productBelow = filteredProducts[index + 1]
+    
+    // Store category-specific order in the product
+    const currentCategory = categoryFilter === 'all' ? null : categoryFilter
+    
+    if (!productToMove.categoryOrder) productToMove.categoryOrder = {}
+    if (!productBelow.categoryOrder) productBelow.categoryOrder = {}
+    
+    if (currentCategory) {
+      // Swap positions within this specific category
+      const tempOrder = productToMove.categoryOrder[currentCategory] || index
+      productToMove.categoryOrder[currentCategory] = productBelow.categoryOrder[currentCategory] || (index + 1)
+      productBelow.categoryOrder[currentCategory] = tempOrder
     } else {
-      // Global reorder
-      const newProducts = [...products]
-      const temp = newProducts[index]
-      newProducts[index] = newProducts[index + 1]
-      newProducts[index + 1] = temp
-      
-      try {
-        newProducts.forEach((p, i) => { p.order = i })
-        await fetch('/api/products/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ products: newProducts })
-        })
-        setProducts(newProducts)
-      } catch (err) {
-        console.error('Failed to reorder product:', err)
-      }
+      // Global swap
+      const temp = productToMove.order || index
+      productToMove.order = productBelow.order || (index + 1)
+      productBelow.order = temp
+    }
+    
+    const newProducts = products.map(p => {
+      if (p.id === productToMove.id) return productToMove
+      if (p.id === productBelow.id) return productBelow
+      return p
+    })
+    
+    try {
+      await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: newProducts })
+      })
+      setProducts(newProducts)
+    } catch (err) {
+      console.error('Failed to reorder product:', err)
     }
   }
 
   const getFilteredProducts = () => {
+    let filtered = []
+    
     if (categoryFilter === 'all') {
-      return products
+      filtered = products
+    } else if (categoryFilter === 'uncategorized') {
+      filtered = products.filter(p => !p.categories || p.categories.length === 0)
+    } else {
+      filtered = products.filter(p => p.categories && p.categories.includes(categoryFilter))
     }
-    if (categoryFilter === 'uncategorized') {
-      return products.filter(p => !p.categories || p.categories.length === 0)
+    
+    // Sort by category-specific order if filtering by category
+    if (categoryFilter !== 'all' && categoryFilter !== 'uncategorized') {
+      filtered.sort((a, b) => {
+        const orderA = a.categoryOrder?.[categoryFilter] !== undefined ? a.categoryOrder[categoryFilter] : 999999
+        const orderB = b.categoryOrder?.[categoryFilter] !== undefined ? b.categoryOrder[categoryFilter] : 999999
+        return orderA - orderB
+      })
+    } else {
+      // Sort by global order
+      filtered.sort((a, b) => {
+        const orderA = a.order !== undefined ? a.order : 999999
+        const orderB = b.order !== undefined ? b.order : 999999
+        return orderA - orderB
+      })
     }
-    return products.filter(p => p.categories && p.categories.includes(categoryFilter))
+    
+    return filtered
   }
 
   const handleShopBgUpload = (e) => {

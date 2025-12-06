@@ -94,11 +94,11 @@ export default function Shop() {
       }
     })
     
-    // Sort products within each category by their order field
+    // Sort products within each category by their category-specific order
     Object.keys(grouped).forEach(category => {
       grouped[category].sort((a, b) => {
-        const orderA = a.order !== undefined ? a.order : 999999
-        const orderB = b.order !== undefined ? b.order : 999999
+        const orderA = a.categoryOrder?.[category] !== undefined ? a.categoryOrder[category] : 999999
+        const orderB = b.categoryOrder?.[category] !== undefined ? b.categoryOrder[category] : 999999
         return orderA - orderB
       })
     })
