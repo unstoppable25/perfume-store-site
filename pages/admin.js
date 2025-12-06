@@ -65,6 +65,7 @@ export default function Admin() {
     active: true
   })
   const [editingPromo, setEditingPromo] = useState(null)
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const router = useRouter()
 
   useEffect(() => {
@@ -561,10 +562,18 @@ export default function Admin() {
 
   const handleMoveProductUp = async (index) => {
     if (index === 0) return
+    const filteredProducts = getFilteredProducts()
     const newProducts = [...products]
-    const temp = newProducts[index]
-    newProducts[index] = newProducts[index - 1]
-    newProducts[index - 1] = temp
+    
+    // Find the actual product in the full list
+    const productToMove = filteredProducts[index]
+    const actualIndex = newProducts.findIndex(p => p.id === productToMove.id)
+    
+    if (actualIndex <= 0) return
+    
+    const temp = newProducts[actualIndex]
+    newProducts[actualIndex] = newProducts[actualIndex - 1]
+    newProducts[actualIndex - 1] = temp
     
     try {
       // Update order field
@@ -581,11 +590,20 @@ export default function Admin() {
   }
 
   const handleMoveProductDown = async (index) => {
-    if (index === products.length - 1) return
+    const filteredProducts = getFilteredProducts()
+    if (index === filteredProducts.length - 1) return
+    
     const newProducts = [...products]
-    const temp = newProducts[index]
-    newProducts[index] = newProducts[index + 1]
-    newProducts[index + 1] = temp
+    
+    // Find the actual product in the full list
+    const productToMove = filteredProducts[index]
+    const actualIndex = newProducts.findIndex(p => p.id === productToMove.id)
+    
+    if (actualIndex >= newProducts.length - 1) return
+    
+    const temp = newProducts[actualIndex]
+    newProducts[actualIndex] = newProducts[actualIndex + 1]
+    newProducts[actualIndex + 1] = temp
     
     try {
       // Update order field
@@ -599,6 +617,16 @@ export default function Admin() {
     } catch (err) {
       console.error('Failed to reorder product:', err)
     }
+  }
+
+  const getFilteredProducts = () => {
+    if (categoryFilter === 'all') {
+      return products
+    }
+    if (categoryFilter === 'uncategorized') {
+      return products.filter(p => !p.categories || p.categories.length === 0)
+    }
+    return products.filter(p => p.categories && p.categories.includes(categoryFilter))
   }
 
   const handleShopBgUpload = (e) => {
@@ -1713,12 +1741,30 @@ export default function Admin() {
 
           {/* Product List */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-2xl font-semibold mb-4">Products ({products.length})</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Products ({products.length})</h2>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Filter by Category:</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">All Products</option>
+                  <option value="uncategorized">Uncategorized</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             {products.length === 0 ? (
               <p className="text-gray-500">No products yet. Add one above!</p>
+            ) : getFilteredProducts().length === 0 ? (
+              <p className="text-gray-500">No products in this category.</p>
             ) : (
               <div className="space-y-4">
-                {products.map((product, index) => (
+                {getFilteredProducts().map((product, index) => (
                   <div key={product.id} className="border p-4 rounded-lg bg-gray-50">
                     <div className="flex gap-4">
                       <div className="flex flex-col gap-1 justify-center">
@@ -1734,8 +1780,8 @@ export default function Admin() {
                         </button>
                         <button
                           onClick={() => handleMoveProductDown(index)}
-                          disabled={index === products.length - 1}
-                          className={`text-gray-600 hover:text-gray-900 p-1 ${index === products.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          disabled={index === getFilteredProducts().length - 1}
+                          className={`text-gray-600 hover:text-gray-900 p-1 ${index === getFilteredProducts().length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
                           title="Move down"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1745,7 +1791,22 @@ export default function Admin() {
                       </div>
                       {product.image && <img src={product.image} alt={product.name} className="h-20 w-20 object-cover rounded" />}
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{product.name}</h3>
+                        <div className="flex items-start gap-2 mb-1">
+                          <h3 className="font-semibold text-lg">{product.name}</h3>
+                          {product.categories && product.categories.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {product.categories.map(cat => (
+                                <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  {cat}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+                              Uncategorized
+                            </span>
+                          )}
+                        </div>
                         <p className="text-amber-700 font-bold">₦{parseFloat(product.price).toLocaleString('en-NG')}</p>
                         <p className="text-sm text-gray-600">{product.description}</p>
                       </div>
