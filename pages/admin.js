@@ -1869,6 +1869,20 @@ export default function Admin() {
                         >
                           Delete
                         </button>
+                        <button
+                          onClick={async () => {
+                            const updated = { ...product, active: product.active === false ? true : false }
+                            await fetch('/api/products', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(updated)
+                            })
+                            setProducts(products.map(p => p.id === product.id ? updated : p))
+                          }}
+                          className={product.active === false ? "bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500" : "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"}
+                        >
+                          {product.active === false ? 'Enable' : 'Disable'}
+                        </button>
                       </div>
                     </div>
                   </div>

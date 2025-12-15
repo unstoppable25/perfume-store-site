@@ -53,9 +53,11 @@ export default function Shop() {
           return orderA - orderB
         })
         
-        setProducts(sortedProducts)
+        // Only show active products
+        const filteredProducts = (sortedProducts || []).filter(p => p.active !== false)
+        setProducts(filteredProducts)
         setCategoryOrder(categories)
-        groupProductsByCategories(sortedProducts)
+        groupProductsByCategories(filteredProducts)
         
         // Update localStorage backup
         if (sortedProducts.length > 0) {
