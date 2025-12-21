@@ -92,7 +92,14 @@ export default function ProductDetails() {
         <div className="max-w-3xl mx-auto px-4 py-8">
           <Link href="/shop" className="text-amber-700 hover:underline">&larr; Back to Shop</Link>
           <div className="mt-6 flex flex-col md:flex-row gap-8">
-            <img src={product.image} alt={product.name} className="w-full md:w-80 h-80 object-cover rounded-lg border" />
+            <div className="flex items-center justify-center w-full md:w-96 bg-gray-100 rounded-lg border aspect-[4/3] max-h-[480px]">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="object-contain w-full h-full max-h-[480px] rounded-lg"
+                style={{ background: 'white' }}
+              />
+            </div>
             <div>
               <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
               <p className="text-lg text-gray-700 mb-4">{product.description}</p>
