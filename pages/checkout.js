@@ -769,6 +769,26 @@ export default function Checkout() {
                   {loading ? 'Processing...' : getDiscountedTotal() === 0 ? '🎉 Complete Free Order' : formData.paymentMethod === 'paystack' ? 'Pay Now' : 'Place Order'}
                 </button>
 
+                {/* Trust Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-4 mt-6 mb-2">
+                  <div className="flex flex-col items-center text-xs text-gray-600">
+                    <svg className="w-8 h-8 mb-1 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    <span>100% Secure</span>
+                  </div>
+                  <div className="flex flex-col items-center text-xs text-gray-600">
+                    <svg className="w-8 h-8 mb-1 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" /></svg>
+                    <span>Verified Payment</span>
+                  </div>
+                  <div className="flex flex-col items-center text-xs text-gray-600">
+                    <svg className="w-8 h-8 mb-1 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" /><circle cx="12" cy="12" r="10" /></svg>
+                    <span>Money-back Guarantee</span>
+                  </div>
+                  <div className="flex flex-col items-center text-xs text-gray-600">
+                    <svg className="w-8 h-8 mb-1 text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M2 7l10 6 10-6" /></svg>
+                    <span>SSL Encrypted</span>
+                  </div>
+                </div>
+
                 <p className="text-xs text-gray-500 text-center mt-4">
                   By placing your order, you agree to our terms and conditions
                 </p>
