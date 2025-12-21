@@ -14,17 +14,49 @@ export default function ProductDetails() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchProduct();
+  const [allProducts, setAllProducts] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
       fetchReviews();
     }
   }, [id]);
 
   const fetchProduct = async () => {
+      fetchAllProducts();
     try {
       const res = await fetch(`/api/products?id=${id}`);
       if (res.ok) {
+  useEffect(() => {
+    if (product && allProducts.length > 0) {
+      // Find related products by category (excluding current product)
+      let related = [];
+      if (product.categories && product.categories.length > 0) {
+        related = allProducts.filter(
+          p =>
+            p.id !== product.id &&
+            p.categories &&
+            p.categories.some(cat => product.categories.includes(cat))
+        );
+      } else {
+        // Fallback: recommend by price similarity if no category
+        related = allProducts.filter(p => p.id !== product.id);
+      }
+      // Shuffle and pick up to 4
+      related = related.sort(() => 0.5 - Math.random()).slice(0, 4);
+      setRelatedProducts(related);
+    }
+  }, [product, allProducts]);
         const data = await res.json();
+  const fetchAllProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        setAllProducts(data || []);
+      }
+    } catch (err) {
+      setAllProducts([]);
+    }
+  };
         setProduct(data.product || data);
       }
     } catch (err) {
