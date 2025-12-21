@@ -12,11 +12,14 @@ export default function ProductDetails() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
   const [allProducts, setAllProducts] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
       fetchReviews();
+      fetchAllProducts();
     }
   }, [id]);
 
@@ -46,20 +49,19 @@ export default function ProductDetails() {
     }
   }, [product, allProducts]);
         const data = await res.json();
-  const fetchAllProducts = async () => {
+  const fetchProduct = async () => {
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch(`/api/products?id=${id}`);
       if (res.ok) {
         const data = await res.json();
-        setAllProducts(data || []);
-      }
-    } catch (err) {
-      setAllProducts([]);
-    }
-  };
         setProduct(data.product || data);
       }
     } catch (err) {
+      console.error('Failed to fetch product:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
       console.error('Failed to fetch product:', err);
     } finally {
       setLoading(false);
