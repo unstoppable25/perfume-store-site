@@ -1,3 +1,20 @@
+/* Floating WhatsApp Button */
+.floating-whatsapp {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  background: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 50%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.floating-whatsapp:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
