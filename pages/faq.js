@@ -56,7 +56,7 @@ export default function FAQ() {
       questions: [
         {
           q: 'What is your return policy?',
-          a: 'We accept returns within 14 days of delivery for unopened, unused products in original packaging. Contact us to initiate a return.'
+          a: 'You may return unused and undamaged products within 10 days of delivery for a full refund or exchange. Items must be in their original packaging and condition.'
         },
         {
           q: 'Can I return an opened perfume?',
@@ -64,11 +64,11 @@ export default function FAQ() {
         },
         {
           q: 'How long do refunds take?',
-          a: 'Once we receive and inspect your return, refunds are processed within 5-7 business days. The refund will be issued to your original payment method.'
+          a: 'Return processing takes 1–2 weeks after we receive your item. Refunds are issued to your original payment method.'
         },
         {
           q: 'What if my product arrives damaged?',
-          a: 'If your product arrives damaged, please contact us immediately with photos. We will arrange for a replacement or full refund at no additional cost.'
+          a: 'If your product arrives damaged or defective, contact us within 48 hours for a replacement or refund. Please provide photos for faster processing.'
         }
       ]
     },
@@ -182,8 +182,21 @@ export default function FAQ() {
             ))}
           </div>
 
+          {/* Return Policy Highlight */}
+          <div className="mt-12 bg-amber-50 rounded-lg p-8 text-center border border-amber-200">
+            <h3 className="text-2xl font-bold text-amber-900 mb-4">Return Policy</h3>
+            <ul className="list-disc pl-6 text-gray-700 text-left max-w-xl mx-auto space-y-2">
+              <li>You may return unused and undamaged products within <b>10 days</b> of delivery for a full refund or exchange.</li>
+              <li>Returned items must be in their original packaging and condition.</li>
+              <li>If your item arrives damaged or defective, contact us within 48 hours for a replacement or refund.</li>
+              <li>Return processing takes <b>1–2 weeks</b> after we receive your item.</li>
+              <li>Shipping fees are non-refundable unless the return is due to our error or a defective product.</li>
+              <li>To start a return, email <a href="mailto:support@scentlumus.com" className="text-amber-700 underline">support@scentlumus.com</a> with your order number and reason for return.</li>
+            </ul>
+          </div>
+
           {/* Still Have Questions */}
-          <div className="mt-12 bg-purple-100 rounded-lg p-8 text-center">
+          <div className="mt-8 bg-purple-100 rounded-lg p-8 text-center">
             <h3 className="text-2xl font-bold text-gray-800 mb-4">Still have questions?</h3>
             <p className="text-gray-600 mb-6">
               Can't find the answer you're looking for? Please reach out to our customer support team.
