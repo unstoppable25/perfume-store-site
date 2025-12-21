@@ -1,4 +1,4 @@
-fetch('/api/fix-orders', { method: 'POST' }).then(r => r.json()).then(console.log)fetch('/api/fix-orders', { method: 'POST' }).then(r => r.json()).then(console.log)import { getSettings } from '../../lib/db'
+import { getSettings } from '../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
