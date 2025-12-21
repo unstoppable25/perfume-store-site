@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
 import Head from 'next/head'
-import Link from 'next/link'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
 export default function Shop() {
@@ -319,54 +319,52 @@ export default function Shop() {
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
                         <div className="flex gap-6" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div 
-                              key={product.id} 
-                              className="flex-none w-64 group"
-                            >
-                              {/* Product Card */}
-                              <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-                                <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-[4/3]">
-                                  {product.image ? (
-                                    <img
-                                      src={product.image}
-                                      alt={product.name}
-                                      className="w-full object-cover group-hover:scale-105 transition duration-300 rounded-lg"
-                                      style={{ aspectRatio: '4/3', height: 'auto' }}
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                      <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                      </svg>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="p-3">
-                                  <h3 className="text-base font-semibold text-gray-800 mb-1 truncate">
-                                    {product.name}
-                                  </h3>
-                                  <p className="text-sm text-gray-600 mb-2 line-clamp-2 h-10">
-                                    {product.description}
-                                  </p>
-                                  <div className="mb-2">
-                                    {product.oldPrice && parseFloat(product.oldPrice) > 0 && (
-                                      <div className="text-xs text-gray-500 line-through mb-0.5">
-                                        NGN {parseFloat(product.oldPrice).toLocaleString()}
+                            <div key={product.id} className="flex-none w-64 group">
+                              <Link href={`/product/${product.id}`} className="block">
+                                <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                                  <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-[4/3]">
+                                    {product.image ? (
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-full object-cover group-hover:scale-105 transition duration-300 rounded-lg"
+                                        style={{ aspectRatio: '4/3', height: 'auto' }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
                                       </div>
                                     )}
-                                    <div className="text-lg font-bold text-amber-900">
-                                      NGN {parseFloat(product.price).toLocaleString()}
+                                  </div>
+                                  <div className="p-3">
+                                    <h3 className="text-base font-semibold text-gray-800 mb-1 truncate">
+                                      {product.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-2 line-clamp-2 h-10">
+                                      {product.description}
+                                    </p>
+                                    <div className="mb-2">
+                                      {product.oldPrice && parseFloat(product.oldPrice) > 0 && (
+                                        <div className="text-xs text-gray-500 line-through mb-0.5">
+                                          NGN {parseFloat(product.oldPrice).toLocaleString()}
+                                        </div>
+                                      )}
+                                      <div className="text-lg font-bold text-amber-900">
+                                        NGN {parseFloat(product.price).toLocaleString()}
+                                      </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center justify-between">
-                                    <button
-                                      onClick={() => handleAddToCart(product)}
-                                      className="bg-amber-700 text-white px-3 py-1.5 rounded-md hover:bg-amber-800 transition text-sm font-medium whitespace-nowrap w-full"
-                                    >
-                                      Add to Cart
-                                    </button>
-                                  </div>
                                 </div>
+                              </Link>
+                              <div className="flex items-center justify-between mt-2">
+                                <button
+                                  onClick={() => handleAddToCart(product)}
+                                  className="bg-amber-700 text-white px-3 py-1.5 rounded-md hover:bg-amber-800 transition text-sm font-medium whitespace-nowrap w-full"
+                                >
+                                  Add to Cart
+                                </button>
                               </div>
                             </div>
                           ))}
