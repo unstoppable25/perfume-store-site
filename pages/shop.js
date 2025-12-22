@@ -6,6 +6,52 @@ import Head from 'next/head'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 
 export default function Shop() {
+  // Wishlist state
+  const [wishlist, setWishlist] = useState([]);
+  // Helper to get userId (from user object or session)
+  const getUserId = () => {
+    if (user && user.id) return user.id;
+    if (user && user.email) return user.email;
+    return null;
+  };
+
+  // Load wishlist from API or localStorage
+  useEffect(() => {
+    const userId = getUserId();
+    if (userId) {
+      fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
+        .then(res => res.json())
+        .then(data => setWishlist(Array.isArray(data.wishlist) ? data.wishlist : []));
+    } else {
+      const stored = localStorage.getItem('scentlumus_wishlist');
+      if (stored) setWishlist(JSON.parse(stored));
+    }
+    // eslint-disable-next-line
+  }, [user]);
+
+  // Save wishlist to API or localStorage
+  useEffect(() => {
+    const userId = getUserId();
+    if (userId) {
+      fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, wishlist }),
+      });
+    } else {
+      localStorage.setItem('scentlumus_wishlist', JSON.stringify(wishlist));
+    }
+    // eslint-disable-next-line
+  }, [wishlist, user]);
+
+  // Toggle wishlist
+  const toggleWishlist = (productId) => {
+    setWishlist((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
   const router = useRouter()
   const [products, setProducts] = useState([])
   const [user, setUser] = useState(null)
@@ -319,7 +365,24 @@ export default function Shop() {
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
                         <div className="flex gap-6" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div key={product.id} className="flex-none w-64 group">
+                            <div key={product.id} className="flex-none w-64 group relative">
+                              {/* Favorite button */}
+                              <button
+                                aria-label={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                                onClick={() => toggleWishlist(product.id)}
+                                className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-amber-100"
+                                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill={wishlist.includes(product.id) ? 'currentColor' : 'none'}
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  className={wishlist.includes(product.id) ? 'w-6 h-6 text-amber-600' : 'w-6 h-6 text-gray-400'}
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                                </svg>
+                              </button>
                               <Link href={`/product/${product.id}`} className="block">
                                 <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
                                   <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-[4/3]">
