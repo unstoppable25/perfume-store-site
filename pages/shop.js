@@ -35,22 +35,21 @@ export default function Shop() {
     // Always load from localStorage first for instant UI
     const stored = window.localStorage.getItem('scentlumus_wishlist');
     if (stored) setWishlist(JSON.parse(stored));
-    if (userId) {
+    if (userId && stored) {
+      const localWishlist = JSON.parse(stored);
+      // Always sync localStorage to cloud on login
+      fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, wishlist: localWishlist }),
+      });
+      // Also fetch from cloud to update local if needed
       fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
         .then(res => res.json())
         .then(data => {
-          const localWishlist = stored ? JSON.parse(stored) : [];
           if (Array.isArray(data.wishlist) && data.wishlist.length > 0) {
             setWishlist(data.wishlist);
             window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(data.wishlist));
-          } else if (localWishlist.length > 0) {
-            // Cloud wishlist is empty, but local has items: sync local to cloud
-            setWishlist(localWishlist);
-            fetch('/api/wishlist', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId, wishlist: localWishlist }),
-            });
           }
         });
     }
