@@ -201,6 +201,7 @@ export default function Shop() {
       <Head>
         <title>Shop — ScentLumus</title>
         <meta name="description" content="Shop luxury fragrances at ScentLumus" />
+        <link rel="canonical" href="https://scentlumus.com/shop" />
       </Head>
       
       <div className="min-h-screen bg-white">

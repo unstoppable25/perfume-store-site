@@ -18,6 +18,7 @@ export default function About() {
       <Head>
         <title>About Us - ScentLumus</title>
         <meta name="description" content="Learn about ScentLumus - Your premier destination for luxury fragrances" />
+        <link rel="canonical" href="https://scentlumus.com/about" />
       </Head>
 
       {/* Header */}
