@@ -16,6 +16,7 @@ function ProductDetails() {
   const [submitting, setSubmitting] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -83,6 +84,7 @@ function ProductDetails() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
     if (!rating || !comment.trim()) return;
     setSubmitting(true);
     try {
@@ -95,9 +97,12 @@ function ProductDetails() {
         setComment('');
         setRating(0);
         fetchReviews();
+      } else {
+        const errorText = await res.text();
+        setSubmitError(`Error: ${res.status} - ${errorText}`);
       }
     } catch (err) {
-      // handle error
+      setSubmitError("Network error: " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -176,6 +181,9 @@ function ProductDetails() {
               </ul>
             )}
             <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-4">
+              {submitError && (
+                <div style={{ color: 'red', marginBottom: '8px' }}>{submitError}</div>
+              )}
               <h3 className="text-lg font-semibold mb-2">Leave a Review</h3>
               <div className="flex items-center gap-2 mb-2">
                 <label className="font-medium">Rating:</label>

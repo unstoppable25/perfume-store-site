@@ -25,6 +25,16 @@ async function writeReviews(reviews) {
 }
 
 export default async function handler(req, res) {
+  console.log('API /api/reviews called with method:', req.method);
+  if (req.method !== 'GET') {
+    let body = '';
+    try {
+      body = JSON.stringify(req.body);
+    } catch (e) {
+      body = 'unreadable';
+    }
+    console.log('Request body:', body);
+  }
   if (req.method === 'GET') {
     const { productId } = req.query;
     const reviews = await readReviews();
