@@ -1,27 +1,49 @@
-import { promises as fs } from 'fs';
+import { createClient } from '@vercel/kv';
+import fs from 'fs';
 import path from 'path';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
 
-async function ensureReviewsFile() {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.access(REVIEWS_FILE);
-  } catch {
-    await fs.writeFile(REVIEWS_FILE, '[]');
+function ensureDataFile() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(REVIEWS_FILE)) {
+    fs.writeFileSync(REVIEWS_FILE, '[]');
   }
 }
 
+async function getKV() {
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
+  }
+  return null;
+}
+
 async function readReviews() {
-  await ensureReviewsFile();
-  const raw = await fs.readFile(REVIEWS_FILE, 'utf8');
-  return JSON.parse(raw || '[]');
+  const kv = await getKV();
+  if (kv) {
+    const reviews = await kv.get('reviews');
+    return Array.isArray(reviews) ? reviews : [];
+  } else {
+    ensureDataFile();
+    const raw = fs.readFileSync(REVIEWS_FILE, 'utf8');
+    return JSON.parse(raw || '[]');
+  }
 }
 
 async function writeReviews(reviews) {
-  await ensureReviewsFile();
-  await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
+  const kv = await getKV();
+  if (kv) {
+    await kv.set('reviews', reviews);
+  } else {
+    ensureDataFile();
+    fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
+  }
 }
 
 export default async function handler(req, res) {
