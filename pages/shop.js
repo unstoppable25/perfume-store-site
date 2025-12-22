@@ -28,33 +28,37 @@ export default function Shop() {
     return null;
   };
 
-  // Load wishlist from API or localStorage (client only)
+  // Hybrid: Load wishlist from localStorage first, then sync with API for logged-in users
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const userId = getUserId();
+    // Always load from localStorage first for instant UI
+    const stored = window.localStorage.getItem('scentlumus_wishlist');
+    if (stored) setWishlist(JSON.parse(stored));
     if (userId) {
       fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
         .then(res => res.json())
-        .then(data => setWishlist(Array.isArray(data.wishlist) ? data.wishlist : []));
-    } else {
-      const stored = window.localStorage.getItem('scentlumus_wishlist');
-      if (stored) setWishlist(JSON.parse(stored));
+        .then(data => {
+          if (Array.isArray(data.wishlist)) {
+            setWishlist(data.wishlist);
+            window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(data.wishlist));
+          }
+        });
     }
     // eslint-disable-next-line
   }, [user]);
 
-  // Save wishlist to API or localStorage (client only)
+  // Save wishlist to both API and localStorage (client only)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const userId = getUserId();
+    window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(wishlist));
     if (userId) {
       fetch('/api/wishlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, wishlist }),
       });
-    } else {
-      window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(wishlist));
     }
     // eslint-disable-next-line
   }, [wishlist, user]);
