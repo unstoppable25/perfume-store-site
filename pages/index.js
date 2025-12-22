@@ -51,7 +51,32 @@ export default function Home() {
     <>
       <Head>
         <title>ScentLumus — Luxury Fragrances</title>
-        <meta name="description" content="Welcome to the house of ScentLumus" />
+        <meta name="description" content="Welcome to the house of ScentLumus, your destination for luxury fragrances, perfumes, and scents." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="perfume, fragrances, luxury, scent, buy perfume, ScentLumus" />
+        <meta property="og:title" content="ScentLumus — Luxury Fragrances" />
+        <meta property="og:description" content="Welcome to the house of ScentLumus, your destination for luxury fragrances, perfumes, and scents." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://scentlumus.com/" />
+        <meta property="og:image" content="https://scentlumus.com/uploads/logo-1764608966451-my-logo.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="ScentLumus — Luxury Fragrances" />
+        <meta name="twitter:description" content="Welcome to the house of ScentLumus, your destination for luxury fragrances, perfumes, and scents." />
+        <meta name="twitter:image" content="https://scentlumus.com/uploads/logo-1764608966451-my-logo.jpg" />
+        <link rel="canonical" href="https://scentlumus.com/" />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Store',
+          'name': 'ScentLumus',
+          'url': 'https://scentlumus.com/',
+          'logo': 'https://scentlumus.com/uploads/logo-1764608966451-my-logo.jpg',
+          'description': 'Luxury fragrances, perfumes, and scents.',
+          'sameAs': [
+            'https://www.facebook.com/scentlumus',
+            'https://www.instagram.com/scentlumus'
+          ]
+        }) }} />
       </Head>
       
       <div className="min-h-screen flex flex-col">
