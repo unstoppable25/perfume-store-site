@@ -87,6 +87,7 @@ function ProductDetails() {
     setSubmitError("");
     if (!rating || !comment.trim()) return;
     setSubmitting(true);
+    console.log('Submitting review with POST to /api/reviews', { productId: String(id), rating, comment });
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',

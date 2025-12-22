@@ -25,6 +25,7 @@ async function writeReviews(reviews) {
 }
 
 export default async function handler(req, res) {
+  console.log('API /api/reviews received:', req.method, req.url);
   console.log('API /api/reviews called with method:', req.method);
   if (req.method !== 'GET') {
     let body = '';
