@@ -76,14 +76,44 @@ export default async function handler(req, res) {
     }
     const reviews = await readReviews();
     const newReview = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       productId,
       rating: Math.max(1, Math.min(5, parseInt(rating, 10))),
       comment: comment.trim(),
       createdAt: new Date().toISOString(),
+      hidden: false,
+      featured: false,
+      response: '',
     };
     reviews.push(newReview);
     await writeReviews(reviews);
     return res.status(201).json({ review: newReview });
+  }
+  if (req.method === 'PUT') {
+    // Edit a review by id
+    const { id, rating, comment, hidden, featured, response } = req.body;
+    if (!id) return res.status(400).json({ message: 'Missing review id' });
+    const reviews = await readReviews();
+    const idx = reviews.findIndex(r => r.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Review not found' });
+    if (rating !== undefined) reviews[idx].rating = Math.max(1, Math.min(5, parseInt(rating, 10)));
+    if (comment !== undefined) reviews[idx].comment = comment.trim();
+    if (hidden !== undefined) reviews[idx].hidden = !!hidden;
+    if (featured !== undefined) reviews[idx].featured = !!featured;
+    if (response !== undefined) reviews[idx].response = response;
+    await writeReviews(reviews);
+    return res.status(200).json({ review: reviews[idx] });
+  }
+  if (req.method === 'DELETE') {
+    // Delete a review by id
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'Missing review id' });
+    const reviews = await readReviews();
+    const idx = reviews.findIndex(r => r.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Review not found' });
+    const deleted = reviews.splice(idx, 1);
+    await writeReviews(reviews);
+    return res.status(200).json({ deleted: deleted[0] });
   }
   res.status(405).json({
     message: `Method not allowed: ${req.method}`,
