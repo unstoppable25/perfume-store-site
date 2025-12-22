@@ -269,6 +269,9 @@ export default function Shop() {
                   <Link href="/contact" className="block text-lg text-gray-700 hover:text-amber-900 transition">
                     Contact us
                   </Link>
+                  <Link href="/wishlist" className="block text-lg text-gray-700 hover:text-amber-900 transition">
+                    Wishlist
+                  </Link>
                   {user ? (
                     <>
                       <Link href="/profile" className="block text-lg text-gray-700 hover:text-amber-900 transition">
@@ -464,6 +467,7 @@ export default function Shop() {
                   <li><Link href="/" className="text-gray-400 hover:text-white transition">Shop</Link></li>
                   <li><Link href="/about" className="text-gray-400 hover:text-white transition">About us</Link></li>
                   <li><Link href="/contact" className="text-gray-400 hover:text-white transition">Contact us</Link></li>
+                  <li><Link href="/wishlist" className="text-gray-400 hover:text-white transition">Wishlist</Link></li>
                   <li><Link href="/faq" className="text-gray-400 hover:text-white transition">FAQ</Link></li>
                   <li><Link href="/profile" className="text-gray-400 hover:text-white transition">My Orders</Link></li>
                 </ul>
