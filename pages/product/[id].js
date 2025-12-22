@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-export default function ProductDetails() {
-  const router = useRouter();
-  const { id } = router.query;
+function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(0);
@@ -15,40 +13,18 @@ export default function ProductDetails() {
   const [allProducts, setAllProducts] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
+  // Get product id from router
+  const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : null;
+
   useEffect(() => {
     if (id) {
       fetchProduct();
       fetchReviews();
       fetchAllProducts();
     }
+    // eslint-disable-next-line
   }, [id]);
 
-  const fetchProduct = async () => {
-      fetchAllProducts();
-    try {
-      const res = await fetch(`/api/products?id=${id}`);
-      if (res.ok) {
-  useEffect(() => {
-    if (product && allProducts.length > 0) {
-      // Find related products by category (excluding current product)
-      let related = [];
-      if (product.categories && product.categories.length > 0) {
-        related = allProducts.filter(
-          p =>
-            p.id !== product.id &&
-            p.categories &&
-            p.categories.some(cat => product.categories.includes(cat))
-        );
-      } else {
-        // Fallback: recommend by price similarity if no category
-        related = allProducts.filter(p => p.id !== product.id);
-      }
-      // Shuffle and pick up to 4
-      related = related.sort(() => 0.5 - Math.random()).slice(0, 4);
-      setRelatedProducts(related);
-    }
-  }, [product, allProducts]);
-        const data = await res.json();
   const fetchProduct = async () => {
     try {
       const res = await fetch(`/api/products?id=${id}`);
@@ -62,9 +38,34 @@ export default function ProductDetails() {
       setLoading(false);
     }
   };
-      console.error('Failed to fetch product:', err);
-    } finally {
-      setLoading(false);
+
+  useEffect(() => {
+    if (product && allProducts.length > 0) {
+      let related = [];
+      if (product.categories && product.categories.length > 0) {
+        related = allProducts.filter(
+          p =>
+            p.id !== product.id &&
+            p.categories &&
+            p.categories.some(cat => product.categories.includes(cat))
+        );
+      } else {
+        related = allProducts.filter(p => p.id !== product.id);
+      }
+      related = related.sort(() => 0.5 - Math.random()).slice(0, 4);
+      setRelatedProducts(related);
+    }
+  }, [product, allProducts]);
+
+  const fetchAllProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        setAllProducts(data.products || data);
+      }
+    } catch (err) {
+      setAllProducts([]);
     }
   };
 
@@ -202,8 +203,38 @@ export default function ProductDetails() {
               </button>
             </form>
           </div>
+
+          {/* Related/Recommended Products Section */}
+          {relatedProducts && relatedProducts.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {relatedProducts.map((rel) => (
+                  <Link key={rel.id} href={`/product/${rel.id}`} className="block border rounded-lg p-4 hover:shadow-lg transition">
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        {rel.image ? (
+                          <img src={rel.image} alt={rel.name} className="object-contain w-full h-full" />
+                        ) : (
+                          <span className="text-gray-400">No Image</span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1">{rel.name}</h3>
+                        <p className="text-gray-600 text-sm mb-1 line-clamp-2">{rel.description}</p>
+                        <div className="font-bold text-amber-700">₦{rel.price}</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </>
   );
 }
+
+export default ProductDetails;
