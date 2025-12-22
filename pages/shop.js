@@ -15,22 +15,24 @@ export default function Shop() {
     return null;
   };
 
-  // Load wishlist from API or localStorage
+  // Load wishlist from API or localStorage (client only)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const userId = getUserId();
     if (userId) {
       fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
         .then(res => res.json())
         .then(data => setWishlist(Array.isArray(data.wishlist) ? data.wishlist : []));
     } else {
-      const stored = localStorage.getItem('scentlumus_wishlist');
+      const stored = window.localStorage.getItem('scentlumus_wishlist');
       if (stored) setWishlist(JSON.parse(stored));
     }
     // eslint-disable-next-line
   }, [user]);
 
-  // Save wishlist to API or localStorage
+  // Save wishlist to API or localStorage (client only)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const userId = getUserId();
     if (userId) {
       fetch('/api/wishlist', {
@@ -39,7 +41,7 @@ export default function Shop() {
         body: JSON.stringify({ userId, wishlist }),
       });
     } else {
-      localStorage.setItem('scentlumus_wishlist', JSON.stringify(wishlist));
+      window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(wishlist));
     }
     // eslint-disable-next-line
   }, [wishlist, user]);
@@ -64,15 +66,15 @@ export default function Shop() {
   const [categorizedProducts, setCategorizedProducts] = useState({})
   const [categoryOrder, setCategoryOrder] = useState([])
 
-  // Check if user is logged in (optional)
+  // Check if user is logged in (optional, client only)
   useEffect(() => {
-    const userAuth = sessionStorage.getItem('user_authenticated')
-    const userData = sessionStorage.getItem('user_data')
-    
+    if (typeof window === 'undefined') return;
+    const userAuth = window.sessionStorage.getItem('user_authenticated');
+    const userData = window.sessionStorage.getItem('user_data');
     if (userAuth === 'true' && userData) {
-      setUser(JSON.parse(userData))
+      setUser(JSON.parse(userData));
     }
-  }, [])
+  }, []);
 
   const handleLogout = () => {
     sessionStorage.removeItem('user_authenticated')
