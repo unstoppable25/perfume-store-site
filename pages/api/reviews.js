@@ -57,5 +57,5 @@ export default async function handler(req, res) {
     await writeReviews(reviews);
     return res.status(201).json({ review: newReview });
   }
-  res.status(405).json({ message: 'Method not allowed' });
+  res.status(405).json({ message: `Method not allowed: ${req.method}` });
 }
