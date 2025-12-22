@@ -1402,98 +1402,99 @@ export default function Admin() {
               >
                 Promo Codes ({promoCodes.length})
               </button>
-                      {/* Reviews Tab */}
-                      {activeTab === 'reviews' && (
-                        <ReviewsAdmin />
-                      )}
-            // --- ReviewsAdmin Component ---
-            function ReviewsAdmin() {
-              const [reviews, setReviews] = useState([]);
-              const [loading, setLoading] = useState(true);
-              const [editId, setEditId] = useState(null);
-              const [editForm, setEditForm] = useState({ rating: '', comment: '', featured: false, hidden: false, response: '' });
-              useEffect(() => {
-                fetch('/api/reviews')
-                  .then(res => res.json())
-                  .then(data => { setReviews(data.reviews || []); setLoading(false); });
-              }, []);
+              {/* Reviews Tab */}
+              {activeTab === 'reviews' && (
+                <ReviewsAdmin />
+              )}
+// --- ReviewsAdmin Component ---
+import React, { useState, useEffect } from 'react';
+function ReviewsAdmin() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({ rating: '', comment: '', featured: false, hidden: false, response: '' });
+  useEffect(() => {
+    fetch('/api/reviews')
+      .then(res => res.json())
+      .then(data => { setReviews(data.reviews || []); setLoading(false); });
+  }, []);
 
-              const handleDelete = async (id) => {
-                if (!window.confirm('Delete this review?')) return;
-                await fetch('/api/reviews', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                setReviews(reviews.filter(r => r.id !== id));
-              };
-              const handleEdit = (review) => {
-                setEditId(review.id);
-                setEditForm({
-                  rating: review.rating,
-                  comment: review.comment,
-                  featured: !!review.featured,
-                  hidden: !!review.hidden,
-                  response: review.response || ''
-                });
-              };
-              const handleSave = async (id) => {
-                const res = await fetch('/api/reviews', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ id, ...editForm })
-                });
-                const data = await res.json();
-                setReviews(reviews.map(r => r.id === id ? data.review : r));
-                setEditId(null);
-              };
-              const handleCancel = () => setEditId(null);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this review?')) return;
+    await fetch('/api/reviews', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    setReviews(reviews.filter(r => r.id !== id));
+  };
+  const handleEdit = (review) => {
+    setEditId(review.id);
+    setEditForm({
+      rating: review.rating,
+      comment: review.comment,
+      featured: !!review.featured,
+      hidden: !!review.hidden,
+      response: review.response || ''
+    });
+  };
+  const handleSave = async (id) => {
+    const res = await fetch('/api/reviews', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...editForm })
+    });
+    const data = await res.json();
+    setReviews(reviews.map(r => r.id === id ? data.review : r));
+    setEditId(null);
+  };
+  const handleCancel = () => setEditId(null);
 
-              if (loading) return <div className="p-4 text-center text-gray-500">Loading reviews...</div>;
-              if (reviews.length === 0) return <div className="p-4 text-center text-gray-500">No reviews yet.</div>;
+  if (loading) return <div className="p-4 text-center text-gray-500">Loading reviews...</div>;
+  if (reviews.length === 0) return <div className="p-4 text-center text-gray-500">No reviews yet.</div>;
 
-              return (
-                <div className="bg-white rounded-lg shadow p-2 sm:p-4 max-w-2xl mx-auto">
-                  <h2 className="text-xl font-bold mb-4">Product Reviews</h2>
-                  <div className="space-y-3">
-                    {reviews.map((r) => (
-                      <div key={r.id} className="border rounded p-2 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center bg-gray-50">
-                        <div className="flex-1 w-full">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">Product:</span>
-                            <span className="text-xs text-gray-700">{r.productId}</span>
-                            <span className="ml-2 text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                            {r.featured && <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs">Featured</span>}
-                            {r.hidden && <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 rounded text-xs">Hidden</span>}
-                          </div>
-                          {editId === r.id ? (
-                            <div className="space-y-2">
-                              <input type="number" min="1" max="5" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} className="border p-2 rounded w-16" />
-                              <textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} className="border p-2 rounded w-full" rows={2} />
-                              <div className="flex gap-2 flex-wrap">
-                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} />Featured</label>
-                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.hidden} onChange={e => setEditForm(f => ({ ...f, hidden: e.target.checked }))} />Hidden</label>
-                              </div>
-                              <input type="text" placeholder="Response (optional)" value={editForm.response} onChange={e => setEditForm(f => ({ ...f, response: e.target.value }))} className="border p-2 rounded w-full" />
-                              <div className="flex gap-2 mt-2">
-                                <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
-                                <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
-                              {r.response && <div className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-1">Admin Response: {r.response}</div>}
-                              <div className="flex gap-2 flex-wrap mt-1">
-                                <button onClick={() => handleEdit(r)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Edit</button>
-                                <button onClick={() => handleDelete(r.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs">Delete</button>
-                              </div>
-                            </>
-                          )}
-                          <div className="text-xs text-gray-500 mt-1">{new Date(r.createdAt).toLocaleString()}</div>
-                        </div>
-                      </div>
-                    ))}
+  return (
+    <div className="bg-white rounded-lg shadow p-2 sm:p-4 max-w-2xl mx-auto">
+      <h2 className="text-xl font-bold mb-4">Product Reviews</h2>
+      <div className="space-y-3">
+        {reviews.map((r) => (
+          <div key={r.id} className="border rounded p-2 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center bg-gray-50">
+            <div className="flex-1 w-full">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-sm">Product:</span>
+                <span className="text-xs text-gray-700">{r.productId}</span>
+                <span className="ml-2 text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                {r.featured && <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs">Featured</span>}
+                {r.hidden && <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 rounded text-xs">Hidden</span>}
+              </div>
+              {editId === r.id ? (
+                <div className="space-y-2">
+                  <input type="number" min="1" max="5" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} className="border p-2 rounded w-16" />
+                  <textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} className="border p-2 rounded w-full" rows={2} />
+                  <div className="flex gap-2 flex-wrap">
+                    <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} />Featured</label>
+                    <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.hidden} onChange={e => setEditForm(f => ({ ...f, hidden: e.target.checked }))} />Hidden</label>
+                  </div>
+                  <input type="text" placeholder="Response (optional)" value={editForm.response} onChange={e => setEditForm(f => ({ ...f, response: e.target.value }))} className="border p-2 rounded w-full" />
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
+                    <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
                   </div>
                 </div>
-              );
-            }
+              ) : (
+                <>
+                  <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
+                  {r.response && <div className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-1">Admin Response: {r.response}</div>}
+                  <div className="flex gap-2 flex-wrap mt-1">
+                    <button onClick={() => handleEdit(r)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Edit</button>
+                    <button onClick={() => handleDelete(r.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs">Delete</button>
+                  </div>
+                </>
+              )}
+              <div className="text-xs text-gray-500 mt-1">{new Date(r.createdAt).toLocaleString()}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
             </div>
           </div>
 
