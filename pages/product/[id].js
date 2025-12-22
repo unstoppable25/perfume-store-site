@@ -1,9 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 
+
 function ProductDetails() {
+  const router = useRouter();
+  const { id } = router.query;
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(0);
@@ -13,15 +17,11 @@ function ProductDetails() {
   const [allProducts, setAllProducts] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
-  // Get product id from router
-  const id = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : null;
-
   useEffect(() => {
-    if (id) {
-      fetchProduct();
-      fetchReviews();
-      fetchAllProducts();
-    }
+    if (!id) return;
+    fetchProduct();
+    fetchReviews();
+    fetchAllProducts();
     // eslint-disable-next-line
   }, [id]);
 
