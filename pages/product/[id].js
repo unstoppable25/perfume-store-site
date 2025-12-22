@@ -91,7 +91,7 @@ function ProductDetails() {
       const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: id, rating, comment }),
+        body: JSON.stringify({ productId: String(id), rating, comment }),
       });
       if (res.ok) {
         setComment('');
@@ -128,8 +128,9 @@ function ProductDetails() {
       {/* Debug Info - Remove in production */}
       <div style={{ background: '#fffbe6', color: '#b45309', padding: '8px', marginBottom: '16px', border: '1px solid #fbbf24', borderRadius: '6px' }}>
         <div><strong>Debug:</strong></div>
-        <div>Current productId: <code>{id}</code></div>
+        <div>Current productId: <code>{id}</code> (type: {typeof id})</div>
         <div>Loaded reviews: <code>{JSON.stringify(reviews)}</code></div>
+        <div>Review productIds: <code>{JSON.stringify(reviews.map(r => [r.productId, typeof r.productId]))}</code></div>
       </div>
       <Head>
         <title>{product.name} — ScentLumus</title>

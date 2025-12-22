@@ -38,7 +38,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { productId } = req.query;
     const reviews = await readReviews();
-    const filtered = productId ? reviews.filter(r => r.productId === productId) : reviews;
+    const filtered = productId ? reviews.filter(r => String(r.productId) === String(productId)) : reviews;
     return res.status(200).json({ reviews: filtered });
   }
   if (req.method === 'POST') {
