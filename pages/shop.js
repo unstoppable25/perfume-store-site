@@ -39,9 +39,18 @@ export default function Shop() {
       fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data.wishlist)) {
+          const localWishlist = stored ? JSON.parse(stored) : [];
+          if (Array.isArray(data.wishlist) && data.wishlist.length > 0) {
             setWishlist(data.wishlist);
             window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(data.wishlist));
+          } else if (localWishlist.length > 0) {
+            // Cloud wishlist is empty, but local has items: sync local to cloud
+            setWishlist(localWishlist);
+            fetch('/api/wishlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, wishlist: localWishlist }),
+            });
           }
         });
     }
