@@ -1,12 +1,14 @@
-export async function getServerSideProps() {
-  return { props: {} };
-}
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
 import Head from 'next/head'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+
+export async function getServerSideProps() {
+  return { props: {} };
+}
 
 export default function Shop() {
   // Wishlist state
