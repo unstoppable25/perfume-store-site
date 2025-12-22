@@ -67,17 +67,8 @@ export default function Shop() {
         : [...prev, productId]
     );
   };
-  const router = useRouter()
-  const [products, setProducts] = useState([])
-  const [user, setUser] = useState(null)
-  const [addedToCart, setAddedToCart] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const { addToCart, getCartCount } = useCart()
-
-  // Group products by categories
-  const [categorizedProducts, setCategorizedProducts] = useState({})
-  const [categoryOrder, setCategoryOrder] = useState([])
+  const router = useRouter();
+  const { addToCart, getCartCount } = useCart();
 
   // Check if user is logged in (optional, client only)
   useEffect(() => {
