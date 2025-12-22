@@ -11,8 +11,16 @@ export async function getServerSideProps() {
 }
 
 export default function Shop() {
-  // Wishlist state
+  // All state declarations at the top
   const [wishlist, setWishlist] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [user, setUser] = useState(null);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categorizedProducts, setCategorizedProducts] = useState({});
+  const [categoryOrder, setCategoryOrder] = useState([]);
+
   // Helper to get userId (from user object or session)
   const getUserId = () => {
     if (user && user.id) return user.id;
