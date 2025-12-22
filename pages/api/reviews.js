@@ -26,7 +26,12 @@ async function writeReviews(reviews) {
 
 export default async function handler(req, res) {
   console.log('API /api/reviews received:', req.method, req.url);
-  console.log('API /api/reviews called with method:', req.method);
+    console.log('API /api/reviews TOP LOG:', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      body: req.body
+    });
   if (req.method !== 'GET') {
     let body = '';
     try {
@@ -58,5 +63,11 @@ export default async function handler(req, res) {
     await writeReviews(reviews);
     return res.status(201).json({ review: newReview });
   }
-  res.status(405).json({ message: `Method not allowed: ${req.method}` });
+  res.status(405).json({
+    message: `Method not allowed: ${req.method}`,
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  });
 }
