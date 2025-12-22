@@ -32,26 +32,19 @@ export default function Shop() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const userId = getUserId();
-    // Always load from localStorage first for instant UI
-    const stored = window.localStorage.getItem('scentlumus_wishlist');
-    if (stored) setWishlist(JSON.parse(stored));
-    if (userId && stored) {
-      const localWishlist = JSON.parse(stored);
-      // Always sync localStorage to cloud on login
-      fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, wishlist: localWishlist }),
-      });
-      // Also fetch from cloud to update local if needed
+    if (userId) {
+      // Always load from cloud and overwrite localStorage and state
       fetch(`/api/wishlist?userId=${encodeURIComponent(userId)}`)
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data.wishlist) && data.wishlist.length > 0) {
-            setWishlist(data.wishlist);
-            window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(data.wishlist));
-          }
+          const cloudWishlist = Array.isArray(data.wishlist) ? data.wishlist : [];
+          setWishlist(cloudWishlist);
+          window.localStorage.setItem('scentlumus_wishlist', JSON.stringify(cloudWishlist));
         });
+    } else {
+      // Guest: load from localStorage
+      const stored = window.localStorage.getItem('scentlumus_wishlist');
+      if (stored) setWishlist(JSON.parse(stored));
     }
     // eslint-disable-next-line
   }, [user]);
@@ -96,6 +89,7 @@ export default function Shop() {
     sessionStorage.removeItem('user_authenticated')
     sessionStorage.removeItem('user_data')
     setUser(null)
+    setWishlist([]); // Clear wishlist from state on logout
   }
 
   useEffect(() => {
