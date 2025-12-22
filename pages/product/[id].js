@@ -120,6 +120,12 @@ function ProductDetails() {
 
   return (
     <>
+      {/* Debug Info - Remove in production */}
+      <div style={{ background: '#fffbe6', color: '#b45309', padding: '8px', marginBottom: '16px', border: '1px solid #fbbf24', borderRadius: '6px' }}>
+        <div><strong>Debug:</strong></div>
+        <div>Current productId: <code>{id}</code></div>
+        <div>Loaded reviews: <code>{JSON.stringify(reviews)}</code></div>
+      </div>
       <Head>
         <title>{product.name} — ScentLumus</title>
       </Head>
