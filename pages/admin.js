@@ -529,29 +529,34 @@ export default function Admin() {
   }
 
   const handleAddCategory = async () => {
-    if (newCategory.trim() && !categories.some(c => c.name === newCategory.trim())) {
-      const catObj = { name: newCategory.trim(), parent: newCategoryParent || null };
-      const updatedCategories = [...categories, catObj];
-      // Save to database first
-      try {
-        const res = await fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'categories', value: updatedCategories })
-        })
-        const data = await res.json()
-        if (data.success) {
-          setCategories(updatedCategories)
-          setNewCategory('')
-          setNewCategoryParent('')
-        } else {
-          console.error('Category save response:', data)
-          alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
-        }
-      } catch (err) {
-        console.error('Failed to save category:', err)
-        alert('Failed to save category: ' + err.message)
+    const trimmedName = newCategory.trim();
+    if (!trimmedName) return;
+    // Prevent duplicate names (case-insensitive)
+    if (categories.some(c => c.name && c.name.toLowerCase() === trimmedName.toLowerCase())) {
+      alert('Category name already exists!');
+      return;
+    }
+    const catObj = { name: trimmedName, parent: newCategoryParent || null };
+    const updatedCategories = [...categories, catObj];
+    // Save to database first
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updatedCategories })
+      })
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updatedCategories);
+        setNewCategory('');
+        setNewCategoryParent('');
+      } else {
+        console.error('Category save response:', data);
+        alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'));
       }
+    } catch (err) {
+      console.error('Failed to save category:', err);
+      alert('Failed to save category: ' + err.message);
     }
   }
 
