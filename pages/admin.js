@@ -1950,6 +1950,16 @@ export default function Admin() {
                                   </div>
                                 )}
                               </div>
+                <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setUploading(true)
+                      // ...existing code...
                     }}
                     className="hidden"
                   />
