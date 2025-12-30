@@ -1747,22 +1747,22 @@ export default function Admin() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                     {categories.map((category) => (
                       <label
-                        key={category}
+                        key={category.name}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
                       >
                         <input
                           type="checkbox"
-                          checked={form.categories.includes(category)}
+                          checked={form.categories.includes(category.name)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setForm({ ...form, categories: [...form.categories, category] })
+                              setForm({ ...form, categories: [...form.categories, category.name] })
                             } else {
-                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
+                              setForm({ ...form, categories: form.categories.filter(c => c !== category.name) })
                             }
                           }}
                           className="w-4 h-4 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className="text-sm flex-1">{category}</span>
+                        <span className="text-sm flex-1">{category.name}</span>
                       </label>
                     ))}
                   </div>
@@ -2004,7 +2004,7 @@ export default function Admin() {
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
                   {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat.name} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
               </div>
