@@ -1793,8 +1793,8 @@ export default function Admin() {
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
                       {categories.map((category, index) => (
-                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          {editingCategory === category ? (
+                        <div key={category.name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          {editingCategory === category.name ? (
                             <>
                               <input
                                 type="text"
@@ -1805,7 +1805,7 @@ export default function Admin() {
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEditCategory(category, editCategoryName)}
+                                onClick={() => handleEditCategory(category.name, editCategoryName)}
                                 className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
                               >
                                 Save
@@ -1847,12 +1847,12 @@ export default function Admin() {
                                   </svg>
                                 </button>
                               </div>
-                              <span className="flex-1 text-sm font-medium">{category}</span>
+                              <span className="flex-1 text-sm font-medium">{category.name}</span>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setEditingCategory(category)
-                                  setEditCategoryName(category)
+                                  setEditingCategory(category.name)
+                                  setEditCategoryName(category.name)
                                 }}
                                 className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
                               >
@@ -1860,7 +1860,7 @@ export default function Admin() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteCategory(category)}
+                                onClick={() => handleDeleteCategory(category.name)}
                                 className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
                               >
                                 Delete
