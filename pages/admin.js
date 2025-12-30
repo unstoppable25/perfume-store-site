@@ -1969,21 +1969,19 @@ export default function Admin() {
                     </span>
                   </label>
                   {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
-                  <div>
-                    <div className="flex gap-2 mt-4">
-                      <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
-                        {isEditing !== null ? 'Update' : 'Add'} Product
+                  <div className="flex gap-2 mt-4">
+                    <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
+                      {isEditing !== null ? 'Update' : 'Add'} Product
+                    </button>
+                    {isEditing !== null && (
+                      <button
+                        type="button"
+                        onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
+                        className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                      >
+                        Cancel
                       </button>
-                      {isEditing !== null && (
-                        <button
-                          type="button"
-                          onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
-                          className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               </form>
