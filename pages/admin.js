@@ -1,3 +1,133 @@
+  // Parent/Child Category CRUD Handlers
+  const handleAddParent = async () => {
+    const name = newParent.trim();
+    if (!name || categories.some(p => p.name === name)) return;
+    const updated = [...categories, { name, children: [] }];
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+        setNewParent('');
+      } else {
+        alert('Failed to add brand: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to add brand: ' + err.message);
+    }
+  };
+
+  const handleEditParent = async (oldName, newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const updated = categories.map(p => p.name === oldName ? { ...p, name: trimmed } : p);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+        setEditingParent(null);
+        setEditParentName('');
+      } else {
+        alert('Failed to edit brand: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to edit brand: ' + err.message);
+    }
+  };
+
+  const handleDeleteParent = async (name) => {
+    if (!confirm(`Delete brand "${name}" and all its sub-categories?`)) return;
+    const updated = categories.filter(p => p.name !== name);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+      } else {
+        alert('Failed to delete brand: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to delete brand: ' + err.message);
+    }
+  };
+
+  const handleAddChild = async (parentName) => {
+    const name = newChild.trim();
+    if (!name) return;
+    const updated = categories.map(p => p.name === parentName ? { ...p, children: [...p.children, name] } : p);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+        setNewChild('');
+      } else {
+        alert('Failed to add sub-category: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to add sub-category: ' + err.message);
+    }
+  };
+
+  const handleEditChild = async (parentName, oldChild, newChildName) => {
+    const trimmed = newChildName.trim();
+    if (!trimmed || trimmed === oldChild) return;
+    const updated = categories.map(p => p.name === parentName ? { ...p, children: p.children.map(c => c === oldChild ? trimmed : c) } : p);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+        setEditingChild({ parent: null, child: null });
+        setEditChildName('');
+      } else {
+        alert('Failed to edit sub-category: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to edit sub-category: ' + err.message);
+    }
+  };
+
+  const handleDeleteChild = async (parentName, childName) => {
+    if (!confirm(`Delete sub-category "${childName}"?`)) return;
+    const updated = categories.map(p => p.name === parentName ? { ...p, children: p.children.filter(c => c !== childName) } : p);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'categories', value: updated })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCategories(updated);
+      } else {
+        alert('Failed to delete sub-category: ' + (data.error || data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to delete sub-category: ' + err.message);
+    }
+  };
 import { useState, useEffect } from 'react'
 
 // --- ReviewsAdmin Component ---
@@ -114,13 +244,14 @@ export default function Admin() {
   })
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
-  // Categories now have { name, parent } structure
+  // Categories: [{ name: 'Brand1', children: ['SubCat1', 'SubCat2'] }, ...]
   const [categories, setCategories] = useState([])
-  const [newCategory, setNewCategory] = useState('')
-  const [newCategoryParent, setNewCategoryParent] = useState('')
-  const [editingCategory, setEditingCategory] = useState(null)
-  const [editCategoryName, setEditCategoryName] = useState('')
-  const [editCategoryParent, setEditCategoryParent] = useState('')
+  const [newParent, setNewParent] = useState('')
+  const [editingParent, setEditingParent] = useState(null)
+  const [editParentName, setEditParentName] = useState('')
+  const [newChild, setNewChild] = useState('')
+  const [editingChild, setEditingChild] = useState({ parent: null, child: null })
+  const [editChildName, setEditChildName] = useState('')
   const [editingOrder, setEditingOrder] = useState(null)
   const [showAddOrder, setShowAddOrder] = useState(false)
   const [orderForm, setOrderForm] = useState({
@@ -336,23 +467,27 @@ export default function Admin() {
     e.preventDefault()
     ;(async () => {
       try {
+        // Only allow children (sub-categories) in form.categories
+        const allChildren = categories.flatMap(p => p.children);
+        const filteredCategories = form.categories.filter(c => allChildren.includes(c));
+        const payload = { ...form, categories: filteredCategories };
         if (isEditing !== null) {
           // update existing product
-          const payload = { id: isEditing, ...form }
-          const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-          const updated = await res.json()
-          const newProducts = products.map((p) => (p.id === updated.id ? updated : p))
-          setProducts(newProducts)
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
-          setIsEditing(null)
-          alert('Product updated successfully!')
+          payload.id = isEditing;
+          const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const updated = await res.json();
+          const newProducts = products.map((p) => (p.id === updated.id ? updated : p));
+          setProducts(newProducts);
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts));
+          setIsEditing(null);
+          alert('Product updated successfully!');
         } else {
-          const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-          const created = await res.json()
-          const newProducts = [...products, created]
-          setProducts(newProducts)
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
-          alert('Product added successfully!')
+          const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const created = await res.json();
+          const newProducts = [...products, created];
+          setProducts(newProducts);
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts));
+          alert('Product added successfully!');
         }
       } catch (err) {
         console.error('Failed to save product', err)
@@ -529,34 +664,30 @@ export default function Admin() {
   }
 
   const handleAddCategory = async () => {
-    const trimmedName = newCategory.trim();
-    if (!trimmedName) return;
-    // Prevent duplicate names (case-insensitive)
-    if (categories.some(c => c.name && c.name.toLowerCase() === trimmedName.toLowerCase())) {
-      alert('Category name already exists!');
-      return;
-    }
-    const catObj = { name: trimmedName, parent: newCategoryParent || null };
-    const updatedCategories = [...categories, catObj];
-    // Save to database first
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'categories', value: updatedCategories })
-      })
-      const data = await res.json();
-      if (data.success) {
-        setCategories(updatedCategories);
-        setNewCategory('');
-        setNewCategoryParent('');
-      } else {
-        console.error('Category save response:', data);
-        alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'));
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      const updatedCategories = [...categories, newCategory.trim()]
+      
+      // Save to database first
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'categories', value: updatedCategories })
+        })
+        const data = await res.json()
+        
+        if (data.success) {
+          setCategories(updatedCategories)
+          setNewCategory('')
+          // Category added successfully - no alert needed
+        } else {
+          console.error('Category save response:', data)
+          alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
+        }
+      } catch (err) {
+        console.error('Failed to save category:', err)
+        alert('Failed to save category: ' + err.message)
       }
-    } catch (err) {
-      console.error('Failed to save category:', err);
-      alert('Failed to save category: ' + err.message);
     }
   }
 
@@ -586,12 +717,10 @@ export default function Admin() {
     }
   }
 
-  const handleEditCategory = async (oldName, newName, newParent) => {
-    if (newName.trim() && (newName !== oldName || newParent !== (categories.find(c => c.name === oldName)?.parent || ''))) {
+  const handleEditCategory = async (oldName, newName) => {
+    if (newName.trim() && newName !== oldName) {
       const trimmedNewName = newName.trim();
-      const updatedCategories = categories.map(c =>
-        c.name === oldName ? { ...c, name: trimmedNewName, parent: newParent || null } : c
-      );
+      const updatedCategories = categories.map(c => c === oldName ? trimmedNewName : c);
 
       // Update all products that reference the old category name
       const updatedProducts = products.map(product => {
@@ -617,7 +746,6 @@ export default function Admin() {
           setCategories(updatedCategories);
           setEditingCategory(null);
           setEditCategoryName('');
-          setEditCategoryParent('');
 
           // Save all updated products to server in one request
           try {
@@ -626,6 +754,7 @@ export default function Admin() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ products: updatedProducts })
             });
+            const bulkData = await bulkRes.json();
             setProducts(updatedProducts);
             localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
 
@@ -635,6 +764,7 @@ export default function Admin() {
               alert('Category updated, but some products failed to update.');
             }
           } catch (err) {
+            // Category updated, but product update failed
             alert('Category updated, but failed to update products.');
           }
         } else {
@@ -1538,100 +1668,9 @@ export default function Admin() {
             </div>
           </div>
 
-
           {/* Products Tab */}
           {activeTab === 'products' && (
             <>
-              {/* Category Management */}
-              <div className="bg-white p-6 rounded-lg shadow mb-8">
-                {/* Cleanup Button */}
-                <button
-                  className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  onClick={async () => {
-                    // Remove all categories with no name
-                    const cleaned = categories.filter(c => c.name && c.name.trim() !== '');
-                    // Save to database
-                    await fetch('/api/settings', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: 'categories', value: cleaned })
-                    });
-                    setCategories(cleaned);
-                    alert('Blank/unnamed categories removed!');
-                  }}
-                >
-                  Remove All Blank/Unnamed Categories
-                </button>
-                <h2 className="text-2xl font-semibold mb-4">Categories</h2>
-                <form className="flex flex-col md:flex-row md:items-end gap-4 mb-6" onSubmit={e => { e.preventDefault(); handleAddCategory(); }}>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                    <input type="text" className="border p-2 rounded w-48" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. Naseem Aqua" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                    <select className="border p-2 rounded w-48" value={newCategoryParent || ''} onChange={e => setNewCategoryParent(e.target.value)}>
-                      <option value="">None (Top-level)</option>
-                      {categories.filter(c => !c.parent).map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <button type="submit" className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800">Add Category</button>
-                </form>
-                {/* Category List Display */}
-                <div className="space-y-4">
-                  {/* Only show categories with a valid name */}
-                  {categories.filter(c => c.name && c.name.trim() !== '' && !c.parent).map(parent => (
-                    <div key={parent.name} className="mb-2">
-                      <div className="text-lg font-bold text-center text-purple-700 bg-purple-50 rounded py-1 mb-1">{parent.name}</div>
-                      <div className="pl-6">
-                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).length === 0 && (
-                          <div className="text-gray-400 italic text-sm">No subcategories</div>
-                        )}
-                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).map(child => (
-                          <div key={child.name} className="flex items-center gap-2 mb-1">
-                            <span className="text-gray-700">{child.name}</span>
-                            <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(child.name); setEditCategoryName(child.name); setEditCategoryParent(child.parent || ''); }}>Edit</button>
-                            <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(child.name)}>Delete</button>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Edit/Delete for parent */}
-                      <div className="flex justify-center gap-2 mt-1">
-                        <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(parent.name); setEditCategoryName(parent.name); setEditCategoryParent(parent.parent || ''); }}>Edit</button>
-                        <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(parent.name)}>Delete</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Edit Category Modal */}
-                {editingCategory && (
-                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-                      <h3 className="text-lg font-bold mb-4">Edit Category</h3>
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                        <input type="text" className="border p-2 rounded w-full" value={editCategoryName} onChange={e => setEditCategoryName(e.target.value)} />
-                      </div>
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                        <select className="border p-2 rounded w-full" value={editCategoryParent || ''} onChange={e => setEditCategoryParent(e.target.value)}>
-                          <option value="">None (Top-level)</option>
-                          {categories.filter(c => !c.parent && c.name !== editingCategory).map(c => (
-                            <option key={c.name} value={c.name}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <button className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800" onClick={async () => { await handleEditCategory(editingCategory, editCategoryName, editCategoryParent); setEditingCategory(null); }}>Save</button>
-                        <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded" onClick={() => setEditingCategory(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Logo Upload */}
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Logo</h2>
@@ -1648,6 +1687,7 @@ export default function Admin() {
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Home Page Button Backgrounds</h2>
                 <p className="text-sm text-gray-600 mb-6">Upload background images for the Shop and About buttons on the home page. Images will be dimmed with the button text visible on top.</p>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Shop Button Background */}
                   <div>
@@ -1771,22 +1811,22 @@ export default function Admin() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                     {categories.map((category) => (
                       <label
-                        key={category.name}
+                        key={category}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
                       >
                         <input
                           type="checkbox"
-                          checked={Array.isArray(form.categories) && form.categories.includes(category.name)}
+                          checked={form.categories.includes(category)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setForm({ ...form, categories: Array.isArray(form.categories) ? [...form.categories, category.name] : [category.name] })
+                              setForm({ ...form, categories: [...form.categories, category] })
                             } else {
-                              setForm({ ...form, categories: Array.isArray(form.categories) ? form.categories.filter(c => c !== category.name) : [] })
+                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
                             }
                           }}
                           className="w-4 h-4 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className="text-sm flex-1">{category.name}</span>
+                        <span className="text-sm flex-1">{category}</span>
                       </label>
                     ))}
                   </div>
@@ -1817,152 +1857,141 @@ export default function Admin() {
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
                       {categories.map((category, index) => (
-                        <div key={category.name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          {editingCategory === category.name ? (
+                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          {editingCategory === category ? (
                             <>
                               <input
                                 type="text"
                                 value={editCategoryName}
-                                onChange={(e) => setEditCategoryName(e.target.value)}
-                                className="flex-1 border px-2 py-1 rounded text-sm"
-                                autoFocus
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleEditCategory(category.name, editCategoryName)}
-                                className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
-                              >
-                                Save
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingCategory(null)
-                                  setEditCategoryName('')
-                                }}
-                                className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex flex-col gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveCategoryUp(index)}
-                                  disabled={index === 0}
-                                  className={`text-gray-600 hover:text-gray-900 ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                  title="Move up"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveCategoryDown(index)}
-                                  disabled={index === categories.length - 1}
-                                  className={`text-gray-600 hover:text-gray-900 ${index === categories.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                  title="Move down"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                  </svg>
-                                </button>
-                              </div>
-                              <span className="flex-1 text-sm font-medium">{category.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingCategory(category.name)
-                                  setEditCategoryName(category.name)
-                                }}
-                                className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCategory(category.name)}
-                                className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {form.categories.length > 0 && (
-                  <div className="mt-3 text-sm text-gray-600">
-                    Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploading}
-                    onChange={async (e) => {
-                      const file = e.target.files[0]
-                      if (!file) return
-                      
-                      setUploading(true)
-                      
-                      // Compress image before upload
-                      const img = new Image()
-                      img.onload = async () => {
-                        try {
-                          // Create canvas to resize image
-                          const canvas = document.createElement('canvas')
-                          let width = img.width
-                          let height = img.height
-                          
-                          // Resize if too large (max 1200px on longest side)
-                          const maxSize = 1200
-                          if (width > maxSize || height > maxSize) {
-                            if (width > height) {
-                              height = (height / width) * maxSize
-                              width = maxSize
-                            } else {
-                              width = (width / height) * maxSize
-                              height = maxSize
-                            }
-                          }
-                          
-                          canvas.width = width
-                          canvas.height = height
-                          const ctx = canvas.getContext('2d')
-                          ctx.drawImage(img, 0, 0, width, height)
-                          
-                          // Convert to base64 with compression
-                          const base64 = canvas.toDataURL('image/jpeg', 0.8) // 80% quality
-                          const filename = `product-${Date.now()}-${file.name.replace(/\s+/g,'-').replace(/\.[^.]+$/, '.jpg')}`
-                          
-                          console.log('Starting upload...', filename, 'Size:', Math.round(base64.length / 1024), 'KB')
-                          const res = await fetch('/api/upload', { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json' }, 
-                            body: JSON.stringify({ filename, data: base64 }) 
-                          })
-                          
-                          if (!res.ok) {
-                            throw new Error(`Upload failed: ${res.status} ${res.statusText}`)
-                          }
-                          
-                          const data = await res.json()
-                          console.log('Upload response:', data)
-                          
-                          if (data.url) {
-                            setForm((f) => ({ ...f, image: data.url }))
-                            alert('Image uploaded successfully!')
+                                <div className="border-t pt-4 mt-4">
+                                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Categories</h3>
+                                  <p className="text-sm text-gray-600 mb-3">Select one or more sub-categories for this product</p>
+                                  {categories.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic mb-4">No parent categories yet. Add your first brand below.</p>
+                                  ) : (
+                                    <div className="mb-4">
+                                      {categories.map((parent, pIdx) => (
+                                        <div key={parent.name} className="mb-2">
+                                          <div className="font-semibold text-purple-700 mb-1">{parent.name}</div>
+                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                            {parent.children.map((child) => (
+                                              <label key={child} className="flex items-center space-x-2 p-2 border rounded cursor-pointer hover:bg-amber-50 transition">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={form.categories.includes(child)}
+                                                  onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                      setForm({ ...form, categories: [...form.categories, child] })
+                                                    } else {
+                                                      setForm({ ...form, categories: form.categories.filter(c => c !== child) })
+                                                    }
+                                                  }}
+                                                  className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                                                />
+                                                <span className="text-sm flex-1">{child}</span>
+                                              </label>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {/* Add New Parent Category (Brand) */}
+                                  <div className="flex gap-2 mb-4">
+                                    <input
+                                      type="text"
+                                      placeholder="Add new brand (parent category)"
+                                      value={newParent}
+                                      onChange={(e) => setNewParent(e.target.value)}
+                                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParent())}
+                                      className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={handleAddParent}
+                                      className="px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 text-sm font-medium"
+                                    >
+                                      Add Brand
+                                    </button>
+                                  </div>
+                                  {/* Manage Parent/Child Categories */}
+                                  {categories.length > 0 && (
+                                    <div className="border-t pt-3">
+                                      <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Brands & Sub-Categories</h4>
+                                      <div className="space-y-4">
+                                        {categories.map((parent, pIdx) => (
+                                          <div key={parent.name} className="bg-gray-50 rounded p-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                              {editingParent === parent.name ? (
+                                                <>
+                                                  <input
+                                                    type="text"
+                                                    value={editParentName}
+                                                    onChange={(e) => setEditParentName(e.target.value)}
+                                                    className="flex-1 border px-2 py-1 rounded text-sm"
+                                                    autoFocus
+                                                  />
+                                                  <button type="button" onClick={() => handleEditParent(parent.name, editParentName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
+                                                  <button type="button" onClick={() => { setEditingParent(null); setEditParentName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <span className="flex-1 text-sm font-bold text-purple-700">{parent.name}</span>
+                                                  <button type="button" onClick={() => { setEditingParent(parent.name); setEditParentName(parent.name); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
+                                                  <button type="button" onClick={() => handleDeleteParent(parent.name)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
+                                                </>
+                                              )}
+                                            </div>
+                                            {/* Children (Sub-Categories) */}
+                                            <div className="ml-4">
+                                              <div className="flex gap-2 mb-2">
+                                                <input
+                                                  type="text"
+                                                  placeholder="Add new sub-category"
+                                                  value={newChild}
+                                                  onChange={(e) => setNewChild(e.target.value)}
+                                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddChild(parent.name))}
+                                                  className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                                />
+                                                <button type="button" onClick={() => handleAddChild(parent.name)} className="px-3 py-1 bg-amber-700 text-white rounded text-xs hover:bg-amber-800">Add Sub-Category</button>
+                                              </div>
+                                              <div className="space-y-1">
+                                                {parent.children.map((child, cIdx) => (
+                                                  <div key={child} className="flex items-center gap-2 p-1">
+                                                    {editingChild.parent === parent.name && editingChild.child === child ? (
+                                                      <>
+                                                        <input
+                                                          type="text"
+                                                          value={editChildName}
+                                                          onChange={(e) => setEditChildName(e.target.value)}
+                                                          className="flex-1 border px-2 py-1 rounded text-sm"
+                                                          autoFocus
+                                                        />
+                                                        <button type="button" onClick={() => handleEditChild(parent.name, child, editChildName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
+                                                        <button type="button" onClick={() => { setEditingChild({ parent: null, child: null }); setEditChildName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <span className="flex-1 text-sm">{child}</span>
+                                                        <button type="button" onClick={() => { setEditingChild({ parent: parent.name, child }); setEditChildName(child); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
+                                                        <button type="button" onClick={() => handleDeleteChild(parent.name, child)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
+                                                      </>
+                                                    )}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {form.categories.length > 0 && (
+                                    <div className="mt-3 text-sm text-gray-600">
+                                      Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
+                                    </div>
+                                  )}
+                                </div>
                           } else {
                             alert('Upload failed: ' + (data.message || 'Unknown error'))
                           }
@@ -2028,7 +2057,7 @@ export default function Admin() {
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
                   {categories.map(cat => (
-                    <option key={cat.name} value={cat.name}>{cat.name}</option>
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
@@ -2071,8 +2100,8 @@ export default function Admin() {
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {product.categories.map(cat => (
-                                <span key={typeof cat === 'string' ? cat : cat.name} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                  {typeof cat === 'string' ? cat : cat.name}
+                                <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  {cat}
                                 </span>
                               ))}
                             </div>
