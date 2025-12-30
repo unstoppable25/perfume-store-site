@@ -2047,8 +2047,8 @@ export default function Admin() {
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {product.categories.map(cat => (
-                                <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                  {cat}
+                                <span key={typeof cat === 'string' ? cat : cat.name} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  {typeof cat === 'string' ? cat : cat.name}
                                 </span>
                               ))}
                             </div>
