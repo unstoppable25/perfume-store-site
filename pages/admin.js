@@ -1950,24 +1950,26 @@ export default function Admin() {
                                   </div>
                                 )}
                               </div>
-                <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploading}
-                    onChange={async (e) => {
-                      const file = e.target.files[0]
-                      if (!file) return
-                      setUploading(true)
-                      // ...existing code...
-                    }}
-                    className="hidden"
-                  />
-                  <span className="text-sm">
-                    {uploading ? 'Uploading...' : 'Upload Image'}
-                  </span>
-                </label>
-                {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
+                <div>
+                  <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading}
+                      onChange={async (e) => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        setUploading(true)
+                        // ...existing code...
+                      }}
+                      className="hidden"
+                    />
+                    <span className="text-sm">
+                      {uploading ? 'Uploading...' : 'Upload Image'}
+                    </span>
+                  </label>
+                  {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
+                </div>
               </div>
               <div className="flex gap-2">
                 <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
