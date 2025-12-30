@@ -22,225 +22,23 @@
     items: [],
     total: 0
   })
-  const [orderItemForm, setOrderItemForm] = useState({ name: '', price: '', quantity: 1 })
-  const [deliverySettings, setDeliverySettings] = useState({
-    defaultFee: 2000,
-    freeDeliveryThreshold: 0,
-    selfPickupEnabled: false,
-    zones: []
-  })
-  const [newZone, setNewZone] = useState({ name: '', fee: '', states: '' })
-  const [editingZone, setEditingZone] = useState(null)
-  const [promoCodes, setPromoCodes] = useState([])
-  const [newPromo, setNewPromo] = useState({
-    code: '',
-    discountType: 'percentage',
-    discountValue: '',
-    minOrder: '',
-    maxUses: '',
-    expiryDate: '',
-    active: true
-  })
-  const [editingPromo, setEditingPromo] = useState(null)
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const router = useRouter()
 
-  useEffect(() => {
-    // Check authentication
-    const isAuth = localStorage.getItem('admin_gate_passed')
-    if (isAuth !== 'true') {
-      // Redirect to security gate
-      router.push('/secure8893')
-      return
-    }
-    setAuthenticated(true)
-    
-    // Set active tab from URL hash
-    const hash = window.location.hash.slice(1)
-    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions'].includes(hash)) {
-      setActiveTab(hash)
-    }
-  }, [router])
+import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
 
-  useEffect(() => {
-    if (!authenticated) return
+function Admin() {
+  // ...move all your existing code here (all hooks, handlers, logic, and return statement)...
+  // Parent/Child Category CRUD Handlers
+  const handleAddParent = async () => {
+    const name = newParent.trim();
+    if (!name || categories.some(p => p.name === name)) return;
+    const updated = [...categories, { name, children: [] }];
+  };
+  // ...existing code...
+}
 
-    // Load products from server API
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch('/api/products')
-        const data = await res.json()
-        
-        // Always use server data, even if empty
-        setProducts(data || [])
-        
-        // Update localStorage backup with server data
-        if (data && data.length > 0) {
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(data))
-        } else {
-          // Clear backup if server has no products
-          localStorage.removeItem('scentlumus_products_backup')
-        }
-      } catch (err) {
-        console.error('Failed to fetch products', err)
-        // Only use backup if server is unreachable (network error)
-        const backup = localStorage.getItem('scentlumus_products_backup')
-        if (backup) {
-          setProducts(JSON.parse(backup))
-        }
-      }
-    }
-    fetchProducts()
-
-    // Load orders
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch('/api/orders')
-        const data = await res.json()
-        if (data.success) {
-          setOrders(data.orders || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch orders', err)
-      }
-    }
-    fetchOrders()
-
-    // Load messages
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch('/api/messages')
-        const data = await res.json()
-        if (data.success) {
-          setMessages(data.messages || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch messages', err)
-      }
-    }
-    fetchMessages()
-
-    // Load subscribers
-    const fetchSubscribers = async () => {
-      try {
-        const res = await fetch('/api/subscribers')
-        const data = await res.json()
-        if (data.success) {
-          setSubscribers(data.subscribers || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch subscribers', err)
-      }
-    }
-    fetchSubscribers()
-
-    // Load users
-    const fetchUsers = async () => {
-      try {
-        const res = await fetch('/api/users')
-        const data = await res.json()
-        if (data.success) {
-          setUsers(data.users || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch users', err)
-      }
-    }
-    fetchUsers()
-
-    const savedLogo = localStorage.getItem('scentlumus_logo')
-    if (savedLogo) setLogo(savedLogo)
-    
-    // Load button background images and categories from database
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/settings')
-        const data = await res.json()
-        if (data.success && data.settings) {
-          if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
-          if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
-          if (data.settings.categories && Array.isArray(data.settings.categories)) {
-            setCategories(data.settings.categories)
-          }
-          // Load delivery settings
-          console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
-          console.log('Raw promo_codes from DB:', data.settings.promo_codes)
-          
-          let parsedZones = []
-          try {
-            if (data.settings.delivery_zones) {
-              const zonesValue = data.settings.delivery_zones
-              // Check if it's already an array or needs parsing
-              if (Array.isArray(zonesValue)) {
-                parsedZones = zonesValue
-              } else if (typeof zonesValue === 'string' && zonesValue.trim()) {
-                parsedZones = JSON.parse(zonesValue)
-              }
-            }
-          } catch (err) {
-            console.error('Failed to parse delivery zones:', err, 'Value was:', data.settings.delivery_zones)
-            parsedZones = []
-          }
-          
-          const deliveryData = {
-            defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
-            freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
-            selfPickupEnabled: data.settings.self_pickup_enabled === 'true' || data.settings.self_pickup_enabled === true,
-            zones: parsedZones
-          }
-          console.log('Loaded delivery settings:', deliveryData)
-          setDeliverySettings(deliveryData)
-          
-          // Load promo codes
-          let parsedPromos = []
-          try {
-            if (data.settings.promo_codes) {
-              const promosValue = data.settings.promo_codes
-              // Check if it's already an array or needs parsing
-              if (Array.isArray(promosValue)) {
-                parsedPromos = promosValue
-              } else if (typeof promosValue === 'string' && promosValue.trim()) {
-                parsedPromos = JSON.parse(promosValue)
-              }
-            }
-          } catch (err) {
-            console.error('Failed to parse promo codes:', err, 'Value was:', data.settings.promo_codes)
-            parsedPromos = []
-          }
-          console.log('Loaded promo codes:', parsedPromos)
-          setPromoCodes(parsedPromos)
-        }
-      } catch (err) {
-        console.error('Failed to load settings:', err)
-      }
-    }
-    loadSettings()
-  }, [authenticated])
-
-  const handleAddProduct = (e) => {
-    e.preventDefault()
-    ;(async () => {
-      try {
-        // Only allow children (sub-categories) in form.categories
-        const allChildren = categories.flatMap(p => p.children);
-        const filteredCategories = form.categories.filter(c => allChildren.includes(c));
-        const payload = { ...form, categories: filteredCategories };
-        if (isEditing !== null) {
-          // update existing product
-          payload.id = isEditing;
-          const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          const updated = await res.json();
-          const newProducts = products.map((p) => (p.id === updated.id ? updated : p));
-          setProducts(newProducts);
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts));
-          setIsEditing(null);
-          alert('Product updated successfully!');
-        } else {
-          const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          const created = await res.json();
-          const newProducts = [...products, created];
-          setProducts(newProducts);
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts));
+export default Admin;
           alert('Product added successfully!');
         }
       } catch (err) {
