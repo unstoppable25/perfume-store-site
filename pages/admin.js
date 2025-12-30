@@ -1969,50 +1969,50 @@ export default function Admin() {
                     </span>
                   </label>
                   {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
+                  <div className="flex gap-2 mt-4">
+                    <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
+                      {isEditing !== null ? 'Update' : 'Add'} Product
+                    </button>
+                    {isEditing !== null && (
+                      <button
+                        type="button"
+                        onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
+                        className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                              </div>
+                <div>
+                  <label className="border p-2 rounded cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading}
+                      onChange={async (e) => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        setUploading(true)
+                        // ...existing code...
+                      }}
+                      className="hidden"
+                    />
+                    <span className="text-sm">
+                      {uploading ? 'Uploading...' : 'Upload Image'}
+                    </span>
+                  </label>
+                  {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
+                  <div className="flex gap-2 mt-4">
+                    <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
+                      {isEditing !== null ? 'Update' : 'Add'} Product
+                    </button>
+                    {isEditing !== null && (
+                      <button
+                        type="button"
+                        onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
+                        className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
                 </div>
-              <div className="flex gap-2">
-                <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
-                  {isEditing !== null ? 'Update' : 'Add'} Product
-                </button>
-                {isEditing !== null && (
-                  <button
-                    type="button"
-                    onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
-                    className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-
-          {/* Product List */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Products ({products.length})</h2>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Filter by Category:</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="all">All Products</option>
-                  <option value="uncategorized">Uncategorized</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {products.length === 0 ? (
-              <p className="text-gray-500">No products yet. Add one above!</p>
-            ) : getFilteredProducts().length === 0 ? (
-              <p className="text-gray-500">No products in this category.</p>
-            ) : (
-              <div className="space-y-4">
-                {getFilteredProducts().map((product, index) => (
                   <div key={product.id} className="border p-4 rounded-lg bg-gray-50">
                     <div className="flex gap-4">
                       <div className="flex flex-col gap-1 justify-center">
