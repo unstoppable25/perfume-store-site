@@ -1539,6 +1539,24 @@ export default function Admin() {
             <>
               {/* Category Management */}
               <div className="bg-white p-6 rounded-lg shadow mb-8">
+                {/* Cleanup Button */}
+                <button
+                  className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  onClick={async () => {
+                    // Remove all categories with no name
+                    const cleaned = categories.filter(c => c.name && c.name.trim() !== '');
+                    // Save to database
+                    await fetch('/api/settings', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ key: 'categories', value: cleaned })
+                    });
+                    setCategories(cleaned);
+                    alert('Blank/unnamed categories removed!');
+                  }}
+                >
+                  Remove All Blank/Unnamed Categories
+                </button>
                 <h2 className="text-2xl font-semibold mb-4">Categories</h2>
                 <form className="flex flex-col md:flex-row md:items-end gap-4 mb-6" onSubmit={e => { e.preventDefault(); handleAddCategory(); }}>
                   <div>
@@ -1558,17 +1576,17 @@ export default function Admin() {
                 </form>
                 {/* Category List Display */}
                 <div className="space-y-4">
-                  {/* Show all parent categories, and also show any category with no name as 'Unnamed Category' */}
-                  {categories.filter(c => !c.parent).map(parent => (
-                    <div key={parent.name || 'unnamed'} className="mb-2">
-                      <div className="text-lg font-bold text-center text-purple-700 bg-purple-50 rounded py-1 mb-1">{parent.name || 'Unnamed Category'}</div>
+                  {/* Only show categories with a valid name */}
+                  {categories.filter(c => c.name && c.name.trim() !== '' && !c.parent).map(parent => (
+                    <div key={parent.name} className="mb-2">
+                      <div className="text-lg font-bold text-center text-purple-700 bg-purple-50 rounded py-1 mb-1">{parent.name}</div>
                       <div className="pl-6">
-                        {categories.filter(c => c.parent === parent.name).length === 0 && (
+                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).length === 0 && (
                           <div className="text-gray-400 italic text-sm">No subcategories</div>
                         )}
-                        {categories.filter(c => c.parent === parent.name).map(child => (
-                          <div key={child.name || 'unnamed'} className="flex items-center gap-2 mb-1">
-                            <span className="text-gray-700">{child.name || 'Unnamed Category'}</span>
+                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).map(child => (
+                          <div key={child.name} className="flex items-center gap-2 mb-1">
+                            <span className="text-gray-700">{child.name}</span>
                             <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(child.name); setEditCategoryName(child.name); setEditCategoryParent(child.parent || ''); }}>Edit</button>
                             <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(child.name)}>Delete</button>
                           </div>
@@ -1579,13 +1597,6 @@ export default function Admin() {
                         <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(parent.name); setEditCategoryName(parent.name); setEditCategoryParent(parent.parent || ''); }}>Edit</button>
                         <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(parent.name)}>Delete</button>
                       </div>
-                    </div>
-                  ))}
-                  {/* Show any category with no name and no parent (orphan/blank) */}
-                  {categories.filter(c => (!c.name || c.name.trim() === '') && !c.parent).map((cat, idx) => (
-                    <div key={'blank-' + idx} className="mb-2">
-                      <div className="text-lg font-bold text-center text-red-700 bg-red-50 rounded py-1 mb-1">Unnamed Category</div>
-                      <div className="pl-6 text-gray-400 italic text-sm">This category has no name. Please edit or delete it.</div>
                     </div>
                   ))}
                 </div>
