@@ -609,18 +609,21 @@ export default function Admin() {
           setEditingCategory(null);
           setEditCategoryName('');
 
-          // Save updated products to server
-          for (const product of updatedProducts) {
-            await fetch('/api/products', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(product)
-            });
-          }
+          // Save all updated products to server in one request
+          const bulkRes = await fetch('/api/products/bulk-update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ products: updatedProducts })
+          });
+          const bulkData = await bulkRes.json();
           setProducts(updatedProducts);
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
 
-          alert('Category and products updated successfully');
+          if (bulkRes.ok) {
+            alert('Category and products updated successfully');
+          } else {
+            alert('Category updated, but some products failed to update.');
+          }
         } else {
           alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'));
         }
