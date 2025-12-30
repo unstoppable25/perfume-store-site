@@ -581,28 +581,52 @@ export default function Admin() {
 
   const handleEditCategory = async (oldName, newName) => {
     if (newName.trim() && newName !== oldName) {
-      const updatedCategories = categories.map(c => c === oldName ? newName.trim() : c)
-      
-      // Save to database
+      const trimmedNewName = newName.trim();
+      const updatedCategories = categories.map(c => c === oldName ? trimmedNewName : c);
+
+      // Update all products that reference the old category name
+      const updatedProducts = products.map(product => {
+        if (product.categories && product.categories.includes(oldName)) {
+          return {
+            ...product,
+            categories: product.categories.map(cat => cat === oldName ? trimmedNewName : cat)
+          };
+        }
+        return product;
+      });
+
       try {
+        // Save updated categories
         const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
-        })
-        const data = await res.json()
-        
+        });
+        const data = await res.json();
+
         if (data.success) {
-          setCategories(updatedCategories)
-          setEditingCategory(null)
-          setEditCategoryName('')
-          alert('Category updated successfully')
+          setCategories(updatedCategories);
+          setEditingCategory(null);
+          setEditCategoryName('');
+
+          // Save updated products to server
+          for (const product of updatedProducts) {
+            await fetch('/api/products', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(product)
+            });
+          }
+          setProducts(updatedProducts);
+          localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
+
+          alert('Category and products updated successfully');
         } else {
-          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'))
+          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'));
         }
       } catch (err) {
-        console.error('Failed to update category:', err)
-        alert('Failed to update category: ' + err.message)
+        console.error('Failed to update category:', err);
+        alert('Failed to update category: ' + err.message);
       }
     }
   }
