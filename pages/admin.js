@@ -1970,6 +1970,7 @@ export default function Admin() {
                   </label>
                   {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
                 </div>
+              </div>
               <div className="flex gap-2">
                 <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
                   {isEditing !== null ? 'Update' : 'Add'} Product
