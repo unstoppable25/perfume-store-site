@@ -610,26 +610,31 @@ export default function Admin() {
           setEditCategoryName('');
 
           // Save all updated products to server in one request
-          const bulkRes = await fetch('/api/products/bulk-update', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ products: updatedProducts })
-          });
-          const bulkData = await bulkRes.json();
-          setProducts(updatedProducts);
-          localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
+          try {
+            const bulkRes = await fetch('/api/products/bulk-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ products: updatedProducts })
+            });
+            const bulkData = await bulkRes.json();
+            setProducts(updatedProducts);
+            localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
 
-          if (bulkRes.ok) {
-            alert('Category and products updated successfully');
-          } else {
-            alert('Category updated, but some products failed to update.');
+            if (bulkRes.ok) {
+              alert('Category and products updated successfully');
+            } else {
+              alert('Category updated, but some products failed to update.');
+            }
+          } catch (err) {
+            // Category updated, but product update failed
+            alert('Category updated, but failed to update products.');
           }
         } else {
           alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'));
         }
       } catch (err) {
         console.error('Failed to update category:', err);
-        alert('Failed to update category: ' + err.message);
+        alert('A network or server error occurred. Please try again.');
       }
     }
   }
