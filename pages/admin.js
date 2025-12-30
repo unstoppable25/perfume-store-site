@@ -199,7 +199,6 @@ function ReviewsAdmin() {
                     <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
                     <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
                   </div>
-                </div>
               ) : (
                 <>
                   <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
