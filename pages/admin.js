@@ -1821,202 +1821,135 @@ export default function Admin() {
                             if (e.target.checked) {
                               setForm({ ...form, categories: [...form.categories, category] })
                             } else {
-                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
-                            }
-                          }}
-                          className="w-4 h-4 text-amber-600 focus:ring-amber-500"
-                        />
-                        <span className="text-sm flex-1">{category}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Add New Category */}
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Add new category (e.g., Versace, Citrus)"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
-                    className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCategory}
-                    className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 text-sm font-medium"
-                  >
-                    Add Category
-                  </button>
-                </div>
-
-                {/* Manage Categories */}
-                {categories.length > 0 && (
-                  <div className="border-t pt-3">
-                    <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
-                    <div className="space-y-2">
-                      {categories.map((category, index) => (
-                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          {editingCategory === category ? (
-                            <>
-                              <input
-                                type="text"
-                                value={editCategoryName}
-                                <div className="border-t pt-4 mt-4">
-                                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Categories</h3>
-                                  <p className="text-sm text-gray-600 mb-3">Select one or more sub-categories for this product</p>
-                                  {categories.length === 0 ? (
-                                    <p className="text-sm text-gray-500 italic mb-4">No parent categories yet. Add your first brand below.</p>
-                                  ) : (
-                                    <div className="mb-4">
+                              <div className="border-t pt-4 mt-4">
+                                <h3 className="text-lg font-semibold mb-3 text-gray-800">Product Categories</h3>
+                                <p className="text-sm text-gray-600 mb-3">Select one or more sub-categories for this product</p>
+                                {categories.length === 0 ? (
+                                  <p className="text-sm text-gray-500 italic mb-4">No parent categories yet. Add your first brand below.</p>
+                                ) : (
+                                  <div className="mb-4">
+                                    {categories.map((parent, pIdx) => (
+                                      <div key={parent.name} className="mb-2">
+                                        <div className="font-semibold text-purple-700 mb-1">{parent.name}</div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                          {parent.children.map((child) => (
+                                            <label key={child} className="flex items-center space-x-2 p-2 border rounded cursor-pointer hover:bg-amber-50 transition">
+                                              <input
+                                                type="checkbox"
+                                                checked={form.categories.includes(child)}
+                                                onChange={(e) => {
+                                                  if (e.target.checked) {
+                                                    setForm({ ...form, categories: [...form.categories, child] })
+                                                  } else {
+                                                    setForm({ ...form, categories: form.categories.filter(c => c !== child) })
+                                                  }
+                                                }}
+                                                className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                                              />
+                                              <span className="text-sm flex-1">{child}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Add New Parent Category (Brand) */}
+                                <div className="flex gap-2 mb-4">
+                                  <input
+                                    type="text"
+                                    placeholder="Add new brand (parent category)"
+                                    value={newParent}
+                                    onChange={(e) => setNewParent(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParent())}
+                                    className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleAddParent}
+                                    className="px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 text-sm font-medium"
+                                  >
+                                    Add Brand
+                                  </button>
+                                </div>
+                                {/* Manage Parent/Child Categories */}
+                                {categories.length > 0 && (
+                                  <div className="border-t pt-3">
+                                    <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Brands & Sub-Categories</h4>
+                                    <div className="space-y-4">
                                       {categories.map((parent, pIdx) => (
-                                        <div key={parent.name} className="mb-2">
-                                          <div className="font-semibold text-purple-700 mb-1">{parent.name}</div>
-                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                            {parent.children.map((child) => (
-                                              <label key={child} className="flex items-center space-x-2 p-2 border rounded cursor-pointer hover:bg-amber-50 transition">
+                                        <div key={parent.name} className="bg-gray-50 rounded p-3">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            {editingParent === parent.name ? (
+                                              <>
                                                 <input
-                                                  type="checkbox"
-                                                  checked={form.categories.includes(child)}
-                                                  onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                      setForm({ ...form, categories: [...form.categories, child] })
-                                                    } else {
-                                                      setForm({ ...form, categories: form.categories.filter(c => c !== child) })
-                                                    }
-                                                  }}
-                                                  className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                                                  type="text"
+                                                  value={editParentName}
+                                                  onChange={(e) => setEditParentName(e.target.value)}
+                                                  className="flex-1 border px-2 py-1 rounded text-sm"
+                                                  autoFocus
                                                 />
-                                                <span className="text-sm flex-1">{child}</span>
-                                              </label>
-                                            ))}
+                                                <button type="button" onClick={() => handleEditParent(parent.name, editParentName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
+                                                <button type="button" onClick={() => { setEditingParent(null); setEditParentName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <span className="flex-1 text-sm font-bold text-purple-700">{parent.name}</span>
+                                                <button type="button" onClick={() => { setEditingParent(parent.name); setEditParentName(parent.name); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
+                                                <button type="button" onClick={() => handleDeleteParent(parent.name)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
+                                              </>
+                                            )}
+                                          </div>
+                                          {/* Children (Sub-Categories) */}
+                                          <div className="ml-4">
+                                            <div className="flex gap-2 mb-2">
+                                              <input
+                                                type="text"
+                                                placeholder="Add new sub-category"
+                                                value={newChild}
+                                                onChange={(e) => setNewChild(e.target.value)}
+                                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddChild(parent.name))}
+                                                className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                              />
+                                              <button type="button" onClick={() => handleAddChild(parent.name)} className="px-3 py-1 bg-amber-700 text-white rounded text-xs hover:bg-amber-800">Add Sub-Category</button>
+                                            </div>
+                                            <div className="space-y-1">
+                                              {parent.children.map((child, cIdx) => (
+                                                <div key={child} className="flex items-center gap-2 p-1">
+                                                  {editingChild.parent === parent.name && editingChild.child === child ? (
+                                                    <>
+                                                      <input
+                                                        type="text"
+                                                        value={editChildName}
+                                                        onChange={(e) => setEditChildName(e.target.value)}
+                                                        className="flex-1 border px-2 py-1 rounded text-sm"
+                                                        autoFocus
+                                                      />
+                                                      <button type="button" onClick={() => handleEditChild(parent.name, child, editChildName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
+                                                      <button type="button" onClick={() => { setEditingChild({ parent: null, child: null }); setEditChildName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <span className="flex-1 text-sm">{child}</span>
+                                                      <button type="button" onClick={() => { setEditingChild({ parent: parent.name, child }); setEditChildName(child); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
+                                                      <button type="button" onClick={() => handleDeleteChild(parent.name, child)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
+                                                    </>
+                                                  )}
+                                                </div>
+                                              ))}
+                                            </div>
                                           </div>
                                         </div>
                                       ))}
                                     </div>
-                                  )}
-                                  {/* Add New Parent Category (Brand) */}
-                                  <div className="flex gap-2 mb-4">
-                                    <input
-                                      type="text"
-                                      placeholder="Add new brand (parent category)"
-                                      value={newParent}
-                                      onChange={(e) => setNewParent(e.target.value)}
-                                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddParent())}
-                                      className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-600"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={handleAddParent}
-                                      className="px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 text-sm font-medium"
-                                    >
-                                      Add Brand
-                                    </button>
                                   </div>
-                                  {/* Manage Parent/Child Categories */}
-                                  {categories.length > 0 && (
-                                    <div className="border-t pt-3">
-                                      <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Brands & Sub-Categories</h4>
-                                      <div className="space-y-4">
-                                        {categories.map((parent, pIdx) => (
-                                          <div key={parent.name} className="bg-gray-50 rounded p-3">
-                                            <div className="flex items-center gap-2 mb-2">
-                                              {editingParent === parent.name ? (
-                                                <>
-                                                  <input
-                                                    type="text"
-                                                    value={editParentName}
-                                                    onChange={(e) => setEditParentName(e.target.value)}
-                                                    className="flex-1 border px-2 py-1 rounded text-sm"
-                                                    autoFocus
-                                                  />
-                                                  <button type="button" onClick={() => handleEditParent(parent.name, editParentName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
-                                                  <button type="button" onClick={() => { setEditingParent(null); setEditParentName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <span className="flex-1 text-sm font-bold text-purple-700">{parent.name}</span>
-                                                  <button type="button" onClick={() => { setEditingParent(parent.name); setEditParentName(parent.name); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
-                                                  <button type="button" onClick={() => handleDeleteParent(parent.name)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
-                                                </>
-                                              )}
-                                            </div>
-                                            {/* Children (Sub-Categories) */}
-                                            <div className="ml-4">
-                                              <div className="flex gap-2 mb-2">
-                                                <input
-                                                  type="text"
-                                                  placeholder="Add new sub-category"
-                                                  value={newChild}
-                                                  onChange={(e) => setNewChild(e.target.value)}
-                                                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddChild(parent.name))}
-                                                  className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
-                                                />
-                                                <button type="button" onClick={() => handleAddChild(parent.name)} className="px-3 py-1 bg-amber-700 text-white rounded text-xs hover:bg-amber-800">Add Sub-Category</button>
-                                              </div>
-                                              <div className="space-y-1">
-                                                {parent.children.map((child, cIdx) => (
-                                                  <div key={child} className="flex items-center gap-2 p-1">
-                                                    {editingChild.parent === parent.name && editingChild.child === child ? (
-                                                      <>
-                                                        <input
-                                                          type="text"
-                                                          value={editChildName}
-                                                          onChange={(e) => setEditChildName(e.target.value)}
-                                                          className="flex-1 border px-2 py-1 rounded text-sm"
-                                                          autoFocus
-                                                        />
-                                                        <button type="button" onClick={() => handleEditChild(parent.name, child, editChildName)} className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Save</button>
-                                                        <button type="button" onClick={() => { setEditingChild({ parent: null, child: null }); setEditChildName(''); }} className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500">Cancel</button>
-                                                      </>
-                                                    ) : (
-                                                      <>
-                                                        <span className="flex-1 text-sm">{child}</span>
-                                                        <button type="button" onClick={() => { setEditingChild({ parent: parent.name, child }); setEditChildName(child); }} className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Edit</button>
-                                                        <button type="button" onClick={() => handleDeleteChild(parent.name, child)} className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700">Delete</button>
-                                                      </>
-                                                    )}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {form.categories.length > 0 && (
-                                    <div className="mt-3 text-sm text-gray-600">
-                                      Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
-                                    </div>
-                                  )}
-                                </div>
-                          } else {
-                            alert('Upload failed: ' + (data.message || 'Unknown error'))
-                          }
-                        } catch (err) {
-                          console.error('Upload failed', err)
-                          alert('Upload error: ' + err.message)
-                        } finally {
-                          setUploading(false)
-                          e.target.value = ''
-                        }
-                      }
-                      
-                      img.onerror = () => {
-                        alert('Failed to load image')
-                        setUploading(false)
-                      }
-                      
-                      // Read file as URL for Image object
-                      const reader = new FileReader()
-                      reader.onload = (ev) => { img.src = ev.target.result }
-                      reader.onerror = () => {
-                        alert('Failed to read file')
-                        setUploading(false)
-                      }
-                      reader.readAsDataURL(file)
+                                )}
+                                {form.categories.length > 0 && (
+                                  <div className="mt-3 text-sm text-gray-600">
+                                    Selected: <span className="font-semibold text-amber-700">{form.categories.join(', ')}</span>
+                                  </div>
+                                )}
+                              </div>
                     }}
                     className="hidden"
                   />
