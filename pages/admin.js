@@ -1771,12 +1771,12 @@ export default function Admin() {
                       >
                         <input
                           type="checkbox"
-                          checked={form.categories.includes(category.name)}
+                          checked={Array.isArray(form.categories) && form.categories.includes(category.name)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setForm({ ...form, categories: [...form.categories, category.name] })
+                              setForm({ ...form, categories: Array.isArray(form.categories) ? [...form.categories, category.name] : [category.name] })
                             } else {
-                              setForm({ ...form, categories: form.categories.filter(c => c !== category.name) })
+                              setForm({ ...form, categories: Array.isArray(form.categories) ? form.categories.filter(c => c !== category.name) : [] })
                             }
                           }}
                           className="w-4 h-4 text-amber-600 focus:ring-amber-500"
