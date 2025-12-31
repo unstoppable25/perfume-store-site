@@ -1,95 +1,10 @@
-import { useState, useEffect } from 'react'
+// Force redeploy: new comment for Vercel cache busting
+// Trivial change: force Vercel to use latest code
 
-// --- ReviewsAdmin Component ---
-function ReviewsAdmin() {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editId, setEditId] = useState(null);
-  const [editForm, setEditForm] = useState({ rating: '', comment: '', featured: false, hidden: false, response: '' });
-  useEffect(() => {
-    fetch('/api/reviews')
-      .then(res => res.json())
-      .then(data => { setReviews(data.reviews || []); setLoading(false); });
-  }, []);
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Head from 'next/head';
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this review?')) return;
-    await fetch('/api/reviews', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    setReviews(reviews.filter(r => r.id !== id));
-  };
-  const handleEdit = (review) => {
-    setEditId(review.id);
-    setEditForm({
-      rating: review.rating,
-      comment: review.comment,
-      featured: !!review.featured,
-      hidden: !!review.hidden,
-      response: review.response || ''
-    });
-  };
-  const handleSave = async (id) => {
-    const res = await fetch('/api/reviews', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...editForm })
-    });
-    const data = await res.json();
-    setReviews(reviews.map(r => r.id === id ? data.review : r));
-    setEditId(null);
-  };
-  const handleCancel = () => setEditId(null);
-
-  if (loading) return <div className="p-4 text-center text-gray-500">Loading reviews...</div>;
-  if (reviews.length === 0) return <div className="p-4 text-center text-gray-500">No reviews yet.</div>;
-
-  return (
-    <div className="bg-white rounded-lg shadow p-2 sm:p-4 max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Product Reviews</h2>
-      <div className="space-y-3">
-        {reviews.map((r) => (
-          <div key={r.id} className="border rounded p-2 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center bg-gray-50">
-            <div className="flex-1 w-full">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-sm">Product:</span>
-                <span className="text-xs text-gray-700">{r.productId}</span>
-                <span className="ml-2 text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                {r.featured && <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs">Featured</span>}
-                {r.hidden && <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 rounded text-xs">Hidden</span>}
-              </div>
-              {editId === r.id ? (
-                <div className="space-y-2">
-                  <input type="number" min="1" max="5" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} className="border p-2 rounded w-16" />
-                  <textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} className="border p-2 rounded w-full" rows={2} />
-                  <div className="flex gap-2 flex-wrap">
-                    <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} />Featured</label>
-                    <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.hidden} onChange={e => setEditForm(f => ({ ...f, hidden: e.target.checked }))} />Hidden</label>
-                  </div>
-                  <input type="text" placeholder="Response (optional)" value={editForm.response} onChange={e => setEditForm(f => ({ ...f, response: e.target.value }))} className="border p-2 rounded w-full" />
-                  <div className="flex gap-2 mt-2">
-                    <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
-                    <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
-                  {r.response && <div className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-1">Admin Response: {r.response}</div>}
-                  <div className="flex gap-2 flex-wrap mt-1">
-                    <button onClick={() => handleEdit(r)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Edit</button>
-                    <button onClick={() => handleDelete(r.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs">Delete</button>
-                  </div>
-                </>
-              )}
-              <div className="text-xs text-gray-500 mt-1">{new Date(r.createdAt).toLocaleString()}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-import { useRouter } from 'next/router'
-import Head from 'next/head'
 
 export default function Admin() {
   const [products, setProducts] = useState([])
@@ -581,28 +496,60 @@ export default function Admin() {
 
   const handleEditCategory = async (oldName, newName) => {
     if (newName.trim() && newName !== oldName) {
-      const updatedCategories = categories.map(c => c === oldName ? newName.trim() : c)
-      
-      // Save to database
+      const trimmedNewName = newName.trim();
+      const updatedCategories = categories.map(c => c === oldName ? trimmedNewName : c);
+
+      // Update all products that reference the old category name
+      const updatedProducts = products.map(product => {
+        if (product.categories && product.categories.includes(oldName)) {
+          return {
+            ...product,
+            categories: product.categories.map(cat => cat === oldName ? trimmedNewName : cat)
+          };
+        }
+        return product;
+      });
+
       try {
+        // Save updated categories
         const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
-        })
-        const data = await res.json()
-        
+        });
+        const data = await res.json();
+
         if (data.success) {
-          setCategories(updatedCategories)
-          setEditingCategory(null)
-          setEditCategoryName('')
-          alert('Category updated successfully')
+          setCategories(updatedCategories);
+          setEditingCategory(null);
+          setEditCategoryName('');
+
+          // Save all updated products to server in one request
+          try {
+            const bulkRes = await fetch('/api/products/bulk-update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ products: updatedProducts })
+            });
+            const bulkData = await bulkRes.json();
+            setProducts(updatedProducts);
+            localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
+
+            if (bulkRes.ok) {
+              alert('Category and products updated successfully');
+            } else {
+              alert('Category updated, but some products failed to update.');
+            }
+          } catch (err) {
+            // Category updated, but product update failed
+            alert('Category updated, but failed to update products.');
+          }
         } else {
-          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'))
+          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'));
         }
       } catch (err) {
-        console.error('Failed to update category:', err)
-        alert('Failed to update category: ' + err.message)
+        console.error('Failed to update category:', err);
+        alert('A network or server error occurred. Please try again.');
       }
     }
   }
@@ -1480,110 +1427,11 @@ export default function Admin() {
                 Delivery Settings
               </button>
               <button
-                onClick={() => { setActiveTab('reviews'); window.location.hash = 'reviews' }}
-                className={`px-6 py-3 font-semibold ${activeTab === 'reviews' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
-              >
-                Reviews
-              </button>
-              <button
                 onClick={() => { setActiveTab('promotions'); window.location.hash = 'promotions' }}
                 className={`px-6 py-3 font-semibold ${activeTab === 'promotions' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Promo Codes ({promoCodes.length})
               </button>
-              {/* Reviews Tab */}
-              {activeTab === 'reviews' && (
-                <ReviewsAdmin />
-              )}
-            // --- ReviewsAdmin Component ---
-            import React, { useState, useEffect } from 'react';
-            function ReviewsAdmin() {
-              const [reviews, setReviews] = useState([]);
-              const [loading, setLoading] = useState(true);
-              const [editId, setEditId] = useState(null);
-              const [editForm, setEditForm] = useState({ rating: '', comment: '', featured: false, hidden: false, response: '' });
-              useEffect(() => {
-                fetch('/api/reviews')
-                  .then(res => res.json())
-                  .then(data => { setReviews(data.reviews || []); setLoading(false); });
-              }, []);
-
-              const handleDelete = async (id) => {
-                if (!window.confirm('Delete this review?')) return;
-                await fetch('/api/reviews', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                setReviews(reviews.filter(r => r.id !== id));
-              };
-              const handleEdit = (review) => {
-                setEditId(review.id);
-                setEditForm({
-                  rating: review.rating,
-                  comment: review.comment,
-                  featured: !!review.featured,
-                  hidden: !!review.hidden,
-                  response: review.response || ''
-                });
-              };
-              const handleSave = async (id) => {
-                const res = await fetch('/api/reviews', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ id, ...editForm })
-                });
-                const data = await res.json();
-                setReviews(reviews.map(r => r.id === id ? data.review : r));
-                setEditId(null);
-              };
-              const handleCancel = () => setEditId(null);
-
-              if (loading) return <div className="p-4 text-center text-gray-500">Loading reviews...</div>;
-              if (reviews.length === 0) return <div className="p-4 text-center text-gray-500">No reviews yet.</div>;
-
-              return (
-                <div className="bg-white rounded-lg shadow p-2 sm:p-4 max-w-2xl mx-auto">
-                  <h2 className="text-xl font-bold mb-4">Product Reviews</h2>
-                  <div className="space-y-3">
-                    {reviews.map((r) => (
-                      <div key={r.id} className="border rounded p-2 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center bg-gray-50">
-                        <div className="flex-1 w-full">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">Product:</span>
-                            <span className="text-xs text-gray-700">{r.productId}</span>
-                            <span className="ml-2 text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                            {r.featured && <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs">Featured</span>}
-                            {r.hidden && <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 rounded text-xs">Hidden</span>}
-                          </div>
-                          {editId === r.id ? (
-                            <div className="space-y-2">
-                              <input type="number" min="1" max="5" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} className="border p-2 rounded w-16" />
-                              <textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} className="border p-2 rounded w-full" rows={2} />
-                              <div className="flex gap-2 flex-wrap">
-                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} />Featured</label>
-                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.hidden} onChange={e => setEditForm(f => ({ ...f, hidden: e.target.checked }))} />Hidden</label>
-                              </div>
-                              <input type="text" placeholder="Response (optional)" value={editForm.response} onChange={e => setEditForm(f => ({ ...f, response: e.target.value }))} className="border p-2 rounded w-full" />
-                              <div className="flex gap-2 mt-2">
-                                <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
-                                <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
-                              {r.response && <div className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-1">Admin Response: {r.response}</div>}
-                              <div className="flex gap-2 flex-wrap mt-1">
-                                <button onClick={() => handleEdit(r)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Edit</button>
-                                <button onClick={() => handleDelete(r.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs">Delete</button>
-                              </div>
-                            </>
-                          )}
-                          <div className="text-xs text-gray-500 mt-1">{new Date(r.createdAt).toLocaleString()}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            }
             </div>
           </div>
 
@@ -2300,91 +2148,86 @@ export default function Admin() {
                 <p className="text-gray-500">No orders yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {(() => {
-                    const validOrders = orders.filter(order => order && order.id)
-                    console.log('Total orders:', orders.length, 'Valid orders:', validOrders.length)
-                    console.log('Orders data:', orders)
-                    
-                    if (validOrders.length === 0) {
-                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>
-                    }
-                    
-                    return validOrders
+                  {orders.filter(order => order && order.id).length === 0 ? (
+                    <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>
+                  ) : (
+                    orders
+                      .filter(order => order && order.id)
                       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                       .map((order) => (
-                    <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
-                          <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
-                          {order.updatedAt && order.updatedAt !== order.createdAt && (
-                            <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end space-y-2">
-                          <select
-                            value={order.status || 'Pending'}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                            className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
-                              order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
-                              order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
-                              order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
-                              order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
-                              'bg-red-50 text-red-800 border-red-300'
-                            }`}
-                          >
-                            <option value="Pending">📋 Pending</option>
-                            <option value="Processing">⚙️ Processing</option>
-                            <option value="Shipped">🚚 Shipped</option>
-                            <option value="Delivered">✅ Delivered</option>
-                            <option value="Cancelled">❌ Cancelled</option>
-                          </select>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditOrder(order)}
-                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteOrder(order.id)}
-                              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-                            >
-                              Delete
-                            </button>
+                        <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
+                              <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                              {order.updatedAt && order.updatedAt !== order.createdAt && (
+                                <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end space-y-2">
+                              <select
+                                value={order.status || 'Pending'}
+                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
+                                  order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
+                                  order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                                  order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
+                                  order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
+                                  'bg-red-50 text-red-800 border-red-300'
+                                }`}
+                              >
+                                <option value="Pending">📋 Pending</option>
+                                <option value="Processing">⚙️ Processing</option>
+                                <option value="Shipped">🚚 Shipped</option>
+                                <option value="Delivered">✅ Delivered</option>
+                                <option value="Cancelled">❌ Cancelled</option>
+                              </select>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditOrder(order)}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Customer</p>
-                          <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
-                          <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
-                          <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
-                          <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
-                          <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                            <span>{item.name} x{item.quantity}</span>
-                            <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">Customer</p>
+                              <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
+                              <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
+                              <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
+                              <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
+                              <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
+                            </div>
                           </div>
-                        ))}
-                        <div className="mt-2 pt-2 border-t flex justify-between font-bold">
-                          <span>Total</span>
-                          <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                                <span>{item.name} x{item.quantity}</span>
+                                <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                              </div>
+                            ))}
+                            <div className="mt-2 pt-2 border-t flex justify-between font-bold">
+                              <span>Total</span>
+                              <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
-                    </div>
-                  ))
-                  })()}
+                      ))
+                  )}
                 </div>
               )}
             </div>
@@ -2409,7 +2252,7 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {customers.map((customer, idx) => {
-                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email)
+                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email);
                         return (
                           <tr key={idx} className="border-b">
                             <td className="px-4 py-3">{customer.firstName} {customer.lastName}</td>
@@ -2417,7 +2260,7 @@ export default function Admin() {
                             <td className="px-4 py-3 text-sm text-gray-600">{customer.phone}</td>
                             <td className="px-4 py-3 text-sm font-semibold">{customerOrders.length}</td>
                           </tr>
-                        )
+                        );
                       })}
                     </tbody>
                   </table>
