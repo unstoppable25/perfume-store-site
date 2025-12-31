@@ -1846,7 +1846,7 @@ export default function Admin() {
                 {isEditing !== null && (
                   <button
                     type="button"
-                    onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '' }) }}
+                    onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '', categories: [] }) }}
                     className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
                   >
                     Cancel
