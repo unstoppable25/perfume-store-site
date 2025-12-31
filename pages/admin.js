@@ -114,13 +114,10 @@ export default function Admin() {
   })
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
-  // Categories now have { name, parent } structure
   const [categories, setCategories] = useState([])
   const [newCategory, setNewCategory] = useState('')
-  const [newCategoryParent, setNewCategoryParent] = useState('')
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCategoryName, setEditCategoryName] = useState('')
-  const [editCategoryParent, setEditCategoryParent] = useState('')
   const [editingOrder, setEditingOrder] = useState(null)
   const [showAddOrder, setShowAddOrder] = useState(false)
   const [orderForm, setOrderForm] = useState({
@@ -529,34 +526,30 @@ export default function Admin() {
   }
 
   const handleAddCategory = async () => {
-    const trimmedName = newCategory.trim();
-    if (!trimmedName) return;
-    // Prevent duplicate names (case-insensitive)
-    if (categories.some(c => c.name && c.name.toLowerCase() === trimmedName.toLowerCase())) {
-      alert('Category name already exists!');
-      return;
-    }
-    const catObj = { name: trimmedName, parent: newCategoryParent || null };
-    const updatedCategories = [...categories, catObj];
-    // Save to database first
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'categories', value: updatedCategories })
-      })
-      const data = await res.json();
-      if (data.success) {
-        setCategories(updatedCategories);
-        setNewCategory('');
-        setNewCategoryParent('');
-      } else {
-        console.error('Category save response:', data);
-        alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'));
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      const updatedCategories = [...categories, newCategory.trim()]
+      
+      // Save to database first
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'categories', value: updatedCategories })
+        })
+        const data = await res.json()
+        
+        if (data.success) {
+          setCategories(updatedCategories)
+          setNewCategory('')
+          // Category added successfully - no alert needed
+        } else {
+          console.error('Category save response:', data)
+          alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
+        }
+      } catch (err) {
+        console.error('Failed to save category:', err)
+        alert('Failed to save category: ' + err.message)
       }
-    } catch (err) {
-      console.error('Failed to save category:', err);
-      alert('Failed to save category: ' + err.message);
     }
   }
 
@@ -586,63 +579,30 @@ export default function Admin() {
     }
   }
 
-  const handleEditCategory = async (oldName, newName, newParent) => {
-    if (newName.trim() && (newName !== oldName || newParent !== (categories.find(c => c.name === oldName)?.parent || ''))) {
-      const trimmedNewName = newName.trim();
-      const updatedCategories = categories.map(c =>
-        c.name === oldName ? { ...c, name: trimmedNewName, parent: newParent || null } : c
-      );
-
-      // Update all products that reference the old category name
-      const updatedProducts = products.map(product => {
-        if (product.categories && product.categories.includes(oldName)) {
-          return {
-            ...product,
-            categories: product.categories.map(cat => cat === oldName ? trimmedNewName : cat)
-          };
-        }
-        return product;
-      });
-
+  const handleEditCategory = async (oldName, newName) => {
+    if (newName.trim() && newName !== oldName) {
+      const updatedCategories = categories.map(c => c === oldName ? newName.trim() : c)
+      
+      // Save to database
       try {
-        // Save updated categories
         const res = await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
-        });
-        const data = await res.json();
-
+        })
+        const data = await res.json()
+        
         if (data.success) {
-          setCategories(updatedCategories);
-          setEditingCategory(null);
-          setEditCategoryName('');
-          setEditCategoryParent('');
-
-          // Save all updated products to server in one request
-          try {
-            const bulkRes = await fetch('/api/products/bulk-update', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ products: updatedProducts })
-            });
-            setProducts(updatedProducts);
-            localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
-
-            if (bulkRes.ok) {
-              alert('Category and products updated successfully');
-            } else {
-              alert('Category updated, but some products failed to update.');
-            }
-          } catch (err) {
-            alert('Category updated, but failed to update products.');
-          }
+          setCategories(updatedCategories)
+          setEditingCategory(null)
+          setEditCategoryName('')
+          alert('Category updated successfully')
         } else {
-          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'));
+          alert('Failed to update category: ' + (data.error || data.message || 'Unknown error'))
         }
       } catch (err) {
-        console.error('Failed to update category:', err);
-        alert('A network or server error occurred. Please try again.');
+        console.error('Failed to update category:', err)
+        alert('Failed to update category: ' + err.message)
       }
     }
   }
@@ -1535,103 +1495,101 @@ export default function Admin() {
               {activeTab === 'reviews' && (
                 <ReviewsAdmin />
               )}
+            // --- ReviewsAdmin Component ---
+            import React, { useState, useEffect } from 'react';
+            function ReviewsAdmin() {
+              const [reviews, setReviews] = useState([]);
+              const [loading, setLoading] = useState(true);
+              const [editId, setEditId] = useState(null);
+              const [editForm, setEditForm] = useState({ rating: '', comment: '', featured: false, hidden: false, response: '' });
+              useEffect(() => {
+                fetch('/api/reviews')
+                  .then(res => res.json())
+                  .then(data => { setReviews(data.reviews || []); setLoading(false); });
+              }, []);
+
+              const handleDelete = async (id) => {
+                if (!window.confirm('Delete this review?')) return;
+                await fetch('/api/reviews', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                setReviews(reviews.filter(r => r.id !== id));
+              };
+              const handleEdit = (review) => {
+                setEditId(review.id);
+                setEditForm({
+                  rating: review.rating,
+                  comment: review.comment,
+                  featured: !!review.featured,
+                  hidden: !!review.hidden,
+                  response: review.response || ''
+                });
+              };
+              const handleSave = async (id) => {
+                const res = await fetch('/api/reviews', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id, ...editForm })
+                });
+                const data = await res.json();
+                setReviews(reviews.map(r => r.id === id ? data.review : r));
+                setEditId(null);
+              };
+              const handleCancel = () => setEditId(null);
+
+              if (loading) return <div className="p-4 text-center text-gray-500">Loading reviews...</div>;
+              if (reviews.length === 0) return <div className="p-4 text-center text-gray-500">No reviews yet.</div>;
+
+              return (
+                <div className="bg-white rounded-lg shadow p-2 sm:p-4 max-w-2xl mx-auto">
+                  <h2 className="text-xl font-bold mb-4">Product Reviews</h2>
+                  <div className="space-y-3">
+                    {reviews.map((r) => (
+                      <div key={r.id} className="border rounded p-2 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center bg-gray-50">
+                        <div className="flex-1 w-full">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">Product:</span>
+                            <span className="text-xs text-gray-700">{r.productId}</span>
+                            <span className="ml-2 text-yellow-500">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                            {r.featured && <span className="ml-2 px-2 py-0.5 bg-amber-200 text-amber-800 rounded text-xs">Featured</span>}
+                            {r.hidden && <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 rounded text-xs">Hidden</span>}
+                          </div>
+                          {editId === r.id ? (
+                            <div className="space-y-2">
+                              <input type="number" min="1" max="5" value={editForm.rating} onChange={e => setEditForm(f => ({ ...f, rating: e.target.value }))} className="border p-2 rounded w-16" />
+                              <textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} className="border p-2 rounded w-full" rows={2} />
+                              <div className="flex gap-2 flex-wrap">
+                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} />Featured</label>
+                                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={editForm.hidden} onChange={e => setEditForm(f => ({ ...f, hidden: e.target.checked }))} />Hidden</label>
+                              </div>
+                              <input type="text" placeholder="Response (optional)" value={editForm.response} onChange={e => setEditForm(f => ({ ...f, response: e.target.value }))} className="border p-2 rounded w-full" />
+                              <div className="flex gap-2 mt-2">
+                                <button onClick={() => handleSave(r.id)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Save</button>
+                                <button onClick={handleCancel} className="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs">Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-sm text-gray-800 mb-1">{r.comment}</div>
+                              {r.response && <div className="text-xs text-purple-700 bg-purple-50 rounded px-2 py-1 mb-1">Admin Response: {r.response}</div>}
+                              <div className="flex gap-2 flex-wrap mt-1">
+                                <button onClick={() => handleEdit(r)} className="bg-amber-700 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onClick={() => handleDelete(r.id)} className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs">Delete</button>
+                              </div>
+                            </>
+                          )}
+                          <div className="text-xs text-gray-500 mt-1">{new Date(r.createdAt).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
             </div>
           </div>
-
 
           {/* Products Tab */}
           {activeTab === 'products' && (
             <>
-              {/* Category Management */}
-              <div className="bg-white p-6 rounded-lg shadow mb-8">
-                {/* Cleanup Button */}
-                <button
-                  className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                  onClick={async () => {
-                    // Remove all categories with no name
-                    const cleaned = categories.filter(c => c.name && c.name.trim() !== '');
-                    // Save to database
-                    await fetch('/api/settings', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ key: 'categories', value: cleaned })
-                    });
-                    setCategories(cleaned);
-                    alert('Blank/unnamed categories removed!');
-                  }}
-                >
-                  Remove All Blank/Unnamed Categories
-                </button>
-                <h2 className="text-2xl font-semibold mb-4">Categories</h2>
-                <form className="flex flex-col md:flex-row md:items-end gap-4 mb-6" onSubmit={e => { e.preventDefault(); handleAddCategory(); }}>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                    <input type="text" className="border p-2 rounded w-48" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. Naseem Aqua" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                    <select className="border p-2 rounded w-48" value={newCategoryParent || ''} onChange={e => setNewCategoryParent(e.target.value)}>
-                      <option value="">None (Top-level)</option>
-                      {categories.filter(c => !c.parent).map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <button type="submit" className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800">Add Category</button>
-                </form>
-                {/* Category List Display */}
-                <div className="space-y-4">
-                  {/* Only show categories with a valid name */}
-                  {categories.filter(c => c.name && c.name.trim() !== '' && !c.parent).map(parent => (
-                    <div key={parent.name} className="mb-2">
-                      <div className="text-lg font-bold text-center text-purple-700 bg-purple-50 rounded py-1 mb-1">{parent.name}</div>
-                      <div className="pl-6">
-                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).length === 0 && (
-                          <div className="text-gray-400 italic text-sm">No subcategories</div>
-                        )}
-                        {categories.filter(c => c.name && c.name.trim() !== '' && c.parent === parent.name).map(child => (
-                          <div key={child.name} className="flex items-center gap-2 mb-1">
-                            <span className="text-gray-700">{child.name}</span>
-                            <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(child.name); setEditCategoryName(child.name); setEditCategoryParent(child.parent || ''); }}>Edit</button>
-                            <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(child.name)}>Delete</button>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Edit/Delete for parent */}
-                      <div className="flex justify-center gap-2 mt-1">
-                        <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(parent.name); setEditCategoryName(parent.name); setEditCategoryParent(parent.parent || ''); }}>Edit</button>
-                        <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(parent.name)}>Delete</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Edit Category Modal */}
-                {editingCategory && (
-                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-                      <h3 className="text-lg font-bold mb-4">Edit Category</h3>
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                        <input type="text" className="border p-2 rounded w-full" value={editCategoryName} onChange={e => setEditCategoryName(e.target.value)} />
-                      </div>
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                        <select className="border p-2 rounded w-full" value={editCategoryParent || ''} onChange={e => setEditCategoryParent(e.target.value)}>
-                          <option value="">None (Top-level)</option>
-                          {categories.filter(c => !c.parent && c.name !== editingCategory).map(c => (
-                            <option key={c.name} value={c.name}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <button className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800" onClick={async () => { await handleEditCategory(editingCategory, editCategoryName, editCategoryParent); setEditingCategory(null); }}>Save</button>
-                        <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded" onClick={() => setEditingCategory(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Logo Upload */}
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Logo</h2>
@@ -1648,6 +1606,7 @@ export default function Admin() {
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Home Page Button Backgrounds</h2>
                 <p className="text-sm text-gray-600 mb-6">Upload background images for the Shop and About buttons on the home page. Images will be dimmed with the button text visible on top.</p>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Shop Button Background */}
                   <div>
@@ -1771,22 +1730,22 @@ export default function Admin() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                     {categories.map((category) => (
                       <label
-                        key={category.name}
+                        key={category}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
                       >
                         <input
                           type="checkbox"
-                          checked={Array.isArray(form.categories) && form.categories.includes(category.name)}
+                          checked={form.categories.includes(category)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setForm({ ...form, categories: Array.isArray(form.categories) ? [...form.categories, category.name] : [category.name] })
+                              setForm({ ...form, categories: [...form.categories, category] })
                             } else {
-                              setForm({ ...form, categories: Array.isArray(form.categories) ? form.categories.filter(c => c !== category.name) : [] })
+                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
                             }
                           }}
                           className="w-4 h-4 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className="text-sm flex-1">{category.name}</span>
+                        <span className="text-sm flex-1">{category}</span>
                       </label>
                     ))}
                   </div>
@@ -1817,8 +1776,8 @@ export default function Admin() {
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
                       {categories.map((category, index) => (
-                        <div key={category.name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          {editingCategory === category.name ? (
+                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          {editingCategory === category ? (
                             <>
                               <input
                                 type="text"
@@ -1829,7 +1788,7 @@ export default function Admin() {
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEditCategory(category.name, editCategoryName)}
+                                onClick={() => handleEditCategory(category, editCategoryName)}
                                 className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
                               >
                                 Save
@@ -1871,12 +1830,12 @@ export default function Admin() {
                                   </svg>
                                 </button>
                               </div>
-                              <span className="flex-1 text-sm font-medium">{category.name}</span>
+                              <span className="flex-1 text-sm font-medium">{category}</span>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setEditingCategory(category.name)
-                                  setEditCategoryName(category.name)
+                                  setEditingCategory(category)
+                                  setEditCategoryName(category)
                                 }}
                                 className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
                               >
@@ -1884,7 +1843,7 @@ export default function Admin() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteCategory(category.name)}
+                                onClick={() => handleDeleteCategory(category)}
                                 className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
                               >
                                 Delete
@@ -2028,7 +1987,7 @@ export default function Admin() {
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
                   {categories.map(cat => (
-                    <option key={cat.name} value={cat.name}>{cat.name}</option>
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
@@ -2071,8 +2030,8 @@ export default function Admin() {
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {product.categories.map(cat => (
-                                <span key={typeof cat === 'string' ? cat : cat.name} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                  {typeof cat === 'string' ? cat : cat.name}
+                                <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  {cat}
                                 </span>
                               ))}
                             </div>
