@@ -2,6 +2,14 @@
 // Trivial change: force Vercel to use latest code
 
 import { useState, useEffect } from 'react';
+
+// Utility to ensure array-ness
+function toArray(val) {
+  if (Array.isArray(val)) return val;
+  if (val && typeof val === 'object') return Object.values(val);
+  if (val == null) return [];
+  return [val];
+}
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 
@@ -187,12 +195,7 @@ export default function Admin() {
           if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
           if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
           if (data.settings.categories) {
-            // Always set as array, even if object
-            let cats = data.settings.categories;
-            if (!Array.isArray(cats)) {
-              cats = Object.values(cats);
-            }
-            setCategories(cats);
+            setCategories(toArray(data.settings.categories));
           }
           // Load delivery settings
           console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
@@ -298,7 +301,7 @@ export default function Admin() {
       oldPrice: product.oldPrice || '',
       description: product.description, 
       image: product.image,
-      categories: product.categories || []
+      categories: toArray(product.categories)
     })
     setIsEditing(product.id)
   }
@@ -509,7 +512,7 @@ export default function Admin() {
         if (product.categories && product.categories.includes(oldName)) {
           return {
             ...product,
-            categories: product.categories.map(cat => cat === oldName ? trimmedNewName : cat)
+            categories: toArray(product.categories).map(cat => cat === oldName ? trimmedNewName : cat)
           };
         }
         return product;
@@ -1581,7 +1584,7 @@ export default function Admin() {
                   <p className="text-sm text-gray-500 italic mb-4">No categories yet. Add your first category below.</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                    {Array.isArray(categories) && categories.map((category) => (
+                    {toArray(categories).map((category) => (
                       <label
                         key={category}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
@@ -1628,7 +1631,7 @@ export default function Admin() {
                   <div className="border-t pt-3">
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
-                      {Array.isArray(categories) && categories.map((category, index) => (
+                      {toArray(categories).map((category, index) => (
                         <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                           {editingCategory === category ? (
                             <>
@@ -1839,7 +1842,7 @@ export default function Admin() {
                 >
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
-                  {Array.isArray(categories) && categories.map(cat => (
+                  {toArray(categories).map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
@@ -1882,7 +1885,7 @@ export default function Admin() {
                           <h3 className="font-semibold text-lg">{product.name}</h3>
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
-                              {Array.isArray(product.categories) && product.categories.map(cat => (
+                              {toArray(product.categories).map(cat => (
                                 <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                                   {cat}
                                 </span>
