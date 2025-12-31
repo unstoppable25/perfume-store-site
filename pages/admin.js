@@ -559,12 +559,12 @@ export default function Admin() {
           setEditingCategory(null);
           setEditCategoryName('');
 
-          // Save all updated products to server in one request
+          // Save all updated products to server in one request, replacing all
           try {
             const bulkRes = await fetch('/api/products/bulk-update', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ products: updatedProducts })
+              body: JSON.stringify({ products: updatedProducts, replaceAll: true })
             });
             const bulkData = await bulkRes.json();
             setProducts(updatedProducts);

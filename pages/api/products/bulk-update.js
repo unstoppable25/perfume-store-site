@@ -1,4 +1,4 @@
-import { updateProduct } from '../../../lib/db'
+import { updateProduct, getAllProducts } from '../../../lib/db'
 
 export default async function handler(req, res) {
   if (req.method !== 'PUT') {
@@ -11,15 +11,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'No products provided' })
   }
 
-  const results = []
-  for (const product of products) {
-    if (!product.id) continue
+  // Replace all products in DB if this is a full-bulk update (category rename scenario)
+  if (req.body.replaceAll) {
     try {
-      const updated = await updateProduct(product)
-      results.push({ id: product.id, success: true, updated })
+      if (typeof global.kv !== 'undefined' && global.kv) {
+        await global.kv.set('products', products);
+      } else {
+        for (const product of products) {
+          await updateProduct(product);
+        }
+      }
+      return res.status(200).json({ updated: products });
     } catch (err) {
-      results.push({ id: product.id, success: false, error: err.message })
+      return res.status(500).json({ error: err.message });
     }
+  } else {
+    const results = []
+    for (const product of products) {
+      if (!product.id) continue
+      try {
+        const updated = await updateProduct(product)
+        results.push({ id: product.id, success: true, updated })
+      } catch (err) {
+        results.push({ id: product.id, success: false, error: err.message })
+      }
+    }
+    return res.status(200).json({ updated: results })
   }
-  return res.status(200).json({ updated: results })
 }
