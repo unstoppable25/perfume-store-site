@@ -2245,99 +2245,85 @@ export default function Admin() {
               ) : (
                 <div className="space-y-4">
                   {(() => {
-                    const validOrders = orders.filter(order => order && order.id)
-                    console.log('Total orders:', orders.length, 'Valid orders:', validOrders.length)
-                    console.log('Orders data:', orders)
-                    
+                    const validOrders = orders.filter(order => order && order.id);
                     if (validOrders.length === 0) {
                       return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>;
                     }
-                    return (
-                      <>
-                        {validOrders
-                          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                          .map((order) => (
-                            <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
-                              <div className="flex justify-between items-start mb-3">
-                                <div>
-                                  <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
-                                  <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
-                                  {order.updatedAt && order.updatedAt !== order.createdAt && (
-                                    <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
-                                  )}
-                                </div>
-                                <div className="flex flex-col items-end space-y-2">
-                                  <select
-                                    value={order.status || 'Pending'}
-                                    // ...existing code...
-                                  />
-                                </div>
-                              </div>
-                              {/* ...existing code for order details... */}
+                    return validOrders
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .map((order) => (
+                        <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
+                              <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                              {order.updatedAt && order.updatedAt !== order.createdAt && (
+                                <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                              )}
                             </div>
-                          ))}
-                      </>
-                    );
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                            className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
-                              order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
-                              order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
-                              order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
-                              order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
-                              'bg-red-50 text-red-800 border-red-300'
-                            }`}
-                          >
-                            <option value="Pending">📋 Pending</option>
-                            <option value="Processing">⚙️ Processing</option>
-                            <option value="Shipped">🚚 Shipped</option>
-                            <option value="Delivered">✅ Delivered</option>
-                            <option value="Cancelled">❌ Cancelled</option>
-                          </select>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditOrder(order)}
-                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteOrder(order.id)}
-                              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-                            >
-                              Delete
-                            </button>
+                            <div className="flex flex-col items-end space-y-2">
+                              <select
+                                value={order.status || 'Pending'}
+                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
+                                  order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
+                                  order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                                  order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
+                                  order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
+                                  'bg-red-50 text-red-800 border-red-300'
+                                }`}
+                              >
+                                <option value="Pending">📋 Pending</option>
+                                <option value="Processing">⚙️ Processing</option>
+                                <option value="Shipped">🚚 Shipped</option>
+                                <option value="Delivered">✅ Delivered</option>
+                                <option value="Cancelled">❌ Cancelled</option>
+                              </select>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditOrder(order)}
+                                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Customer</p>
-                          <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
-                          <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
-                          <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
-                          <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
-                          <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                            <span>{item.name} x{item.quantity}</span>
-                            <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">Customer</p>
+                              <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
+                              <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
+                              <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
+                              <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
+                              <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
+                            </div>
                           </div>
-                        ))}
-                        <div className="mt-2 pt-2 border-t flex justify-between font-bold">
-                          <span>Total</span>
-                          <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                                <span>{item.name} x{item.quantity}</span>
+                                <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                              </div>
+                            ))}
+                            <div className="mt-2 pt-2 border-t flex justify-between font-bold">
+                              <span>Total</span>
+                              <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
-                    </div>
-                  ))
+                      ));
                   })()}
                 </div>
               )}
