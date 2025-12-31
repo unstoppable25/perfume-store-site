@@ -196,8 +196,14 @@ export default function Admin() {
           if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
           if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
           if (data.settings.categories) {
-            setCategories(toArray(data.settings.categories));
-            console.log('Loaded categories:', data.settings.categories)
+            // Always store categories as array of strings
+            const cats = toArray(data.settings.categories);
+            if (cats.length && typeof cats[0] === 'object' && cats[0].name) {
+              setCategories(cats.map(c => c.name));
+            } else {
+              setCategories(cats);
+            }
+            console.log('Loaded categories:', cats)
           }
           // Load delivery settings
           console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
