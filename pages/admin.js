@@ -1581,7 +1581,7 @@ export default function Admin() {
                   <p className="text-sm text-gray-500 italic mb-4">No categories yet. Add your first category below.</p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                    {categories.map((category) => (
+                    {Array.isArray(categories) && categories.map((category) => (
                       <label
                         key={category}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
@@ -1628,7 +1628,7 @@ export default function Admin() {
                   <div className="border-t pt-3">
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
-                      {categories.map((category, index) => (
+                      {Array.isArray(categories) && categories.map((category, index) => (
                         <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                           {editingCategory === category ? (
                             <>
@@ -1839,7 +1839,7 @@ export default function Admin() {
                 >
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
-                  {categories.map(cat => (
+                  {Array.isArray(categories) && categories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
@@ -1882,7 +1882,7 @@ export default function Admin() {
                           <h3 className="font-semibold text-lg">{product.name}</h3>
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
-                              {product.categories.map(cat => (
+                              {Array.isArray(product.categories) && product.categories.map(cat => (
                                 <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                                   {cat}
                                 </span>
