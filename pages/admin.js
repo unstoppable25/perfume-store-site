@@ -1,7 +1,4 @@
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
+import { useState, useEffect } from 'react'
 
 // --- ReviewsAdmin Component ---
 function ReviewsAdmin() {
@@ -91,6 +88,8 @@ function ReviewsAdmin() {
     </div>
   );
 }
+import { useRouter } from 'next/router'
+import Head from 'next/head'
 
 export default function Admin() {
   const [products, setProducts] = useState([])
@@ -115,10 +114,13 @@ export default function Admin() {
   })
   const [shopBgImage, setShopBgImage] = useState('')
   const [aboutBgImage, setAboutBgImage] = useState('')
+  // Categories now have { name, parent } structure
   const [categories, setCategories] = useState([])
   const [newCategory, setNewCategory] = useState('')
+  const [newCategoryParent, setNewCategoryParent] = useState('')
   const [editingCategory, setEditingCategory] = useState(null)
   const [editCategoryName, setEditCategoryName] = useState('')
+  const [editCategoryParent, setEditCategoryParent] = useState('')
   const [editingOrder, setEditingOrder] = useState(null)
   const [showAddOrder, setShowAddOrder] = useState(false)
   const [orderForm, setOrderForm] = useState({
@@ -527,9 +529,9 @@ export default function Admin() {
   }
 
   const handleAddCategory = async () => {
-    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
-      const updatedCategories = [...categories, newCategory.trim()]
-      
+    if (newCategory.trim() && !categories.some(c => c.name === newCategory.trim())) {
+      const catObj = { name: newCategory.trim(), parent: newCategoryParent || null };
+      const updatedCategories = [...categories, catObj];
       // Save to database first
       try {
         const res = await fetch('/api/settings', {
@@ -538,11 +540,10 @@ export default function Admin() {
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         })
         const data = await res.json()
-        
         if (data.success) {
           setCategories(updatedCategories)
           setNewCategory('')
-          // Category added successfully - no alert needed
+          setNewCategoryParent('')
         } else {
           console.error('Category save response:', data)
           alert('Failed to save category: ' + (data.error || data.message || 'Unknown error'))
@@ -580,10 +581,12 @@ export default function Admin() {
     }
   }
 
-  const handleEditCategory = async (oldName, newName) => {
-    if (newName.trim() && newName !== oldName) {
+  const handleEditCategory = async (oldName, newName, newParent) => {
+    if (newName.trim() && (newName !== oldName || newParent !== (categories.find(c => c.name === oldName)?.parent || ''))) {
       const trimmedNewName = newName.trim();
-      const updatedCategories = categories.map(c => c === oldName ? trimmedNewName : c);
+      const updatedCategories = categories.map(c =>
+        c.name === oldName ? { ...c, name: trimmedNewName, parent: newParent || null } : c
+      );
 
       // Update all products that reference the old category name
       const updatedProducts = products.map(product => {
@@ -609,6 +612,7 @@ export default function Admin() {
           setCategories(updatedCategories);
           setEditingCategory(null);
           setEditCategoryName('');
+          setEditCategoryParent('');
 
           // Save all updated products to server in one request
           try {
@@ -617,7 +621,6 @@ export default function Admin() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ products: updatedProducts })
             });
-            const bulkData = await bulkRes.json();
             setProducts(updatedProducts);
             localStorage.setItem('scentlumus_products_backup', JSON.stringify(updatedProducts));
 
@@ -627,7 +630,6 @@ export default function Admin() {
               alert('Category updated, but some products failed to update.');
             }
           } catch (err) {
-            // Category updated, but product update failed
             alert('Category updated, but failed to update products.');
           }
         } else {
@@ -1531,9 +1533,81 @@ export default function Admin() {
             </div>
           </div>
 
+
           {/* Products Tab */}
           {activeTab === 'products' && (
             <>
+              {/* Category Management */}
+              <div className="bg-white p-6 rounded-lg shadow mb-8">
+                <h2 className="text-2xl font-semibold mb-4">Categories</h2>
+                <form className="flex flex-col md:flex-row md:items-end gap-4 mb-6" onSubmit={e => { e.preventDefault(); handleAddCategory(); }}>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                    <input type="text" className="border p-2 rounded w-48" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. Naseem Aqua" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                    <select className="border p-2 rounded w-48" value={newCategoryParent || ''} onChange={e => setNewCategoryParent(e.target.value)}>
+                      <option value="">None (Top-level)</option>
+                      {categories.filter(c => !c.parent).map(c => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="submit" className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800">Add Category</button>
+                </form>
+                {/* Category List Display */}
+                <div className="space-y-4">
+                  {categories.filter(c => !c.parent).map(parent => (
+                    <div key={parent.name} className="mb-2">
+                      <div className="text-lg font-bold text-center text-purple-700 bg-purple-50 rounded py-1 mb-1">{parent.name}</div>
+                      <div className="pl-6">
+                        {categories.filter(c => c.parent === parent.name).length === 0 && (
+                          <div className="text-gray-400 italic text-sm">No subcategories</div>
+                        )}
+                        {categories.filter(c => c.parent === parent.name).map(child => (
+                          <div key={child.name} className="flex items-center gap-2 mb-1">
+                            <span className="text-gray-700">{child.name}</span>
+                            <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(child.name); setEditCategoryName(child.name); setEditCategoryParent(child.parent || ''); }}>Edit</button>
+                            <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(child.name)}>Delete</button>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Edit/Delete for parent */}
+                      <div className="flex justify-center gap-2 mt-1">
+                        <button className="text-xs text-blue-600 underline" onClick={() => { setEditingCategory(parent.name); setEditCategoryName(parent.name); setEditCategoryParent(parent.parent || ''); }}>Edit</button>
+                        <button className="text-xs text-red-600 underline" onClick={() => handleDeleteCategory(parent.name)}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Edit Category Modal */}
+                {editingCategory && (
+                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+                      <h3 className="text-lg font-bold mb-4">Edit Category</h3>
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                        <input type="text" className="border p-2 rounded w-full" value={editCategoryName} onChange={e => setEditCategoryName(e.target.value)} />
+                      </div>
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
+                        <select className="border p-2 rounded w-full" value={editCategoryParent || ''} onChange={e => setEditCategoryParent(e.target.value)}>
+                          <option value="">None (Top-level)</option>
+                          {categories.filter(c => !c.parent && c.name !== editingCategory).map(c => (
+                            <option key={c.name} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <button className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800" onClick={async () => { await handleEditCategory(editingCategory, editCategoryName, editCategoryParent); setEditingCategory(null); }}>Save</button>
+                        <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded" onClick={() => setEditingCategory(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Logo Upload */}
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Logo</h2>
@@ -1550,7 +1624,6 @@ export default function Admin() {
               <div className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-2xl font-semibold mb-4">Home Page Button Backgrounds</h2>
                 <p className="text-sm text-gray-600 mb-6">Upload background images for the Shop and About buttons on the home page. Images will be dimmed with the button text visible on top.</p>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Shop Button Background */}
                   <div>
@@ -1674,22 +1747,22 @@ export default function Admin() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                     {categories.map((category) => (
                       <label
-                        key={category}
+                        key={category.name}
                         className="flex items-center space-x-2 p-3 border rounded cursor-pointer hover:bg-amber-50 transition"
                       >
                         <input
                           type="checkbox"
-                          checked={form.categories.includes(category)}
+                          checked={form.categories.includes(category.name)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setForm({ ...form, categories: [...form.categories, category] })
+                              setForm({ ...form, categories: [...form.categories, category.name] })
                             } else {
-                              setForm({ ...form, categories: form.categories.filter(c => c !== category) })
+                              setForm({ ...form, categories: form.categories.filter(c => c !== category.name) })
                             }
                           }}
                           className="w-4 h-4 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className="text-sm flex-1">{category}</span>
+                        <span className="text-sm flex-1">{category.name}</span>
                       </label>
                     ))}
                   </div>
@@ -1720,8 +1793,8 @@ export default function Admin() {
                     <h4 className="text-sm font-semibold mb-2 text-gray-700">Manage Categories</h4>
                     <div className="space-y-2">
                       {categories.map((category, index) => (
-                        <div key={category} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                          {editingCategory === category ? (
+                        <div key={category.name} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          {editingCategory === category.name ? (
                             <>
                               <input
                                 type="text"
@@ -1732,7 +1805,7 @@ export default function Admin() {
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEditCategory(category, editCategoryName)}
+                                onClick={() => handleEditCategory(category.name, editCategoryName)}
                                 className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
                               >
                                 Save
@@ -1774,12 +1847,12 @@ export default function Admin() {
                                   </svg>
                                 </button>
                               </div>
-                              <span className="flex-1 text-sm font-medium">{category}</span>
+                              <span className="flex-1 text-sm font-medium">{category.name}</span>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setEditingCategory(category)
-                                  setEditCategoryName(category)
+                                  setEditingCategory(category.name)
+                                  setEditCategoryName(category.name)
                                 }}
                                 className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
                               >
@@ -1787,7 +1860,7 @@ export default function Admin() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteCategory(category)}
+                                onClick={() => handleDeleteCategory(category.name)}
                                 className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
                               >
                                 Delete
@@ -1931,7 +2004,7 @@ export default function Admin() {
                   <option value="all">All Products</option>
                   <option value="uncategorized">Uncategorized</option>
                   {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat.name} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -1974,8 +2047,8 @@ export default function Admin() {
                           {product.categories && product.categories.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {product.categories.map(cat => (
-                                <span key={cat} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                                  {cat}
+                                <span key={typeof cat === 'string' ? cat : cat.name} className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                                  {typeof cat === 'string' ? cat : cat.name}
                                 </span>
                               ))}
                             </div>
@@ -2245,85 +2318,89 @@ export default function Admin() {
               ) : (
                 <div className="space-y-4">
                   {(() => {
-                    const validOrders = orders.filter(order => order && order.id);
+                    const validOrders = orders.filter(order => order && order.id)
+                    console.log('Total orders:', orders.length, 'Valid orders:', validOrders.length)
+                    console.log('Orders data:', orders)
+                    
                     if (validOrders.length === 0) {
-                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>;
+                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>
                     }
+                    
                     return validOrders
                       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                       .map((order) => (
-                        <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
-                              <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
-                              {order.updatedAt && order.updatedAt !== order.createdAt && (
-                                <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
-                              )}
-                            </div>
-                            <div className="flex flex-col items-end space-y-2">
-                              <select
-                                value={order.status || 'Pending'}
-                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                                className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
-                                  order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
-                                  order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
-                                  order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
-                                  order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
-                                  'bg-red-50 text-red-800 border-red-300'
-                                }`}
-                              >
-                                <option value="Pending">📋 Pending</option>
-                                <option value="Processing">⚙️ Processing</option>
-                                <option value="Shipped">🚚 Shipped</option>
-                                <option value="Delivered">✅ Delivered</option>
-                                <option value="Cancelled">❌ Cancelled</option>
-                              </select>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleEditOrder(order)}
-                                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteOrder(order.id)}
-                                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700">Customer</p>
-                              <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
-                              <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
-                              <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
-                              <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
-                              <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                                <span>{item.name} x{item.quantity}</span>
-                                <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
-                              </div>
-                            ))}
-                            <div className="mt-2 pt-2 border-t flex justify-between font-bold">
-                              <span>Total</span>
-                              <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
+                    <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
+                          <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                          {order.updatedAt && order.updatedAt !== order.createdAt && (
+                            <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                          )}
                         </div>
-                      ));
+                        <div className="flex flex-col items-end space-y-2">
+                          <select
+                            value={order.status || 'Pending'}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                            className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
+                              order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
+                              order.status === 'Processing' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                              order.status === 'Shipped' ? 'bg-purple-50 text-purple-800 border-purple-300' :
+                              order.status === 'Delivered' ? 'bg-green-50 text-green-800 border-green-300' :
+                              'bg-red-50 text-red-800 border-red-300'
+                            }`}
+                          >
+                            <option value="Pending">📋 Pending</option>
+                            <option value="Processing">⚙️ Processing</option>
+                            <option value="Shipped">🚚 Shipped</option>
+                            <option value="Delivered">✅ Delivered</option>
+                            <option value="Cancelled">❌ Cancelled</option>
+                          </select>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditOrder(order)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOrder(order.id)}
+                              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Customer</p>
+                          <p className="text-sm">{order.customer?.firstName || order.firstName || 'N/A'} {order.customer?.lastName || order.lastName || ''}</p>
+                          <p className="text-sm text-gray-600">{order.customer?.email || order.email || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">{order.customer?.phone || order.phone || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Shipping Address</p>
+                          <p className="text-sm">{order.shipping?.address || order.address || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">{order.shipping?.city || order.city || 'N/A'}, {order.shipping?.state || order.state || 'N/A'} {order.shipping?.zipCode || order.zipCode || ''}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                            <span>{item.name} x{item.quantity}</span>
+                            <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                          </div>
+                        ))}
+                        <div className="mt-2 pt-2 border-t flex justify-between font-bold">
+                          <span>Total</span>
+                          <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>
+                    </div>
+                  ))
                   })()}
                 </div>
               )}
@@ -2349,7 +2426,7 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {customers.map((customer, idx) => {
-                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email);
+                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email)
                         return (
                           <tr key={idx} className="border-b">
                             <td className="px-4 py-3">{customer.firstName} {customer.lastName}</td>
@@ -2357,7 +2434,7 @@ export default function Admin() {
                             <td className="px-4 py-3 text-sm text-gray-600">{customer.phone}</td>
                             <td className="px-4 py-3 text-sm font-semibold">{customerOrders.length}</td>
                           </tr>
-                        );
+                        )
                       })}
                     </tbody>
                   </table>
