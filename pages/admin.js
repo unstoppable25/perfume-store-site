@@ -186,8 +186,13 @@ export default function Admin() {
         if (data.success && data.settings) {
           if (data.settings.shop_button_bg) setShopBgImage(data.settings.shop_button_bg)
           if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
-          if (data.settings.categories && Array.isArray(data.settings.categories)) {
-            setCategories(data.settings.categories)
+          if (data.settings.categories) {
+            // Always set as array, even if object
+            let cats = data.settings.categories;
+            if (!Array.isArray(cats)) {
+              cats = Object.values(cats);
+            }
+            setCategories(cats);
           }
           // Load delivery settings
           console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
