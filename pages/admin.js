@@ -124,78 +124,8 @@ export default function Admin() {
       } catch (err) {
         console.error('Failed to fetch products', err)
         // Only use backup if server is unreachable (network error)
-                <button
-                  type="button"
-                  className="ml-4 px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 text-sm font-medium"
-                  onClick={() => { setBulkMode(!bulkMode); setBulkSelected([]); setBulkCategories([]); }}
-                >
-                  {bulkMode ? 'Cancel Bulk Edit' : 'Bulk Edit Categories'}
-                </button>
         const backup = localStorage.getItem('scentlumus_products_backup')
         if (backup) {
-            {bulkMode && (
-              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded">
-                <h3 className="font-semibold mb-2">Bulk Category Assignment</h3>
-                <div className="mb-2 text-sm">Select products below, then choose categories to assign to all selected products.</div>
-                <div className="mb-2">
-                  <strong>Selected Products:</strong> {bulkSelected.length}
-                </div>
-                <div className="mb-2">
-                  <label className="font-medium">Categories:</label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {toArray(categories).map((cat) => (
-                      <label key={cat} className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          checked={bulkCategories.includes(cat)}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              setBulkCategories([...bulkCategories, cat])
-                            } else {
-                              setBulkCategories(bulkCategories.filter(c => c !== cat))
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{cat}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 text-sm font-medium"
-                  disabled={bulkSelected.length === 0 || bulkCategories.length === 0}
-                  onClick={async () => {
-                    if (bulkSelected.length === 0 || bulkCategories.length === 0) return;
-                    const updatedProducts = products.map(p =>
-                      bulkSelected.includes(p.id)
-                        ? { ...p, categories: bulkCategories }
-                        : p
-                    );
-                    try {
-                      const bulkRes = await fetch('/api/products/bulk-update', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ products: updatedProducts.filter(p => bulkSelected.includes(p.id)) })
-                      });
-                      if (bulkRes.ok) {
-                        setProducts(updatedProducts);
-                        setBulkSelected([]);
-                        setBulkCategories([]);
-                        setBulkMode(false);
-                        alert('Bulk category update successful!');
-                      } else {
-                        alert('Bulk update failed.');
-                      }
-                    } catch (err) {
-                      alert('Bulk update error: ' + err.message);
-                    }
-                  }}
-                >
-                  Update Categories for Selected
-                </button>
-              </div>
-            )}
           setProducts(JSON.parse(backup))
         }
       }
