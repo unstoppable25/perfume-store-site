@@ -2250,24 +2250,34 @@ export default function Admin() {
                     console.log('Orders data:', orders)
                     
                     if (validOrders.length === 0) {
-                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>
+                      return <p className="text-red-500">Orders exist but have no IDs. Please run the fix-orders script.</p>;
                     }
-                    
-                    return validOrders
-                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                      .map((order) => (
-                    <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
-                          <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
-                          {order.updatedAt && order.updatedAt !== order.createdAt && (
-                            <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end space-y-2">
-                          <select
-                            value={order.status || 'Pending'}
+                    return (
+                      <>
+                        {validOrders
+                          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                          .map((order) => (
+                            <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h3 className="font-semibold text-lg">Order #{order.id.slice(0, 12)}</h3>
+                                  <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleString()}</p>
+                                  {order.updatedAt && order.updatedAt !== order.createdAt && (
+                                    <p className="text-xs text-gray-400">Updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end space-y-2">
+                                  <select
+                                    value={order.status || 'Pending'}
+                                    // ...existing code...
+                                  />
+                                </div>
+                              </div>
+                              {/* ...existing code for order details... */}
+                            </div>
+                          ))}
+                      </>
+                    );
                             onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                             className={`px-3 py-2 rounded-lg font-semibold border-2 cursor-pointer transition ${
                               order.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-300' :
@@ -2353,7 +2363,7 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {customers.map((customer, idx) => {
-                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email)
+                        const customerOrders = orders.filter(o => (o.customer?.email || o.email) === customer.email);
                         return (
                           <tr key={idx} className="border-b">
                             <td className="px-4 py-3">{customer.firstName} {customer.lastName}</td>
@@ -2361,7 +2371,7 @@ export default function Admin() {
                             <td className="px-4 py-3 text-sm text-gray-600">{customer.phone}</td>
                             <td className="px-4 py-3 text-sm font-semibold">{customerOrders.length}</td>
                           </tr>
-                        )
+                        );
                       })}
                     </tbody>
                   </table>
