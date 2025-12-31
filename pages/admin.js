@@ -108,6 +108,7 @@ export default function Admin() {
         
         // Always use server data, even if empty
         setProducts(data || [])
+        console.log('Loaded products:', data)
         
         // Update localStorage backup with server data
         if (data && data.length > 0) {
@@ -196,6 +197,7 @@ export default function Admin() {
           if (data.settings.about_button_bg) setAboutBgImage(data.settings.about_button_bg)
           if (data.settings.categories) {
             setCategories(toArray(data.settings.categories));
+            console.log('Loaded categories:', data.settings.categories)
           }
           // Load delivery settings
           console.log('Raw delivery_zones from DB:', data.settings.delivery_zones)
