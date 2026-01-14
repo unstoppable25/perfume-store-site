@@ -1,4 +1,5 @@
 import { getSettings, updateSettings } from '../../lib/db'
+import requireAdmin from '../../lib/requireAdmin'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -11,6 +12,7 @@ export default async function handler(req, res) {
       res.status(500).json({ success: false, message: 'Failed to get settings', error: err.message })
     }
   } else if (req.method === 'POST') {
+    if (!requireAdmin(req, res)) return
     try {
       const { key, value } = req.body
       // Handle different value types for logging

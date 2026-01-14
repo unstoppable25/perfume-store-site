@@ -1,8 +1,13 @@
 
 import { getAllProducts, createProduct, updateProduct, deleteProduct } from '../../lib/db'
+import requireAdmin from '../../lib/requireAdmin'
 
 export default async function handler(req, res) {
   const { method } = req
+  // Protect non-GET product mutations with server-side admin guard
+  if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+    if (!requireAdmin(req, res)) return
+  }
 
   if (method === 'GET') {
     const { id } = req.query;

@@ -36,6 +36,10 @@ export default async function handler(req, res) {
     return res.status(405).end('Method Not Allowed')
   }
 
+  // Require admin for uploads
+  const requireAdmin = (await import('../../lib/requireAdmin')).default
+  if (!requireAdmin(req, res)) return
+
   const { filename, data } = req.body || {}
   if (!filename || !data) return res.status(400).json({ message: 'filename and data are required' })
 
