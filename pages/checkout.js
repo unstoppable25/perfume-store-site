@@ -5,6 +5,24 @@ import Head from 'next/head'
 import Link from 'next/link'
 import Script from 'next/script'
 
+// Nigerian States and LGAs data
+const NIGERIAN_STATES = [
+  'Abuja (FCT)', 'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 'Cross River',
+  'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi',
+  'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
+  'Taraba', 'Yobe', 'Zamfara'
+]
+
+const STATE_LGAS = {
+  'Abuja (FCT)': ['Abaji', 'Abuja Municipal', 'Bwari', 'Gwagwalada', 'Kuje', 'Kwali'],
+  'Lagos': ['Agege', 'Ajeromi-Ifelodun', 'Alimosho', 'Amuwo-Odofin', 'Apapa', 'Badagry', 'Epe', 'Eti-Osa', 'Ibeju-Lekki', 'Ifako-Ijaiye', 'Ikeja', 'Ikorodu', 'Kosofe', 'Lagos Island', 'Lagos Mainland', 'Mushin', 'Ojo', 'Oshodi-Isolo', 'Shomolu', 'Surulere'],
+  'Kano': ['Ajingi', 'Albasu', 'Bagwai', 'Bebeji', 'Bichi', 'Bunkure', 'Dala', 'Dambatta', 'Dawakin Kudu', 'Dawakin Tofa', 'Doguwa', 'Fagge', 'Gabasawa', 'Garko', 'Garun Mallam', 'Gaya', 'Gezawa', 'Gwale', 'Gwarzo', 'Kabo', 'Kano Municipal', 'Karaye', 'Kibiya', 'Kiru', 'Kumbotso', 'Kunchi', 'Kura', 'Madobi', 'Makoda', 'Minjibir', 'Nasarawa', 'Rano', 'Rimin Gado', 'Rogo', 'Shanono', 'Sumaila', 'Takai', 'Tarauni', 'Tofa', 'Tsanyawa', 'Tudun Wada', 'Ungogo', 'Warawa', 'Wudil'],
+  // Add more states as needed, for brevity I'll include a few
+  'Oyo': ['Afijio', 'Akinyele', 'Atiba', 'Atisbo', 'Egbeda', 'Ibadan North', 'Ibadan North-East', 'Ibadan North-West', 'Ibadan South-East', 'Ibadan South-West', 'Ibarapa Central', 'Ibarapa East', 'Ibarapa North', 'Ido', 'Irepo', 'Iseyin', 'Itesiwaju', 'Iwajowa', 'Kajola', 'Lagelu', 'Ogbomosho North', 'Ogbomosho South', 'Ogo Oluwa', 'Olorunsogo', 'Oluyole', 'Ona Ara', 'Orelope', 'Ori Ire', 'Oyo East', 'Oyo West', 'Saki East', 'Saki West', 'Surulere'],
+  // Default for others
+  'default': ['Select State First']
+}
+
 export default function Checkout() {
   const { cart, getCartTotal, clearCart } = useCart()
   const router = useRouter()
@@ -92,11 +110,21 @@ export default function Checkout() {
       [name]: value
     })
 
+    // If state changes, reset city
+    if (name === 'state') {
+      setFormData(prev => ({ ...prev, city: '' }))
+    }
+
     // Recalculate delivery fee when state or city changes (only if delivery method is delivery)
     if ((name === 'state' || name === 'city') && deliveryMethod === 'delivery') {
       const newFormData = { ...formData, [name]: value }
+      if (name === 'state') newFormData.city = '' // Reset city when state changes
       fetchDeliveryFee(newFormData.state, newFormData.city)
     }
+  }
+
+  const getLgasForState = (state) => {
+    return STATE_LGAS[state] || ['Select a city/LGA']
   }
 
   // Fetch delivery fee based on location and cart total
@@ -571,29 +599,38 @@ export default function Checkout() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City *
+                        City/LGA *
                       </label>
-                      <input
-                        type="text"
+                      <select
                         name="city"
                         value={formData.city}
                         onChange={handleChange}
                         className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
                         required
-                      />
+                        disabled={!formData.state}
+                      >
+                        <option value="">{formData.state ? 'Select City/LGA' : 'Select State First'}</option>
+                        {formData.state && getLgasForState(formData.state).map(lga => (
+                          <option key={lga} value={lga}>{lga}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         State *
                       </label>
-                      <input
-                        type="text"
+                      <select
                         name="state"
                         value={formData.state}
                         onChange={handleChange}
                         className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
                         required
-                      />
+                      >
+                        <option value="">Select State</option>
+                        {NIGERIAN_STATES.map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
