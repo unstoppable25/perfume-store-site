@@ -424,6 +424,13 @@ export default function Shop() {
                                     <p className="text-sm text-gray-600 mb-2 line-clamp-2 h-10">
                                       {product.description}
                                     </p>
+                                    {product.status && product.status !== 'available' && (
+                                      <div className={`text-xs font-semibold mb-2 px-2 py-1 rounded-full inline-block ${
+                                        product.status === 'sold_out' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                                      }`}>
+                                        {product.status === 'sold_out' ? 'Sold Out' : 'Pre-Sale'}
+                                      </div>
+                                    )}
                                     <div className="mb-2">
                                       {product.oldPrice && parseFloat(product.oldPrice) > 0 && (
                                         <div className="text-xs text-gray-500 line-through mb-0.5">
@@ -440,9 +447,14 @@ export default function Shop() {
                               <div className="flex items-center justify-between mt-2">
                                 <button
                                   onClick={() => handleAddToCart(product)}
-                                  className="bg-amber-700 text-white px-3 py-1.5 rounded-md hover:bg-amber-800 transition text-sm font-medium whitespace-nowrap w-full"
+                                  disabled={product.status === 'sold_out'}
+                                  className={`px-3 py-1.5 rounded-md transition text-sm font-medium whitespace-nowrap w-full ${
+                                    product.status === 'sold_out'
+                                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                                      : 'bg-amber-700 text-white hover:bg-amber-800'
+                                  }`}
                                 >
-                                  Add to Cart
+                                  {product.status === 'sold_out' ? 'Sold Out' : 'Add to Cart'}
                                 </button>
                               </div>
                             </div>

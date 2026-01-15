@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   }
 
   if (method === 'POST') {
-    const { name, price, oldPrice, description, image, categories, active } = req.body || {}
+    const { name, price, oldPrice, description, image, categories, active, status } = req.body || {}
     if (!name || !price) return res.status(400).json({ message: 'Name and price are required' })
     const newProduct = { 
       id: Date.now().toString(), 
@@ -31,14 +31,15 @@ export default async function handler(req, res) {
       description: description || '', 
       image: image || '',
       categories: categories || [],
-      active: active !== false // default to true
+      active: active !== false, // default to true
+      status: status || 'available'
     }
     const created = await createProduct(newProduct)
     return res.status(201).json(created)
   }
 
   if (method === 'PUT') {
-    const { id, name, price, oldPrice, description, image, categories, active } = req.body || {}
+    const { id, name, price, oldPrice, description, image, categories, active, status } = req.body || {}
     if (!id) return res.status(400).json({ message: 'Product id is required' })
     const updated = await updateProduct({ 
       id, 
@@ -48,7 +49,8 @@ export default async function handler(req, res) {
       description: description || '', 
       image: image || '',
       categories: categories || [],
-      active: active !== false
+      active: active !== false,
+      status: status || 'available'
     })
     return res.status(200).json(updated)
   }

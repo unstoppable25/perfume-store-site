@@ -143,6 +143,13 @@ function ProductDetails() {
             </div>
             <div>
               <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+              {product.status && product.status !== 'available' && (
+                <div className={`text-sm font-semibold mb-2 px-3 py-1 rounded-full inline-block ${
+                  product.status === 'sold_out' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {product.status === 'sold_out' ? 'Sold Out' : 'Pre-Sale'}
+                </div>
+              )}
               <p className="text-lg text-gray-700 mb-4">{product.description}</p>
               <div className="mb-2">
                 <span className="font-semibold">Price:</span> ₦{product.price}

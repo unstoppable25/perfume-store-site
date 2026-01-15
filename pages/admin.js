@@ -24,7 +24,7 @@ export default function Admin() {
 
   const [products, setProducts] = useState([])
   const [logo, setLogo] = useState(null)
-  const [form, setForm] = useState({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [] })
+  const [form, setForm] = useState({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [], status: 'available' })
   const [isEditing, setIsEditing] = useState(null)
     // Bulk edit state
     const [bulkSelected, setBulkSelected] = useState([])
@@ -323,7 +323,7 @@ export default function Admin() {
           localStorage.setItem('scentlumus_products_backup', JSON.stringify(newProducts))
         }
       } finally {
-        setForm({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [] })
+        setForm({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [], status: 'available' })
       }
     })()
   }
@@ -335,7 +335,8 @@ export default function Admin() {
       oldPrice: product.oldPrice || '',
       description: product.description, 
       image: product.image,
-      categories: toArray(product.categories)
+      categories: toArray(product.categories),
+      status: product.status || 'available'
     })
     setIsEditing(product.id)
   }
@@ -1846,6 +1847,24 @@ export default function Admin() {
                 </label>
                 {form.image && <img src={form.image} alt="preview" className="h-12 w-12 object-cover rounded" />}
               </div>
+
+              {/* Product Status */}
+              <div className="border-t pt-4 mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Status</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-600"
+                >
+                  <option value="available">Available</option>
+                  <option value="sold_out">Sold Out</option>
+                  <option value="pre_sale">Pre-Sale</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Sold Out: Visible but not purchasable. Pre-Sale: Visible, indicates quick fulfillment.
+                </p>
+              </div>
+
               <div className="flex gap-2">
                 <button type="submit" className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800">
                   {isEditing !== null ? 'Update' : 'Add'} Product
@@ -1853,7 +1872,7 @@ export default function Admin() {
                 {isEditing !== null && (
                   <button
                     type="button"
-                    onClick={() => { setIsEditing(null); setForm({ name: '', price: '', description: '', image: '', categories: [] }) }}
+                    onClick={() => { setIsEditing(null); setForm({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [], status: 'available' }) }}
                     className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
                   >
                     Cancel
