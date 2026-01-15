@@ -89,6 +89,7 @@ export default function Admin() {
   })
   const [editingPromo, setEditingPromo] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [adminApiKey, setAdminApiKey] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -1419,6 +1420,34 @@ export default function Admin() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 Logout
+              </button>
+            </div>
+          </div>
+
+          {/* Admin API Key Setup */}
+          <div className="bg-white rounded-lg shadow-md mb-6 p-6">
+            <h2 className="text-xl font-semibold mb-4">Admin API Key</h2>
+            <p className="text-sm text-gray-600 mb-4">Enter your admin API key to enable protected actions (add/edit products, upload, settings). This is stored locally in your browser.</p>
+            <div className="flex gap-4">
+              <input
+                type="password"
+                placeholder="Enter Admin API Key"
+                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                onChange={(e) => setAdminApiKey(e.target.value)}
+                value={adminApiKey || ''}
+              />
+              <button
+                onClick={() => {
+                  if (adminApiKey) {
+                    localStorage.setItem('admin_api_key', adminApiKey)
+                    alert('Admin API Key saved!')
+                  } else {
+                    alert('Please enter a key.')
+                  }
+                }}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+              >
+                Save Key
               </button>
             </div>
           </div>
