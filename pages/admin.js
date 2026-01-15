@@ -15,6 +15,13 @@ import Head from 'next/head';
 
 
 export default function Admin() {
+  // Build headers including admin Authorization when present in localStorage
+  const buildHeaders = (existing = {}) => {
+    if (typeof window === 'undefined') return existing
+    const token = localStorage.getItem('admin_api_key')
+    return token ? { ...existing, Authorization: `Bearer ${token}` } : existing
+  }
+
   const [products, setProducts] = useState([])
   const [logo, setLogo] = useState(null)
   const [form, setForm] = useState({ name: '', price: '', oldPrice: '', description: '', image: '', categories: [] })
@@ -286,7 +293,7 @@ export default function Admin() {
         if (isEditing !== null) {
           // update existing product
           const payload = { id: isEditing, ...form }
-          const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          const res = await fetch('/api/products', { method: 'PUT', headers: buildHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload) })
           const updated = await res.json()
           const newProducts = products.map((p) => (p.id === updated.id ? updated : p))
           setProducts(newProducts)
@@ -294,7 +301,7 @@ export default function Admin() {
           setIsEditing(null)
           alert('Product updated successfully!')
         } else {
-          const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+          const res = await fetch('/api/products', { method: 'POST', headers: buildHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(form) })
           const created = await res.json()
           const newProducts = [...products, created]
           setProducts(newProducts)
@@ -461,7 +468,7 @@ export default function Admin() {
         try {
           const base64 = reader.result
           const filename = `logo-${Date.now()}-${file.name.replace(/\s+/g,'-')}`
-          const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, data: base64 }) })
+          const res = await fetch('/api/upload', { method: 'POST', headers: buildHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ filename, data: base64 }) })
           const data = await res.json()
           if (data.url) {
             setLogo(data.url)
@@ -483,7 +490,7 @@ export default function Admin() {
       try {
         const res = await fetch('/api/settings', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         })
         const data = await res.json()
@@ -549,7 +556,7 @@ export default function Admin() {
         // Save updated categories
         const res = await fetch('/api/settings', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ key: 'categories', value: updatedCategories })
         });
         const data = await res.json();
@@ -563,7 +570,7 @@ export default function Admin() {
           try {
             const bulkRes = await fetch('/api/products/bulk-update', {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: buildHeaders({ 'Content-Type': 'application/json' }),
               body: JSON.stringify({ products: updatedProducts, replaceAll: true })
             });
             const bulkData = await bulkRes.json();
