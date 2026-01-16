@@ -1,6 +1,9 @@
 import { createClient } from '@vercel/kv';
+import { addSecurityHeaders } from '../../lib/security';
 
 export default async function handler(req, res) {
+  // Add security headers
+  addSecurityHeaders(res)
   // Require user to be authenticated
   const userId = req.query.userId || req.body?.userId;
   if (!userId) {

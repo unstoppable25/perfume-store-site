@@ -1,6 +1,9 @@
 import { getAllMessages, deleteMessage } from '../../lib/db'
+import { addSecurityHeaders } from '../../lib/security'
 
 export default async function handler(req, res) {
+  // Add security headers
+  addSecurityHeaders(res)
   if (req.method === 'GET') {
     try {
       const messages = await getAllMessages()

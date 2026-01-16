@@ -18,6 +18,33 @@ export default function Admin() {
   // Build headers including admin Authorization when present in localStorage
   const buildHeaders = (existing = {}) => {
     if (typeof window === 'undefined') return existing
+
+    // Check token expiration
+    const tokenData = localStorage.getItem('admin_token_data')
+    if (tokenData) {
+      try {
+        const parsed = JSON.parse(tokenData)
+        const now = Date.now()
+
+        // Token expired (24 hours)
+        if (now > parsed.expiresAt) {
+          console.log('[SECURITY] Admin token expired, clearing session')
+          localStorage.removeItem('admin_api_key')
+          localStorage.removeItem('admin_token_data')
+          localStorage.removeItem('admin_gate_passed')
+          window.location.href = '/secure8893'
+          return existing
+        }
+      } catch (err) {
+        console.error('[SECURITY] Invalid token data format')
+        localStorage.removeItem('admin_api_key')
+        localStorage.removeItem('admin_token_data')
+        localStorage.removeItem('admin_gate_passed')
+        window.location.href = '/secure8893'
+        return existing
+      }
+    }
+
     const token = localStorage.getItem('admin_api_key')
     return token ? { ...existing, Authorization: `Bearer ${token}` } : existing
   }

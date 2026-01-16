@@ -1,6 +1,9 @@
 import { getSettings } from '../../lib/db'
+import { addSecurityHeaders } from '../../lib/security'
 
 export default async function handler(req, res) {
+  // Add security headers
+  addSecurityHeaders(res)
   if (req.method === 'POST') {
     try {
       const { code, cartTotal, userId, userEmail } = req.body

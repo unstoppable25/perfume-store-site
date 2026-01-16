@@ -1,6 +1,7 @@
 import { createClient } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
+import { addSecurityHeaders } from '../../lib/security';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
@@ -47,6 +48,9 @@ async function writeReviews(reviews) {
 }
 
 export default async function handler(req, res) {
+  // Add security headers
+  addSecurityHeaders(res)
+
   console.log('API /api/reviews received:', req.method, req.url);
     console.log('API /api/reviews TOP LOG:', {
       method: req.method,

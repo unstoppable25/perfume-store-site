@@ -53,8 +53,20 @@ export default function SecureGate() {
       const data = await res.json()
 
       if (data.success) {
+        // Generate session token with expiration (24 hours)
+        const token = 'admin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+
         localStorage.removeItem('admin_lockout')
         localStorage.setItem('admin_gate_passed', 'true')
+        localStorage.setItem('admin_api_key', token)
+        localStorage.setItem('admin_token_data', JSON.stringify({
+          token,
+          expiresAt,
+          createdAt: Date.now()
+        }))
+
+        console.log('[SECURITY] Admin session created, expires at:', new Date(expiresAt).toISOString())
         router.push('/admin')
       } else {
         const newAttempts = attempts + 1

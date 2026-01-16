@@ -1,6 +1,9 @@
 import { createOrder } from '../../lib/db'
+import { addSecurityHeaders } from '../../lib/security'
 
 export default async function handler(req, res) {
+  // Add security headers
+  addSecurityHeaders(res)
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
