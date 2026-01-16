@@ -141,7 +141,12 @@ export default function Admin() {
   const [faqs, setFaqs] = useState([])
   const [newFaq, setNewFaq] = useState({ question: '', answer: '' })
   const [editingFaq, setEditingFaq] = useState(null)
-  
+
+  // Security settings states
+  const [currentAdminPassword, setCurrentAdminPassword] = useState('')
+  const [newAdminPassword, setNewAdminPassword] = useState('')
+  const [confirmNewAdminPassword, setConfirmNewAdminPassword] = useState('')
+
   const router = useRouter()
 
   useEffect(() => {
@@ -156,7 +161,7 @@ export default function Admin() {
     
     // Set active tab from URL hash
     const hash = window.location.hash.slice(1)
-    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions', 'reviews', 'content'].includes(hash)) {
+    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions', 'reviews', 'content', 'security'].includes(hash)) {
       setActiveTab(hash)
     }
   }, [router])
@@ -591,6 +596,58 @@ export default function Admin() {
     } catch (err) {
       console.error('Failed to delete review', err)
       alert('Failed to delete review')
+    }
+  }
+
+  // Security handlers
+  const handleChangeAdminPassword = async () => {
+    if (!currentAdminPassword || !newAdminPassword || !confirmNewAdminPassword) {
+      alert('Please fill in all password fields')
+      return
+    }
+
+    if (newAdminPassword !== confirmNewAdminPassword) {
+      alert('New passwords do not match')
+      return
+    }
+
+    if (newAdminPassword.length < 8) {
+      alert('New password must be at least 8 characters long')
+      return
+    }
+
+    // Verify current password
+    if (currentAdminPassword !== (process.env.NODE_ENV === 'development' ? 'MIN_SECURITY_ID' : process.env.ADMIN_SECURITY_ID)) {
+      alert('Current password is incorrect')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: buildHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ newPassword: newAdminPassword })
+      })
+
+      const data = await res.json()
+
+      if (data.success) {
+        alert('Admin password changed successfully! You will need to log in again with the new password.')
+        // Clear the form
+        setCurrentAdminPassword('')
+        setNewAdminPassword('')
+        setConfirmNewAdminPassword('')
+        // Log out the admin
+        localStorage.removeItem('admin_api_key')
+        localStorage.removeItem('admin_token_data')
+        localStorage.removeItem('admin_gate_passed')
+        router.push('/secure8893')
+      } else {
+        alert('Failed to change password: ' + (data.message || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Failed to change admin password', err)
+      alert('Failed to change admin password')
     }
   }
 
@@ -1811,6 +1868,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'content' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Content Management
+              </button>
+              <button
+                onClick={() => { setActiveTab('security'); window.location.hash = 'security' }}
+                className={`px-6 py-3 font-semibold ${activeTab === 'security' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Security Settings
               </button>
             </div>
           </div>
@@ -3706,6 +3769,76 @@ export default function Admin() {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Settings Tab */}
+          {activeTab === 'security' && (
+            <div className="space-y-8">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-bold mb-4">Security Settings</h2>
+                <p className="text-gray-600 mb-6">Manage your admin access and security settings.</p>
+
+                {/* Change Admin Password */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Change Admin Password</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Your current admin password is: <code className="bg-gray-100 px-2 py-1 rounded text-sm">{process.env.NODE_ENV === 'development' ? 'MIN_SECURITY_ID' : '••••••••'}</code>
+                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Current Password</label>
+                    <input
+                      type="password"
+                      value={currentAdminPassword}
+                      onChange={(e) => setCurrentAdminPassword(e.target.value)}
+                      placeholder="Enter your current admin password"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">New Password</label>
+                    <input
+                      type="password"
+                      value={newAdminPassword}
+                      onChange={(e) => setNewAdminPassword(e.target.value)}
+                      placeholder="Enter new admin password (min 8 characters)"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={confirmNewAdminPassword}
+                      onChange={(e) => setConfirmNewAdminPassword(e.target.value)}
+                      placeholder="Confirm new admin password"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleChangeAdminPassword}
+                    className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  >
+                    Change Admin Password
+                  </button>
+                </div>
+
+                {/* Security Information */}
+                <div className="mt-8 pt-6 border-t">
+                  <h3 className="text-lg font-semibold mb-4">Security Information</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p>• Admin access is protected by a security ID that must be at least 8 characters long</p>
+                    <p>• Failed login attempts are rate limited (5 attempts per 15 minutes)</p>
+                    <p>• After 5 failed attempts, access is locked for 15 minutes</p>
+                    <p>• Admin sessions expire after 24 hours of inactivity</p>
+                    <p>• All admin actions are logged with IP addresses and timestamps</p>
+                  </div>
                 </div>
               </div>
             </div>
