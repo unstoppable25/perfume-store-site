@@ -2,6 +2,7 @@ import { createClient } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
 import { addSecurityHeaders } from '../../lib/security';
+import requireAdmin from '../../lib/requireAdmin';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json');
@@ -74,16 +75,25 @@ export default async function handler(req, res) {
     return res.status(200).json({ reviews: filtered });
   }
   if (req.method === 'POST') {
-    const { productId, rating, comment } = req.body;
+    const { productId, rating, comment, userId, userName } = req.body;
+
+    // Require user authentication
+    if (!userId || !userName) {
+      return res.status(401).json({ message: 'User authentication required' });
+    }
+
     if (!productId || !rating || !comment) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
+
     const reviews = await readReviews();
     const newReview = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2),
       productId,
       rating: Math.max(1, Math.min(5, parseInt(rating, 10))),
       comment: comment.trim(),
+      userId,
+      userName,
       createdAt: new Date().toISOString(),
       hidden: false,
       featured: false,
@@ -94,7 +104,9 @@ export default async function handler(req, res) {
     return res.status(201).json({ review: newReview });
   }
   if (req.method === 'PUT') {
-    // Edit a review by id
+    // Edit a review by id (Admin only)
+    if (!requireAdmin(req, res)) return
+
     const { id, rating, comment, hidden, featured, response } = req.body;
     if (!id) return res.status(400).json({ message: 'Missing review id' });
     const reviews = await readReviews();
@@ -109,7 +121,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ review: reviews[idx] });
   }
   if (req.method === 'DELETE') {
-    // Delete a review by id
+    // Delete a review by id (Admin only)
+    if (!requireAdmin(req, res)) return
+
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: 'Missing review id' });
     const reviews = await readReviews();

@@ -118,6 +118,15 @@ export default function Admin() {
     canCombine: true
   })
   const [editingPromo, setEditingPromo] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [editingReview, setEditingReview] = useState(null)
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: '',
+    hidden: false,
+    featured: false,
+    response: ''
+  })
   const [categoryFilter, setCategoryFilter] = useState('all')
   
   // Content management states
@@ -147,7 +156,7 @@ export default function Admin() {
     
     // Set active tab from URL hash
     const hash = window.location.hash.slice(1)
-    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions', 'content'].includes(hash)) {
+    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions', 'reviews', 'content'].includes(hash)) {
       setActiveTab(hash)
     }
   }, [router])
@@ -261,6 +270,20 @@ export default function Admin() {
       }
     }
     fetchContent()
+
+    // Load reviews
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch('/api/reviews')
+        const data = await res.json()
+        if (data.reviews) {
+          setReviews(data.reviews)
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews', err)
+      }
+    }
+    fetchReviews()
 
     // Load users
     const fetchUsers = async () => {
@@ -508,6 +531,66 @@ export default function Admin() {
     } catch (err) {
       console.error('Failed to delete subscriber', err)
       alert('Failed to delete subscriber')
+    }
+  }
+
+  // Review management handlers
+  const updateReview = async (reviewId) => {
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'PUT',
+        headers: buildHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          id: reviewId,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+          hidden: reviewForm.hidden,
+          featured: reviewForm.featured,
+          response: reviewForm.response
+        })
+      })
+
+      const data = await res.json()
+
+      if (data.review) {
+        setReviews((prev) => prev.map((review) =>
+          review.id === reviewId ? data.review : review
+        ))
+        setEditingReview(null)
+        setReviewForm({ rating: 5, comment: '', hidden: false, featured: false, response: '' })
+        alert('Review updated successfully!')
+      } else {
+        alert('Failed to update review: ' + (data.message || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Failed to update review', err)
+      alert('Failed to update review')
+    }
+  }
+
+  const deleteReview = async (reviewId) => {
+    if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'DELETE',
+        headers: buildHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ id: reviewId })
+      })
+
+      const data = await res.json()
+
+      if (data.deleted) {
+        setReviews((prev) => prev.filter((review) => review.id !== reviewId))
+        alert('Review deleted successfully!')
+      } else {
+        alert('Failed to delete review: ' + (data.message || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Failed to delete review', err)
+      alert('Failed to delete review')
     }
   }
 
@@ -1716,6 +1799,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'promotions' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Promo Codes ({promoCodes.length})
+              </button>
+              <button
+                onClick={() => { setActiveTab('reviews'); window.location.hash = 'reviews' }}
+                className={`px-6 py-3 font-semibold ${activeTab === 'reviews' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Reviews ({reviews.length})
               </button>
               <button
                 onClick={() => { setActiveTab('content'); window.location.hash = 'content' }}
@@ -3291,6 +3380,151 @@ export default function Admin() {
                   <li>Customers enter codes at checkout to get instant discounts!</li>
                 </ul>
               </div>
+            </div>
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-bold mb-4">Customer Reviews Management</h2>
+                <p className="text-gray-600 mb-6">Manage customer reviews, moderate content, and respond to feedback.</p>
+
+                {/* Reviews List */}
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No reviews yet.</p>
+                  ) : (
+                    reviews.map((review) => (
+                      <div key={review.id} className={`border rounded-lg p-4 ${review.hidden ? 'bg-gray-50 opacity-60' : 'bg-white'}`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                              <span className="text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                              <span className="text-sm text-gray-600">({review.rating}/5)</span>
+                            </div>
+                            <span className="font-medium text-gray-800">{review.userName}</span>
+                            <span className="text-sm text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            {review.hidden && <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">Hidden</span>}
+                            {review.featured && <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Featured</span>}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingReview(review)
+                                setReviewForm({
+                                  rating: review.rating,
+                                  comment: review.comment,
+                                  hidden: review.hidden,
+                                  featured: review.featured,
+                                  response: review.response || ''
+                                })
+                              }}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deleteReview(review.id)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-gray-800 mb-2">{review.comment}</p>
+                        {review.response && (
+                          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mt-2">
+                            <p className="text-sm text-blue-800">
+                              <strong>Response:</strong> {review.response}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Edit Review Modal */}
+              {editingReview && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                    <h3 className="text-lg font-bold mb-4">Edit Review</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Rating</label>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              type="button"
+                              key={star}
+                              className={`text-2xl ${reviewForm.rating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                              onClick={() => setReviewForm({...reviewForm, rating: star})}
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Comment</label>
+                        <textarea
+                          className="w-full border rounded-lg p-2"
+                          rows={3}
+                          value={reviewForm.comment}
+                          onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Response (Optional)</label>
+                        <textarea
+                          className="w-full border rounded-lg p-2"
+                          rows={2}
+                          placeholder="Add a response to this review..."
+                          value={reviewForm.response}
+                          onChange={(e) => setReviewForm({...reviewForm, response: e.target.value})}
+                        />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={reviewForm.hidden}
+                            onChange={(e) => setReviewForm({...reviewForm, hidden: e.target.checked})}
+                          />
+                          <span className="text-sm">Hide Review</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={reviewForm.featured}
+                            onChange={(e) => setReviewForm({...reviewForm, featured: e.target.checked})}
+                          />
+                          <span className="text-sm">Feature Review</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={() => updateReview(editingReview.id)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingReview(null)
+                          setReviewForm({ rating: 5, comment: '', hidden: false, featured: false, response: '' })
+                        }}
+                        className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

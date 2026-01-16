@@ -17,12 +17,23 @@ function ProductDetails() {
   const [allProducts, setAllProducts] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [submitError, setSubmitError] = useState("");
+  const [user, setUser] = useState(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     fetchProduct();
     fetchReviews();
     fetchAllProducts();
+
+    // Load user authentication
+    if (typeof window !== 'undefined') {
+      const userAuth = window.sessionStorage.getItem('user_authenticated');
+      const userData = window.sessionStorage.getItem('user_data');
+      if (userAuth === 'true' && userData) {
+        setUser(JSON.parse(userData));
+      }
+    }
     // eslint-disable-next-line
   }, [id]);
 
@@ -85,14 +96,35 @@ function ProductDetails() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+
+    // Check if user is logged in
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
     if (!rating || !comment.trim()) return;
     setSubmitting(true);
-    console.log('Submitting review with POST to /api/reviews', { productId: String(id), rating, comment });
+
+    console.log('Submitting review with POST to /api/reviews', {
+      productId: String(id),
+      rating,
+      comment,
+      userId: user.id,
+      userName: user.name || user.email
+    });
+
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: String(id), rating, comment }),
+        body: JSON.stringify({
+          productId: String(id),
+          rating,
+          comment,
+          userId: user.id,
+          userName: user.name || user.email
+        }),
       });
       if (res.ok) {
         setComment('');
@@ -173,51 +205,94 @@ function ProductDetails() {
               <ul className="space-y-4 mb-6">
                 {reviews.map((review, idx) => (
                   <li key={idx} className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-                      <span className="text-gray-600 text-xs">{new Date(review.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-500">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                        <span className="text-gray-600 text-xs">{new Date(review.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <span className="text-gray-700 font-medium text-sm">{review.userName}</span>
                     </div>
                     <p className="text-gray-800">{review.comment}</p>
                   </li>
                 ))}
               </ul>
             )}
-            <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-4">
-              {submitError && (
-                <div style={{ color: 'red', marginBottom: '8px' }}>{submitError}</div>
-              )}
-              <h3 className="text-lg font-semibold mb-2">Leave a Review</h3>
-              <div className="flex items-center gap-2 mb-2">
-                <label className="font-medium">Rating:</label>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    type="button"
-                    key={star}
-                    className={
-                      'text-2xl ' + (rating >= star ? 'text-yellow-500' : 'text-gray-300')
-                    }
-                    onClick={() => setRating(star)}
+            {user ? (
+              <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-4">
+                {submitError && (
+                  <div style={{ color: 'red', marginBottom: '8px' }}>{submitError}</div>
+                )}
+                <h3 className="text-lg font-semibold mb-2">Leave a Review</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <label className="font-medium">Rating:</label>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      className={
+                        'text-2xl ' + (rating >= star ? 'text-yellow-500' : 'text-gray-300')
+                      }
+                      onClick={() => setRating(star)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  className="w-full border rounded-lg p-2 mb-2"
+                  rows={3}
+                  placeholder="Write your review..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800 transition"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </form>
+            ) : (
+              <div className="bg-white border rounded-lg p-4">
+                {showLoginPrompt && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <p className="text-yellow-800 font-medium mb-2">Login Required</p>
+                    <p className="text-yellow-700 text-sm mb-3">You need to be logged in to leave a review. Please sign in or create an account.</p>
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/auth/signin?redirect=${encodeURIComponent(`/product/${id}`)}`}
+                        className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800 transition text-sm"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        href={`/auth/signup?redirect=${encodeURIComponent(`/product/${id}`)}`}
+                        className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition text-sm"
+                      >
+                        Sign Up
+                      </Link>
+                      <button
+                        onClick={() => setShowLoginPrompt(false)}
+                        className="text-gray-600 hover:text-gray-800 text-sm underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="text-center py-4">
+                  <p className="text-gray-600 mb-3">Want to share your thoughts about this product?</p>
+                  <Link
+                    href={`/auth/signin?redirect=${encodeURIComponent(`/product/${id}`)}`}
+                    className="bg-amber-700 text-white px-6 py-2 rounded hover:bg-amber-800 transition inline-block"
                   >
-                    ★
-                  </button>
-                ))}
+                    Sign In to Leave a Review
+                  </Link>
+                </div>
               </div>
-              <textarea
-                className="w-full border rounded-lg p-2 mb-2"
-                rows={3}
-                placeholder="Write your review..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                required
-              />
-              <button
-                type="submit"
-                className="bg-amber-700 text-white px-4 py-2 rounded hover:bg-amber-800 transition"
-                disabled={submitting}
-              >
-                {submitting ? 'Submitting...' : 'Submit Review'}
-              </button>
-            </form>
+            )}
           </div>
 
           {/* Related/Recommended Products Section */}
