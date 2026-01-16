@@ -1,120 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null)
+  const [faqs, setFaqs] = useState([])
+
+  useEffect(() => {
+    // Fetch FAQs from settings
+    const fetchFAQs = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings?.faqs) {
+          setFaqs(data.settings.faqs)
+        } else {
+          // Fallback to default FAQs if none are set
+          setFaqs([
+            {
+              question: 'How long does shipping take?',
+              answer: 'Standard shipping within Nigeria typically takes 3-5 business days. Express shipping is available for 1-2 business day delivery.'
+            },
+            {
+              question: 'Do you ship internationally?',
+              answer: 'Currently, we only ship within Nigeria. We are working on expanding our shipping options to international locations.'
+            },
+            {
+              question: 'Are your perfumes authentic?',
+              answer: 'Yes, all our perfumes are 100% authentic and sourced directly from authorized distributors. We guarantee the quality and authenticity of every product.'
+            }
+          ])
+        }
+      } catch (err) {
+        console.error('Failed to fetch FAQs:', err)
+        // Fallback to default FAQs
+        setFaqs([
+          {
+            question: 'How long does shipping take?',
+            answer: 'Standard shipping within Nigeria typically takes 3-5 business days. Express shipping is available for 1-2 business day delivery.'
+          },
+          {
+            question: 'Do you ship internationally?',
+            answer: 'Currently, we only ship within Nigeria. We are working on expanding our shipping options to international locations.'
+          },
+          {
+            question: 'Are your perfumes authentic?',
+            answer: 'Yes, all our perfumes are 100% authentic and sourced directly from authorized distributors. We guarantee the quality and authenticity of every product.'
+          }
+        ])
+      }
+    }
+    fetchFAQs()
+  }, [])
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index)
   }
-
-  const faqs = [
-    {
-      category: 'Orders & Shipping',
-      questions: [
-        {
-          q: 'How long does shipping take?',
-          a: 'Standard shipping within Nigeria typically takes 3-5 business days. Express shipping is available for 1-2 business day delivery.'
-        },
-        {
-          q: 'Do you ship internationally?',
-          a: 'Currently, we only ship within Nigeria. We are working on expanding our shipping options to international locations.'
-        },
-        {
-          q: 'How can I track my order?',
-          a: 'Once your order ships, you will receive an email with tracking information. You can also check your order status by contacting our customer service.'
-        },
-        {
-          q: 'What are the shipping costs?',
-          a: 'Shipping costs vary based on your location and order size. Standard shipping starts at ₦2,000. Orders over ₦50,000 qualify for free shipping.'
-        }
-      ]
-    },
-    {
-      category: 'Products & Quality',
-      questions: [
-        {
-          q: 'Are your perfumes authentic?',
-          a: 'Yes, all our perfumes are 100% authentic and sourced directly from authorized distributors. We guarantee the quality and authenticity of every product.'
-        },
-        {
-          q: 'How should I store my perfume?',
-          a: 'Store perfumes in a cool, dry place away from direct sunlight and heat. Keep the bottle tightly closed when not in use to preserve the fragrance.'
-        },
-        {
-          q: 'How long do perfumes last?',
-          a: 'When stored properly, unopened perfumes can last 3-5 years. Once opened, they typically maintain their quality for 1-3 years.'
-        },
-        {
-          q: 'Do you offer testers or samples?',
-          a: 'We occasionally offer sample sizes for select fragrances. Check our website or contact us to see current sample availability.'
-        }
-      ]
-    },
-    {
-      category: 'Returns & Refunds',
-      questions: [
-        {
-          q: 'What is your return policy?',
-          a: 'You may return unused and undamaged products within 10 days of delivery for a full refund or exchange. Items must be in their original packaging and condition.'
-        },
-        {
-          q: 'Can I return an opened perfume?',
-          a: 'Due to hygiene reasons, we cannot accept returns of opened or used perfumes unless the product is defective or damaged upon arrival.'
-        },
-        {
-          q: 'How long do refunds take?',
-          a: 'Return processing takes 1–2 weeks after we receive your item. Refunds are issued to your original payment method.'
-        },
-        {
-          q: 'What if my product arrives damaged?',
-          a: 'If your product arrives damaged or defective, contact us within 48 hours for a replacement or refund. Please provide photos for faster processing.'
-        }
-      ]
-    },
-    {
-      category: 'Payment & Security',
-      questions: [
-        {
-          q: 'What payment methods do you accept?',
-          a: 'We accept credit/debit cards (via Stripe), bank transfers, and cash on delivery for select locations. All card payments are processed securely.'
-        },
-        {
-          q: 'Is my payment information secure?',
-          a: 'Yes, we use industry-standard SSL encryption and secure payment gateways. We never store your complete card information on our servers.'
-        },
-        {
-          q: 'Can I cancel my order?',
-          a: 'You can cancel your order within 2 hours of placement if it has not been processed yet. Contact us immediately to request cancellation.'
-        },
-        {
-          q: 'Do you offer cash on delivery?',
-          a: 'Yes, cash on delivery is available for orders within Lagos and select major cities. A small fee may apply for this service.'
-        }
-      ]
-    },
-    {
-      category: 'Account & Newsletter',
-      questions: [
-        {
-          q: 'Do I need an account to place an order?',
-          a: 'No, you can checkout as a guest. However, creating an account allows you to track orders and save your information for faster checkout.'
-        },
-        {
-          q: 'How do I subscribe to your newsletter?',
-          a: 'Simply enter your email in the newsletter subscription box at the bottom of our homepage. You will receive exclusive offers and new product updates.'
-        },
-        {
-          q: 'How can I unsubscribe from emails?',
-          a: 'You can unsubscribe anytime by clicking the unsubscribe link at the bottom of any promotional email we send you.'
-        },
-        {
-          q: 'How do I contact customer service?',
-          a: 'You can reach us via our contact form, email at info@scentlumus.com, or call us during business hours. We typically respond within 24 hours.'
-        }
-      ]
-    }
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -141,45 +81,43 @@ export default function FAQ() {
             </p>
           </div>
 
-          {/* FAQ Categories */}
-          <div className="space-y-8">
-            {faqs.map((category, catIndex) => (
-              <div key={catIndex} className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-purple-600 mb-4">{category.category}</h2>
-                <div className="space-y-2">
-                  {category.questions.map((faq, qIndex) => {
-                    const index = `${catIndex}-${qIndex}`
-                    const isOpen = openIndex === index
-
-                    return (
-                      <div key={qIndex} className="border-b border-gray-200 last:border-b-0">
-                        <button
-                          onClick={() => toggleFAQ(index)}
-                          className="w-full flex justify-between items-center py-4 text-left hover:text-purple-600 transition-colors"
-                        >
-                          <span className="font-semibold text-gray-800 pr-4">{faq.q}</span>
-                          <svg
-                            className={`w-5 h-5 text-purple-600 flex-shrink-0 transform transition-transform ${
-                              isOpen ? 'rotate-180' : ''
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                        {isOpen && (
-                          <div className="pb-4 text-gray-600">
-                            {faq.a}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+          {/* FAQ List */}
+          <div className="space-y-4">
+            {faqs.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                <p className="text-gray-500">No FAQs available yet. Check back soon!</p>
               </div>
-            ))}
+            ) : (
+              faqs.map((faq, index) => {
+                const isOpen = openIndex === index
+
+                return (
+                  <div key={index} className="bg-white rounded-lg shadow-lg">
+                    <button
+                      onClick={() => toggleFAQ(index)}
+                      className="w-full flex justify-between items-center p-6 text-left hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="font-semibold text-gray-800 pr-4">{faq.question}</span>
+                      <svg
+                        className={`w-5 h-5 text-purple-600 flex-shrink-0 transform transition-transform ${
+                          isOpen ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {isOpen && (
+                      <div className="px-6 pb-6 text-gray-600">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
           </div>
 
           {/* Return Policy Highlight */}

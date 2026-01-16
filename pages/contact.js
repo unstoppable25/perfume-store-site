@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useCart } from '../context/CartContext'
 
 export default function Contact() {
   const { getCartCount } = useCart()
   const cartCount = getCartCount()
+  const [contactInfo, setContactInfo] = useState({
+    email: 'info@scentlumus.com',
+    phone1: '+234 (0) 123 456 7890',
+    phone2: '',
+    address: 'Lagos, Nigeria',
+    businessHours: 'Mon - Sat: 9am - 6pm\nSunday: Closed'
+  })
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +20,22 @@ export default function Contact() {
   })
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState({ type: '', message: '' })
+
+  useEffect(() => {
+    // Fetch contact info from settings
+    const fetchContactInfo = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings?.contact_info) {
+          setContactInfo({ ...contactInfo, ...data.settings.contact_info })
+        }
+      } catch (err) {
+        console.error('Failed to fetch contact info:', err)
+      }
+    }
+    fetchContactInfo()
+  }, [])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -182,7 +205,7 @@ export default function Contact() {
                     </svg>
                     <div>
                       <h3 className="font-semibold text-gray-800">Email</h3>
-                      <p className="text-gray-600">info@scentlumus.com</p>
+                      <p className="text-gray-600">{contactInfo.email}</p>
                     </div>
                   </div>
 
@@ -192,7 +215,8 @@ export default function Contact() {
                     </svg>
                     <div>
                       <h3 className="font-semibold text-gray-800">Phone</h3>
-                      <p className="text-gray-600">+234 (0) 123 456 7890</p>
+                      <p className="text-gray-600">{contactInfo.phone1}</p>
+                      {contactInfo.phone2 && <p className="text-gray-600">{contactInfo.phone2}</p>}
                     </div>
                   </div>
 
@@ -203,7 +227,7 @@ export default function Contact() {
                     </svg>
                     <div>
                       <h3 className="font-semibold text-gray-800">Address</h3>
-                      <p className="text-gray-600">Lagos, Nigeria</p>
+                      <p className="text-gray-600 whitespace-pre-line">{contactInfo.address}</p>
                     </div>
                   </div>
 
@@ -213,8 +237,7 @@ export default function Contact() {
                     </svg>
                     <div>
                       <h3 className="font-semibold text-gray-800">Business Hours</h3>
-                      <p className="text-gray-600">Mon - Sat: 9am - 6pm</p>
-                      <p className="text-gray-600">Sunday: Closed</p>
+                      <p className="text-gray-600 whitespace-pre-line">{contactInfo.businessHours}</p>
                     </div>
                   </div>
                 </div>

@@ -5,12 +5,27 @@ import { useCart } from '../context/CartContext'
 
 export default function About() {
   const [logo, setLogo] = useState(null)
+  const [aboutContent, setAboutContent] = useState('')
   const { getCartCount } = useCart()
   const cartCount = getCartCount()
 
   useEffect(() => {
     const savedLogo = localStorage.getItem('scentlumus_logo')
     if (savedLogo) setLogo(savedLogo)
+
+    // Fetch about content from settings
+    const fetchAboutContent = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings?.about_content) {
+          setAboutContent(data.settings.about_content)
+        }
+      } catch (err) {
+        console.error('Failed to fetch about content:', err)
+      }
+    }
+    fetchAboutContent()
   }, [])
 
   return (
@@ -64,26 +79,17 @@ export default function About() {
           </div>
         </section>
 
-        {/* Our Story */}
+        {/* About Content */}
         <section className="max-w-6xl mx-auto px-4 py-16">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">Our Story</h2>
-              <p className="text-gray-600 mb-4">
-                Founded with a passion for luxury fragrances, ScentLumus has become a trusted destination for perfume enthusiasts seeking authentic, high-quality scents. Our name combines "Scent" and "Lumus" (light), symbolizing our mission to illuminate your presence with captivating fragrances.
-              </p>
-              <p className="text-gray-600 mb-4">
-                We believe that the right fragrance is more than just a scent—it's an expression of personality, a confidence booster, and a lasting impression. That's why we carefully curate our collection to offer only the finest perfumes from renowned brands around the world.
-              </p>
-              <p className="text-gray-600">
-                Every bottle we offer is authentic, and every customer experience is crafted with care. From selection to delivery, we ensure your journey with ScentLumus is as memorable as the fragrances you choose.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-lg h-96 flex items-center justify-center">
-              <svg className="w-32 h-32 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
-            </div>
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">About ScentLumus</h2>
+            {aboutContent ? (
+              <div className="prose prose-lg max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: aboutContent.replace(/\n/g, '<br>') }} />
+            ) : (
+              <div className="text-gray-500 italic">
+                About content is being loaded... If you're an admin, you can add content in the Content Management section.
+              </div>
+            )}
           </div>
         </section>
 
