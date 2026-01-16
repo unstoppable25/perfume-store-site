@@ -71,14 +71,21 @@ export default async function handler(req, res) {
 
       // Calculate discount
       let discountAmount = 0
+      let isFreeDelivery = false
+      
       if (promo.discountType === 'percentage') {
         discountAmount = (cartTotal * promo.discountValue) / 100
+      } else if (promo.discountType === 'free_delivery') {
+        isFreeDelivery = true
+        discountAmount = 0 // Will be handled as free delivery in checkout
       } else {
         discountAmount = promo.discountValue
       }
 
       // Ensure discount doesn't exceed cart total
-      discountAmount = Math.min(discountAmount, cartTotal)
+      if (!isFreeDelivery) {
+        discountAmount = Math.min(discountAmount, cartTotal)
+      }
 
       return res.status(200).json({
         success: true,
@@ -89,9 +96,12 @@ export default async function handler(req, res) {
           discountAmount: Math.round(discountAmount),
           requiresLogin: promo.requiresLogin,
           canCombine: promo.canCombine,
-          perUserLimit: promo.perUserLimit
+          perUserLimit: promo.perUserLimit,
+          isFreeDelivery
         },
-        message: `Promo code applied! You saved ₦${Math.round(discountAmount).toLocaleString('en-NG')}`
+        message: isFreeDelivery 
+          ? `Promo code applied! You get FREE delivery!` 
+          : `Promo code applied! You saved ₦${Math.round(discountAmount).toLocaleString('en-NG')}`
       })
 
     } catch (err) {

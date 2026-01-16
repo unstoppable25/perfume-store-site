@@ -260,7 +260,9 @@ export default function Checkout() {
   const getDiscountedTotal = () => {
     const subtotal = getCartTotal()
     const totalDiscount = appliedPromos.reduce((sum, promo) => sum + promo.discountAmount, 0)
-    return subtotal - totalDiscount + deliveryFee
+    const hasFreeDelivery = appliedPromos.some(promo => promo.isFreeDelivery)
+    const finalDeliveryFee = hasFreeDelivery ? 0 : deliveryFee
+    return subtotal - totalDiscount + finalDeliveryFee
   }
 
   // Update delivery fee when cart total changes
@@ -857,7 +859,9 @@ export default function Checkout() {
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className="flex flex-col items-end">
-                      {deliveryFee === 0 ? (
+                      {appliedPromos.some(promo => promo.isFreeDelivery) ? (
+                        <span className="text-green-600 font-semibold">FREE (Promo)</span>
+                      ) : deliveryFee === 0 ? (
                         <span className="text-green-600 font-semibold">FREE</span>
                       ) : (
                         <span>₦{deliveryFee.toLocaleString('en-NG')}</span>

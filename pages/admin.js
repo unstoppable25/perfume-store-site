@@ -92,6 +92,20 @@ export default function Admin() {
   })
   const [editingPromo, setEditingPromo] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
+  
+  // Content management states
+  const [contactInfo, setContactInfo] = useState({
+    email: '',
+    phone1: '',
+    phone2: '',
+    address: '',
+    businessHours: ''
+  })
+  const [aboutContent, setAboutContent] = useState('')
+  const [faqs, setFaqs] = useState([])
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '' })
+  const [editingFaq, setEditingFaq] = useState(null)
+  
   const router = useRouter()
 
   useEffect(() => {
@@ -106,7 +120,7 @@ export default function Admin() {
     
     // Set active tab from URL hash
     const hash = window.location.hash.slice(1)
-    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions'].includes(hash)) {
+    if (hash && ['products', 'orders', 'customers', 'messages', 'subscribers', 'users', 'delivery', 'promotions', 'content'].includes(hash)) {
       setActiveTab(hash)
     }
   }, [router])
@@ -198,6 +212,28 @@ export default function Admin() {
       }
     }
     fetchSubscribers()
+
+    // Load content
+    const fetchContent = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings) {
+          setContactInfo(data.settings.contact_info || {
+            email: '',
+            phone1: '',
+            phone2: '',
+            address: '',
+            businessHours: ''
+          })
+          setAboutContent(data.settings.about_content || '')
+          setFaqs(data.settings.faqs || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch content', err)
+      }
+    }
+    fetchContent()
 
     // Load users
     const fetchUsers = async () => {
@@ -393,6 +429,166 @@ export default function Admin() {
     } catch (err) {
       console.error('Failed to delete user', err)
       alert('Failed to delete user')
+    }
+  }
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: messageId })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
+        alert('Message deleted successfully')
+      } else {
+        alert('Failed to delete message: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to delete message', err)
+      alert('Failed to delete message')
+    }
+  }
+
+  const handleDeleteSubscriber = async (subscriberId) => {
+    if (!confirm('Are you sure you want to delete this subscriber? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/subscribers', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: subscriberId })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        setSubscribers((prev) => prev.filter((sub) => sub.id !== subscriberId))
+        alert('Subscriber deleted successfully')
+      } else {
+        alert('Failed to delete subscriber: ' + data.message)
+      }
+    } catch (err) {
+      console.error('Failed to delete subscriber', err)
+      alert('Failed to delete subscriber')
+    }
+  }
+
+  // Content management handlers
+  const handleSaveContactInfo = async () => {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'contact_info', value: JSON.stringify(contactInfo) })
+      })
+      alert('Contact information saved successfully!')
+    } catch (err) {
+      console.error('Failed to save contact info', err)
+      alert('Failed to save contact information')
+    }
+  }
+
+  const handleSaveAboutContent = async () => {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'about_content', value: aboutContent })
+      })
+      alert('About content saved successfully!')
+    } catch (err) {
+      console.error('Failed to save about content', err)
+      alert('Failed to save about content')
+    }
+  }
+
+  const handleAddFaq = async () => {
+    if (!newFaq.question || !newFaq.answer) {
+      alert('Please fill in both question and answer')
+      return
+    }
+
+    const updatedFaqs = [...faqs, { ...newFaq }]
+    setFaqs(updatedFaqs)
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'faqs', value: JSON.stringify(updatedFaqs) })
+      })
+      setNewFaq({ question: '', answer: '' })
+      alert('FAQ added successfully!')
+    } catch (err) {
+      console.error('Failed to save FAQ', err)
+      alert('Failed to add FAQ')
+    }
+  }
+
+  const handleEditFaq = (index) => {
+    setEditingFaq(index)
+    setNewFaq({ ...faqs[index] })
+  }
+
+  const handleUpdateFaq = async () => {
+    if (!newFaq.question || !newFaq.answer) {
+      alert('Please fill in both question and answer')
+      return
+    }
+
+    const updatedFaqs = [...faqs]
+    updatedFaqs[editingFaq] = { ...newFaq }
+    setFaqs(updatedFaqs)
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'faqs', value: JSON.stringify(updatedFaqs) })
+      })
+      setEditingFaq(null)
+      setNewFaq({ question: '', answer: '' })
+      alert('FAQ updated successfully!')
+    } catch (err) {
+      console.error('Failed to update FAQ', err)
+      alert('Failed to update FAQ')
+    }
+  }
+
+  const handleCancelFaqEdit = () => {
+    setEditingFaq(null)
+    setNewFaq({ question: '', answer: '' })
+  }
+
+  const handleDeleteFaq = async (index) => {
+    if (!confirm('Are you sure you want to delete this FAQ?')) {
+      return
+    }
+
+    const updatedFaqs = faqs.filter((_, i) => i !== index)
+    setFaqs(updatedFaqs)
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'faqs', value: JSON.stringify(updatedFaqs) })
+      })
+      alert('FAQ deleted successfully!')
+    } catch (err) {
+      console.error('Failed to delete FAQ', err)
+      alert('Failed to delete FAQ')
     }
   }
 
@@ -1242,7 +1438,7 @@ export default function Admin() {
   }
 
   const handleAddPromo = async () => {
-    if (!newPromo.code || !newPromo.discountValue) {
+    if (!newPromo.code || (newPromo.discountType !== 'free_delivery' && !newPromo.discountValue)) {
       alert('Please fill in promo code and discount value')
       return
     }
@@ -1251,7 +1447,7 @@ export default function Admin() {
       id: Date.now(),
       code: newPromo.code.toUpperCase().trim(),
       discountType: newPromo.discountType,
-      discountValue: parseFloat(newPromo.discountValue),
+      discountValue: newPromo.discountType === 'free_delivery' ? 0 : parseFloat(newPromo.discountValue),
       minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
       maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
       perUserLimit: newPromo.perUserLimit ? parseInt(newPromo.perUserLimit) : null,
@@ -1306,7 +1502,7 @@ export default function Admin() {
   }
 
   const handleUpdatePromo = async () => {
-    if (!newPromo.code || !newPromo.discountValue) {
+    if (!newPromo.code || (newPromo.discountType !== 'free_delivery' && !newPromo.discountValue)) {
       alert('Please fill in promo code and discount value')
       return
     }
@@ -1317,7 +1513,7 @@ export default function Admin() {
           ...promo,
           code: newPromo.code.toUpperCase().trim(),
           discountType: newPromo.discountType,
-          discountValue: parseFloat(newPromo.discountValue),
+          discountValue: newPromo.discountType === 'free_delivery' ? 0 : parseFloat(newPromo.discountValue),
           minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
           maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
           perUserLimit: newPromo.perUserLimit ? parseInt(newPromo.perUserLimit) : null,
@@ -1493,6 +1689,12 @@ export default function Admin() {
                 className={`px-6 py-3 font-semibold ${activeTab === 'promotions' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
               >
                 Promo Codes ({promoCodes.length})
+              </button>
+              <button
+                onClick={() => { setActiveTab('content'); window.location.hash = 'content' }}
+                className={`px-6 py-3 font-semibold ${activeTab === 'content' ? 'border-b-2 border-purple-600 text-purple-600' : 'text-gray-600'}`}
+              >
+                Content Management
               </button>
             </div>
           </div>
@@ -2364,7 +2566,15 @@ export default function Admin() {
                           <h3 className="font-semibold">{msg.name}</h3>
                           <p className="text-sm text-gray-600">{msg.email}</p>
                         </div>
-                        <p className="text-sm text-gray-500">{new Date(msg.createdAt).toLocaleString()}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-500">{new Date(msg.createdAt).toLocaleString()}</p>
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                       <p className="font-semibold text-sm text-gray-700 mb-1">Subject: {msg.subject}</p>
                       <p className="text-sm text-gray-600">{msg.message}</p>
@@ -2388,6 +2598,7 @@ export default function Admin() {
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
                         <th className="px-4 py-3 text-left text-sm font-semibold">Subscribed Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2396,6 +2607,14 @@ export default function Admin() {
                           <td className="px-4 py-3">{sub.email}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
                             {new Date(sub.subscribedAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => handleDeleteSubscriber(sub.id)}
+                              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -2830,19 +3049,26 @@ export default function Admin() {
                     >
                       <option value="percentage">Percentage (%)</option>
                       <option value="fixed">Fixed Amount (₦)</option>
+                      <option value="free_delivery">Free Delivery</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Discount Value *</label>
+                    <label className="block text-sm font-medium mb-1">Discount Value {newPromo.discountType !== 'free_delivery' ? '*' : ''}</label>
                     <input
                       type="number"
                       value={newPromo.discountValue}
                       onChange={(e) => setNewPromo({ ...newPromo, discountValue: e.target.value })}
-                      placeholder={newPromo.discountType === 'percentage' ? '20' : '5000'}
-                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder={newPromo.discountType === 'percentage' ? '20' : newPromo.discountType === 'free_delivery' ? 'N/A' : '5000'}
+                      disabled={newPromo.discountType === 'free_delivery'}
+                      className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      {newPromo.discountType === 'percentage' ? 'Enter percentage (e.g., 20 for 20%)' : 'Enter amount in Naira'}
+                      {newPromo.discountType === 'percentage' 
+                        ? 'Enter percentage (e.g., 20 for 20%)' 
+                        : newPromo.discountType === 'free_delivery'
+                        ? 'Free delivery codes don\'t require a discount value'
+                        : 'Enter amount in Naira'
+                      }
                     </p>
                   </div>
                   <div>
@@ -2968,6 +3194,8 @@ export default function Admin() {
                               <p className="text-lg font-semibold text-green-700">
                                 {promo.discountType === 'percentage' 
                                   ? `${promo.discountValue}% OFF` 
+                                  : promo.discountType === 'free_delivery'
+                                  ? 'FREE DELIVERY'
                                   : `₦${promo.discountValue.toLocaleString('en-NG')} OFF`
                                 }
                               </p>
@@ -3035,6 +3263,189 @@ export default function Admin() {
                   <li><strong>Active/Disabled:</strong> Toggle codes on/off without deleting them</li>
                   <li>Customers enter codes at checkout to get instant discounts!</li>
                 </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Content Management Tab */}
+          {activeTab === 'content' && (
+            <div className="space-y-8">
+              {/* Contact Information */}
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-2xl font-semibold mb-6">Contact Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Business Email</label>
+                    <input
+                      type="email"
+                      value={contactInfo.email}
+                      onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+                      placeholder="info@yourbusiness.com"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Phone Number 1</label>
+                    <input
+                      type="tel"
+                      value={contactInfo.phone1}
+                      onChange={(e) => setContactInfo({ ...contactInfo, phone1: e.target.value })}
+                      placeholder="+234 xxx xxx xxxx"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Phone Number 2 (Optional)</label>
+                    <input
+                      type="tel"
+                      value={contactInfo.phone2}
+                      onChange={(e) => setContactInfo({ ...contactInfo, phone2: e.target.value })}
+                      placeholder="+234 xxx xxx xxxx"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-1">Business Address</label>
+                    <textarea
+                      value={contactInfo.address}
+                      onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
+                      placeholder="123 Business Street, City, State, Nigeria"
+                      rows={3}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-1">Business Hours</label>
+                    <textarea
+                      value={contactInfo.businessHours}
+                      onChange={(e) => setContactInfo({ ...contactInfo, businessHours: e.target.value })}
+                      placeholder="Monday - Friday: 9:00 AM - 6:00 PM&#10;Saturday: 10:00 AM - 4:00 PM&#10;Sunday: Closed"
+                      rows={3}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={handleSaveContactInfo}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    Save Contact Information
+                  </button>
+                </div>
+              </div>
+
+              {/* About Page Content */}
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-2xl font-semibold mb-6">About Page Content</h2>
+                <div>
+                  <label className="block text-sm font-medium mb-1">About Content</label>
+                  <textarea
+                    value={aboutContent}
+                    onChange={(e) => setAboutContent(e.target.value)}
+                    placeholder="Write your about page content here..."
+                    rows={10}
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={handleSaveAboutContent}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    Save About Content
+                  </button>
+                </div>
+              </div>
+
+              {/* FAQ Management */}
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-2xl font-semibold mb-6">FAQ Management</h2>
+                
+                {/* Add/Edit FAQ Form */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4">{editingFaq ? 'Edit FAQ' : 'Add New FAQ'}</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Question</label>
+                      <input
+                        type="text"
+                        value={newFaq.question}
+                        onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                        placeholder="Enter FAQ question"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Answer</label>
+                      <textarea
+                        value={newFaq.answer}
+                        onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                        placeholder="Enter FAQ answer"
+                        rows={4}
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      {editingFaq ? (
+                        <>
+                          <button
+                            onClick={handleUpdateFaq}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Update FAQ
+                          </button>
+                          <button
+                            onClick={handleCancelFaqEdit}
+                            className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={handleAddFaq}
+                          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Add FAQ
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* FAQ List */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Existing FAQs ({faqs.length})</h3>
+                  {faqs.length === 0 ? (
+                    <p className="text-gray-500">No FAQs yet. Add your first FAQ above!</p>
+                  ) : (
+                    faqs.map((faq, index) => (
+                      <div key={index} className="border p-4 rounded-lg bg-gray-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg mb-2">{faq.question}</h4>
+                            <p className="text-gray-700">{faq.answer}</p>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <button
+                              onClick={() => handleEditFaq(index)}
+                              className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFaq(index)}
+                              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
