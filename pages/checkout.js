@@ -422,10 +422,10 @@ export default function Checkout() {
                 variable_name: 'phone',
                 value: formData.phone
               },
-              ...(appliedPromo ? [{
-                display_name: 'Promo Code',
-                variable_name: 'promo_code',
-                value: appliedPromo.code
+              ...(appliedPromos.length > 0 ? [{
+                display_name: 'Promo Codes',
+                variable_name: 'promo_codes',
+                value: appliedPromos.map(p => p.code).join(', ')
               }] : [])
             ],
             customer: {
@@ -848,12 +848,12 @@ export default function Checkout() {
                     <span>Subtotal</span>
                     <span>₦{getCartTotal().toLocaleString('en-NG')}</span>
                   </div>
-                  {appliedPromo && (
-                    <div className="flex justify-between text-green-600 font-medium">
-                      <span>Promo Discount ({appliedPromo.code})</span>
-                      <span>-₦{appliedPromo.discountAmount.toLocaleString('en-NG')}</span>
+                  {appliedPromos.map((promo, index) => (
+                    <div key={index} className="flex justify-between text-green-600 font-medium">
+                      <span>Promo Discount ({promo.code})</span>
+                      <span>-₦{promo.discountAmount.toLocaleString('en-NG')}</span>
                     </div>
-                  )}
+                  ))}
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className="flex flex-col items-end">
