@@ -84,8 +84,11 @@ export default function Admin() {
     discountValue: '',
     minOrder: '',
     maxUses: '',
+    perUserLimit: '',
     expiryDate: '',
-    active: true
+    active: true,
+    requiresLogin: false,
+    canCombine: true
   })
   const [editingPromo, setEditingPromo] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -1251,9 +1254,13 @@ export default function Admin() {
       discountValue: parseFloat(newPromo.discountValue),
       minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
       maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
+      perUserLimit: newPromo.perUserLimit ? parseInt(newPromo.perUserLimit) : null,
       usedCount: 0,
+      userUsages: {},
       expiryDate: newPromo.expiryDate || null,
       active: newPromo.active,
+      requiresLogin: newPromo.requiresLogin,
+      canCombine: newPromo.canCombine,
       createdAt: new Date().toISOString()
     }
 
@@ -1273,8 +1280,11 @@ export default function Admin() {
       discountValue: '',
       minOrder: '',
       maxUses: '',
+      perUserLimit: '',
       expiryDate: '',
-      active: true
+      active: true,
+      requiresLogin: false,
+      canCombine: true
     })
     alert('Promo code added successfully!')
   }
@@ -1287,8 +1297,11 @@ export default function Admin() {
       discountValue: promo.discountValue.toString(),
       minOrder: promo.minOrder ? promo.minOrder.toString() : '',
       maxUses: promo.maxUses ? promo.maxUses.toString() : '',
+      perUserLimit: promo.perUserLimit ? promo.perUserLimit.toString() : '',
       expiryDate: promo.expiryDate || '',
-      active: promo.active
+      active: promo.active,
+      requiresLogin: promo.requiresLogin || false,
+      canCombine: promo.canCombine !== false
     })
   }
 
@@ -1307,8 +1320,11 @@ export default function Admin() {
           discountValue: parseFloat(newPromo.discountValue),
           minOrder: newPromo.minOrder ? parseFloat(newPromo.minOrder) : 0,
           maxUses: newPromo.maxUses ? parseInt(newPromo.maxUses) : null,
+          perUserLimit: newPromo.perUserLimit ? parseInt(newPromo.perUserLimit) : null,
           expiryDate: newPromo.expiryDate || null,
-          active: newPromo.active
+          active: newPromo.active,
+          requiresLogin: newPromo.requiresLogin,
+          canCombine: newPromo.canCombine
         }
       }
       return promo
@@ -1330,8 +1346,11 @@ export default function Admin() {
       discountValue: '',
       minOrder: '',
       maxUses: '',
+      perUserLimit: '',
       expiryDate: '',
-      active: true
+      active: true,
+      requiresLogin: false,
+      canCombine: true
     })
     alert('Promo code updated successfully!')
   }
@@ -2847,6 +2866,16 @@ export default function Admin() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium mb-1">Per User Limit</label>
+                    <input
+                      type="number"
+                      value={newPromo.perUserLimit}
+                      onChange={(e) => setNewPromo({ ...newPromo, perUserLimit: e.target.value })}
+                      placeholder="Unlimited per user"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium mb-1">Expiry Date</label>
                     <input
                       type="date"
@@ -2865,6 +2894,24 @@ export default function Admin() {
                       className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                     />
                     <span className="text-sm font-medium">Active</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newPromo.requiresLogin}
+                      onChange={(e) => setNewPromo({ ...newPromo, requiresLogin: e.target.checked })}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium">Requires Login</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newPromo.canCombine}
+                      onChange={(e) => setNewPromo({ ...newPromo, canCombine: e.target.checked })}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium">Can Combine with Other Promos</span>
                   </label>
                   <div className="flex-1"></div>
                   {editingPromo ? (
@@ -2927,6 +2974,9 @@ export default function Admin() {
                               <div className="text-sm text-gray-600 mt-2 space-y-1">
                                 {promo.minOrder > 0 && <p>Min. order: ₦{promo.minOrder.toLocaleString('en-NG')}</p>}
                                 {promo.maxUses && <p>Uses: {promo.usedCount || 0} / {promo.maxUses}</p>}
+                                {promo.perUserLimit && <p>Per user limit: {promo.perUserLimit}</p>}
+                                {promo.requiresLogin && <p className="text-blue-600">Requires login</p>}
+                                {!promo.canCombine && <p className="text-orange-600">Cannot combine with other promos</p>}
                                 {promo.expiryDate && <p>Expires: {new Date(promo.expiryDate).toLocaleDateString()}</p>}
                                 <p className="text-xs text-gray-400">Created: {new Date(promo.createdAt).toLocaleDateString()}</p>
                               </div>

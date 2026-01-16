@@ -40,6 +40,47 @@ export default async function handler(req, res) {
       // Create order
       const newOrder = await createOrder(orderData)
 
+      // Update promo usage counts
+      if (orderData.promoCodes && orderData.promoCodes.length > 0) {
+        try {
+          const { getSettings, updateSettings } = await import('../../lib/db')
+          const settings = await getSettings()
+          let promoCodes = []
+          
+          try {
+            if (settings.promo_codes) {
+              if (Array.isArray(settings.promo_codes)) {
+                promoCodes = settings.promo_codes
+              } else if (typeof settings.promo_codes === 'string') {
+                promoCodes = JSON.parse(settings.promo_codes)
+              }
+            }
+          } catch (err) {
+            console.error('Failed to parse promo codes for usage update:', err)
+            promoCodes = []
+          }
+
+          // Update usage for each applied promo
+          const userKey = orderData.customer?.email || orderData.customerEmail
+          promoCodes = promoCodes.map(promo => {
+            if (orderData.promoCodes.includes(promo.code)) {
+              promo.usedCount = (promo.usedCount || 0) + 1
+              if (userKey) {
+                promo.userUsages = promo.userUsages || {}
+                promo.userUsages[userKey] = (promo.userUsages[userKey] || 0) + 1
+              }
+            }
+            return promo
+          })
+
+          // Save updated promo codes
+          await updateSettings('promo_codes', JSON.stringify(promoCodes))
+        } catch (promoErr) {
+          console.error('Failed to update promo usage:', promoErr)
+          // Don't fail order creation if promo update fails
+        }
+      }
+
       // Send confirmation email
       try {
         await sendOrderConfirmationEmail(newOrder)

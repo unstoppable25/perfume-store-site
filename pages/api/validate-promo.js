@@ -3,7 +3,7 @@ import { getSettings } from '../../lib/db'
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
-      const { code, cartTotal } = req.body
+      const { code, cartTotal, userId, userEmail } = req.body
 
       if (!code) {
         return res.status(400).json({ success: false, message: 'Promo code is required' })
@@ -55,12 +55,18 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: 'This promo code has reached its usage limit' })
       }
 
-      // Check minimum order amount
-      if (promo.minOrder && cartTotal < promo.minOrder) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Minimum order of ₦${promo.minOrder.toLocaleString('en-NG')} required for this promo code` 
-        })
+      // Check if promo requires login
+      if (promo.requiresLogin && !userId && !userEmail) {
+        return res.status(400).json({ success: false, message: 'This promo code requires you to be logged in' })
+      }
+
+      // Check per user limit
+      if (promo.perUserLimit && (userId || userEmail)) {
+        const userKey = userId || userEmail
+        const userUsage = promo.userUsages?.[userKey] || 0
+        if (userUsage >= promo.perUserLimit) {
+          return res.status(400).json({ success: false, message: `You have already used this promo code ${promo.perUserLimit} time(s)` })
+        }
       }
 
       // Calculate discount
@@ -80,7 +86,10 @@ export default async function handler(req, res) {
           code: promo.code,
           discountType: promo.discountType,
           discountValue: promo.discountValue,
-          discountAmount: Math.round(discountAmount)
+          discountAmount: Math.round(discountAmount),
+          requiresLogin: promo.requiresLogin,
+          canCombine: promo.canCombine,
+          perUserLimit: promo.perUserLimit
         },
         message: `Promo code applied! You saved ₦${Math.round(discountAmount).toLocaleString('en-NG')}`
       })

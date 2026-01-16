@@ -63,7 +63,7 @@ export default function Checkout() {
   const [deliveryMethod, setDeliveryMethod] = useState('delivery') // 'delivery' or 'pickup'
   const [selfPickupEnabled, setSelfPickupEnabled] = useState(false)
   const [promoCode, setPromoCode] = useState('')
-  const [appliedPromo, setAppliedPromo] = useState(null)
+  const [appliedPromos, setAppliedPromos] = useState([])
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoMessage, setPromoMessage] = useState('')
   const [formData, setFormData] = useState({
@@ -188,44 +188,79 @@ export default function Checkout() {
       return
     }
 
+    // Check if promo is already applied
+    if (appliedPromos.some(p => p.code.toUpperCase() === promoCode.toUpperCase())) {
+      setPromoMessage('This promo code is already applied')
+      return
+    }
+
     setPromoLoading(true)
     setPromoMessage('')
 
     try {
+      // Get user info for validation
+      const userAuth = sessionStorage.getItem('user_authenticated')
+      const userData = sessionStorage.getItem('user_data')
+      let userId = null
+      let userEmail = null
+      
+      if (userAuth === 'true' && userData) {
+        const user = JSON.parse(userData)
+        userId = user.id
+        userEmail = user.email
+      }
+
       const res = await fetch('/api/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCode, cartTotal: getCartTotal() })
+        body: JSON.stringify({ 
+          code: promoCode, 
+          cartTotal: getCartTotal(),
+          userId,
+          userEmail
+        })
       })
       const data = await res.json()
 
       if (data.success) {
-        setAppliedPromo(data.promo)
+        // Check if this promo can combine with existing ones
+        const canCombine = data.promo.canCombine !== false
+        const hasNonCombinable = appliedPromos.some(p => p.canCombine === false)
+        
+        if (!canCombine && appliedPromos.length > 0) {
+          setPromoMessage('This promo code cannot be combined with other promotions')
+          return
+        }
+        
+        if (hasNonCombinable && canCombine) {
+          setPromoMessage('Cannot add this promo code with existing non-combinable promotions')
+          return
+        }
+
+        setAppliedPromos([...appliedPromos, data.promo])
         setPromoMessage(data.message)
+        setPromoCode('')
       } else {
         setPromoMessage(data.message)
-        setAppliedPromo(null)
       }
     } catch (err) {
       console.error('Failed to apply promo', err)
       setPromoMessage('Failed to apply promo code')
-      setAppliedPromo(null)
     } finally {
       setPromoLoading(false)
     }
   }
 
-  const handleRemovePromo = () => {
-    setAppliedPromo(null)
-    setPromoCode('')
+  const handleRemovePromo = (index) => {
+    setAppliedPromos(appliedPromos.filter((_, i) => i !== index))
     setPromoMessage('')
   }
 
   // Calculate final total with promo discount
   const getDiscountedTotal = () => {
     const subtotal = getCartTotal()
-    const discount = appliedPromo ? appliedPromo.discountAmount : 0
-    return subtotal - discount + deliveryFee
+    const totalDiscount = appliedPromos.reduce((sum, promo) => sum + promo.discountAmount, 0)
+    return subtotal - totalDiscount + deliveryFee
   }
 
   // Update delivery fee when cart total changes
@@ -276,8 +311,8 @@ export default function Checkout() {
           })),
           total: 0,
           deliveryFee,
-          promoCode: appliedPromo?.code || null,
-          promoDiscount: appliedPromo?.discountAmount || 0,
+          promoCodes: appliedPromos.map(p => p.code),
+          promoDiscount: appliedPromos.reduce((sum, p) => sum + p.discountAmount, 0),
           deliveryMethod,
           status: 'Pending',
           paymentMethod: 'Free Order (100% Discount)',
@@ -331,8 +366,8 @@ export default function Checkout() {
           })),
           total: getDiscountedTotal(),
           deliveryFee,
-          promoCode: appliedPromo?.code || null,
-          promoDiscount: appliedPromo?.discountAmount || 0,
+          promoCodes: appliedPromos.map(p => p.code),
+          promoDiscount: appliedPromos.reduce((sum, p) => sum + p.discountAmount, 0),
           deliveryMethod,
           status: 'Pending',
           paymentMethod: 'Cash on Delivery',
@@ -406,8 +441,8 @@ export default function Checkout() {
               zipCode: deliveryMethod === 'pickup' ? '' : formData.zipCode
             },
             deliveryMethod,
-            promoCode: appliedPromo?.code || null,
-            promoDiscount: appliedPromo?.discountAmount || 0,
+            promoCodes: appliedPromos.map(p => p.code),
+            promoDiscount: appliedPromos.reduce((sum, p) => sum + p.discountAmount, 0),
             cart: cart.map(item => ({
               id: item.id,
               name: item.name,
@@ -683,39 +718,49 @@ export default function Checkout() {
               {/* Promo Code */}
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg shadow p-6 border border-amber-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">🎉 Have a Promo Code?</h2>
-                {!appliedPromo ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      placeholder="Enter promo code"
-                      className="flex-1 border border-gray-300 rounded px-4 py-2 uppercase focus:outline-none focus:ring-2 focus:ring-amber-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleApplyPromo}
-                      disabled={promoLoading}
-                      className="px-6 py-2 bg-amber-700 text-white rounded font-semibold hover:bg-amber-800 disabled:bg-gray-400"
-                    >
-                      {promoLoading ? 'Checking...' : 'Apply'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-4 bg-green-100 border-2 border-green-500 rounded-lg">
-                    <div>
-                      <p className="font-bold text-green-800 text-lg">{appliedPromo.code} Applied!</p>
-                      <p className="text-green-700">You saved ₦{appliedPromo.discountAmount.toLocaleString('en-NG')}</p>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Enter promo code"
+                    className="flex-1 border border-gray-300 rounded px-4 py-2 uppercase focus:outline-none focus:ring-2 focus:ring-amber-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={promoLoading}
+                    className="px-6 py-2 bg-amber-700 text-white rounded font-semibold hover:bg-amber-800 disabled:bg-gray-400"
+                  >
+                    {promoLoading ? 'Checking...' : 'Apply'}
+                  </button>
+                </div>
+                
+                {/* Applied Promos */}
+                {appliedPromos.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    <h3 className="font-medium text-gray-800">Applied Promo Codes:</h3>
+                    {appliedPromos.map((promo, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-green-100 border-2 border-green-500 rounded-lg">
+                        <div>
+                          <p className="font-bold text-green-800">{promo.code}</p>
+                          <p className="text-green-700 text-sm">Saved ₦{promo.discountAmount.toLocaleString('en-NG')}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePromo(index)}
+                          className="text-red-600 hover:text-red-800 font-medium text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <div className="text-right font-semibold text-green-800">
+                      Total Savings: ₦{appliedPromos.reduce((sum, p) => sum + p.discountAmount, 0).toLocaleString('en-NG')}
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleRemovePromo}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Remove
-                    </button>
                   </div>
                 )}
+                
                 {promoMessage && (
                   <p className={`mt-2 text-sm ${promoMessage.includes('saved') || promoMessage.includes('Applied') ? 'text-green-600' : 'text-red-600'}`}>
                     {promoMessage}
