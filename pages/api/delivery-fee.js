@@ -93,6 +93,20 @@ export default async function handler(req, res) {
         console.error('Failed to parse state flat rates:', err)
       }
 
+      let zones = []
+      try {
+        if (settings.delivery_zones) {
+          if (Array.isArray(settings.delivery_zones)) {
+            zones = settings.delivery_zones
+          } else if (typeof settings.delivery_zones === 'string' && settings.delivery_zones.trim()) {
+            zones = JSON.parse(settings.delivery_zones)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse delivery zones:', err)
+        zones = []
+      }
+
       // Check which delivery system to use
       const useDistanceBasedPricing = settings.use_distance_based_pricing === 'true' || settings.use_distance_based_pricing === true
 
@@ -205,16 +219,59 @@ export default async function handler(req, res) {
           })
         }
 
-        // Legacy zone-based logic (simplified - you may need to restore original logic)
+        // Zone-based delivery logic
         let deliveryFee = defaultFee
         let deliveryMessage = 'Standard delivery'
         let deliveryType = 'default'
 
-        // For now, use default fee - you can restore original zone logic here
-        console.log('Legacy delivery fee calculation result:', {
+        // Check for zone matches
+        let matchedZone = null
+        for (const zone of zones) {
+          if (!zone.states || !Array.isArray(zone.states)) continue
+          
+          // Check if city matches (more specific)
+          if (city && zone.states.some(location => 
+            location.toLowerCase().includes(city.toLowerCase()) || 
+            city.toLowerCase().includes(location.toLowerCase())
+          )) {
+            matchedZone = zone
+            deliveryType = 'zone_city_match'
+            break
+          }
+          
+          // Check if state matches
+          if (state && zone.states.some(location => 
+            location.toLowerCase() === state.toLowerCase() ||
+            state.toLowerCase().includes(location.toLowerCase())
+          )) {
+            matchedZone = zone
+            deliveryType = 'zone_state_match'
+            break
+          }
+        }
+
+        if (matchedZone) {
+          deliveryFee = parseInt(matchedZone.fee) || defaultFee
+          deliveryMessage = `${matchedZone.name} delivery`
+          console.log('Zone match found:', {
+            zone: matchedZone.name,
+            fee: deliveryFee,
+            locations: matchedZone.states,
+            matchType: deliveryType
+          })
+        } else {
+          console.log('No zone match found, using default fee:', {
+            state,
+            city,
+            availableZones: zones.map(z => ({ name: z.name, locations: z.states }))
+          })
+        }
+
+        console.log('Legacy zone-based delivery fee calculation result:', {
           fee: deliveryFee,
           message: deliveryMessage,
-          type: deliveryType
+          type: deliveryType,
+          matchedZone: matchedZone ? matchedZone.name : null
         })
 
         return res.status(200).json({
