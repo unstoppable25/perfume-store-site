@@ -72,6 +72,21 @@ export default async function handler(req, res) {
       } catch (err) {
         console.error('Failed to parse state flat rates:', err)
       }
+
+      let pickupAddresses = []
+      try {
+        if (settings.pickup_addresses) {
+          const addressesValue = settings.pickup_addresses
+          if (Array.isArray(addressesValue)) {
+            pickupAddresses = addressesValue
+          } else if (typeof addressesValue === 'string' && addressesValue.trim()) {
+            pickupAddresses = JSON.parse(addressesValue)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse pickup addresses:', err)
+        pickupAddresses = []
+      }
       
       const deliverySettings = {
         defaultFee: settings.delivery_default_fee ? parseInt(settings.delivery_default_fee) : 2000,

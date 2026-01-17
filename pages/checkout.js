@@ -112,6 +112,10 @@ export default function Checkout() {
           console.log('Self pickup enabled:', data.settings.selfPickupEnabled)
           console.log('Free threshold:', data.settings.freeThreshold)
           setSelfPickupEnabled(data.settings.selfPickupEnabled || false)
+          // For testing: enable self pickup by default if no addresses exist
+          if (!data.settings.selfPickupEnabled && (!data.settings.pickupAddresses || data.settings.pickupAddresses.length === 0)) {
+            setSelfPickupEnabled(true) // Enable for testing
+          }
           setPickupAddresses(data.settings.pickupAddresses || [])
           // Set initial delivery fee to default instead of 0
           if (deliveryMethod === 'delivery') {
@@ -132,7 +136,7 @@ export default function Checkout() {
       setDeliveryFee(0)
       setDeliveryMessage('Self Pickup - FREE')
     } else if (formData.state || formData.city) {
-      fetchDeliveryFee(formData.state, formData.city)
+      fetchDeliveryFee(formData.state, formData.city, formData.address)
     }
   }, [deliveryMethod])
 
@@ -152,7 +156,7 @@ export default function Checkout() {
     if ((name === 'state' || name === 'city') && deliveryMethod === 'delivery') {
       const newFormData = { ...formData, [name]: value }
       if (name === 'state') newFormData.city = '' // Reset city when state changes
-      fetchDeliveryFee(newFormData.state, newFormData.city)
+      fetchDeliveryFee(newFormData.state, newFormData.city, newFormData.address)
     }
   }
 
@@ -161,7 +165,7 @@ export default function Checkout() {
   }
 
   // Fetch delivery fee based on location and cart total
-  const fetchDeliveryFee = async (state, city) => {
+  const fetchDeliveryFee = async (state, city, address = '') => {
     if (deliveryMethod === 'pickup') {
       setDeliveryFee(0)
       setDeliveryMessage('Self Pickup - FREE')
@@ -169,18 +173,57 @@ export default function Checkout() {
     }
 
     try {
+      // For now, use mock coordinates based on address/state/city
+      // In production, this should use Google Maps Geocoding API
+      let customerLat = null
+      let customerLng = null
+
+      // Simple mock coordinate lookup (replace with real geocoding)
+      const mockCoords = {
+        'Victoria Island, Lagos': { lat: 6.4281, lng: 3.4219 },
+        'Lekki Phase 1, Lagos': { lat: 6.4488, lng: 3.4737 },
+        'Ikeja, Lagos': { lat: 6.6018, lng: 3.3515 },
+        'Surulere, Lagos': { lat: 6.4874, lng: 3.3581 },
+        'Yaba, Lagos': { lat: 6.5101, lng: 3.3869 },
+        'Ajah, Lagos': { lat: 6.4720, lng: 3.5880 },
+        'Gbagada, Lagos': { lat: 6.5538, lng: 3.3869 },
+        'Maryland, Lagos': { lat: 6.5770, lng: 3.3650 },
+        'Oshodi, Lagos': { lat: 6.5550, lng: 3.3430 },
+        'Festac Town, Lagos': { lat: 6.4697, lng: 3.2830 }
+      }
+
+      // Try to get coordinates from address first, then fallback to city/state
+      const coords = mockCoords[address] || mockCoords[`${city}, ${state}`]
+      if (coords) {
+        customerLat = coords.lat
+        customerLng = coords.lng
+      }
+
       const res = await fetch('/api/delivery-fee', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state, city, cartTotal: getCartTotal() })
+        body: JSON.stringify({
+          state,
+          city,
+          cartTotal: getCartTotal(),
+          customerLat,
+          customerLng
+        })
       })
       const data = await res.json()
       if (data.success) {
         setDeliveryFee(data.fee)
         setDeliveryMessage(data.message)
+      } else {
+        // Fallback to default fee if API fails
+        setDeliveryFee(2000)
+        setDeliveryMessage('Standard delivery')
       }
     } catch (err) {
       console.error('Failed to fetch delivery fee', err)
+      // Fallback to default fee
+      setDeliveryFee(2000)
+      setDeliveryMessage('Standard delivery')
     }
   }
 
@@ -271,7 +314,7 @@ export default function Checkout() {
   // Update delivery fee when cart total changes
   useEffect(() => {
     if ((formData.state || formData.city) && deliveryMethod === 'delivery') {
-      fetchDeliveryFee(formData.state, formData.city)
+      fetchDeliveryFee(formData.state, formData.city, formData.address)
     }
   }, [getCartTotal()])
 
@@ -729,6 +772,10 @@ export default function Checkout() {
                             } else {
                               setShowSuggestions(false)
                             }
+                            // Recalculate delivery fee as user types address
+                            if (deliveryMethod === 'delivery' && formData.state && formData.city) {
+                              setTimeout(() => fetchDeliveryFee(formData.state, formData.city, e.target.value), 500)
+                            }
                           }}
                           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                           className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
@@ -744,6 +791,10 @@ export default function Checkout() {
                                 onClick={() => {
                                   setFormData(prev => ({ ...prev, address: suggestion }))
                                   setShowSuggestions(false)
+                                  // Recalculate delivery fee with the selected address
+                                  if (deliveryMethod === 'delivery' && formData.state && formData.city) {
+                                    fetchDeliveryFee(formData.state, formData.city, suggestion)
+                                  }
                                 }}
                               >
                                 {suggestion}
@@ -791,7 +842,7 @@ export default function Checkout() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Zip Code *
+                        Zip Code
                       </label>
                       <input
                         type="text"
@@ -799,7 +850,6 @@ export default function Checkout() {
                         value={formData.zipCode}
                         onChange={handleChange}
                         className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                        required
                       />
                     </div>
                   </div>
