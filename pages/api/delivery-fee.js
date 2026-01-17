@@ -43,22 +43,50 @@ export default async function handler(req, res) {
         })
       }
 
-      // Check if location matches any zone
-      if (state) {
-        const matchingZone = zones.find(zone => {
-          if (!zone.states || zone.states.length === 0) return false
-          return zone.states.some(s => 
-            state.toLowerCase().includes(s.toLowerCase()) || 
-            s.toLowerCase().includes(state.toLowerCase())
-          )
-        })
+      // Check if location matches any zone - prioritize specific matches
+      if (state || city) {
+        let matchingZone = null
+        let bestMatchType = 'none' // 'city', 'state', or 'none'
+
+        for (const zone of zones) {
+          if (!zone.states || zone.states.length === 0) continue
+
+          // Check for exact city/LGA match first
+          if (city) {
+            const cityMatch = zone.states.some(s =>
+              s.toLowerCase() === city.toLowerCase() ||
+              s.toLowerCase().includes(city.toLowerCase()) ||
+              city.toLowerCase().includes(s.toLowerCase())
+            )
+            if (cityMatch) {
+              matchingZone = zone
+              bestMatchType = 'city'
+              break // Exact city match takes priority
+            }
+          }
+
+          // If no city match, check for state match (but only if we haven't found a city match)
+          if (bestMatchType !== 'city' && state) {
+            const stateMatch = zone.states.some(s =>
+              s.toLowerCase() === state.toLowerCase() ||
+              s.toLowerCase().includes(state.toLowerCase()) ||
+              state.toLowerCase().includes(s.toLowerCase())
+            )
+            if (stateMatch && bestMatchType !== 'city') {
+              matchingZone = zone
+              bestMatchType = 'state'
+              // Don't break - continue looking for city matches
+            }
+          }
+        }
 
         if (matchingZone) {
           return res.status(200).json({
             success: true,
             fee: matchingZone.fee,
             message: `${matchingZone.name} delivery`,
-            zone: matchingZone.name
+            zone: matchingZone.name,
+            matchType: bestMatchType
           })
         }
       }

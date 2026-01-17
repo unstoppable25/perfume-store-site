@@ -61,6 +61,8 @@ export default function Checkout() {
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [deliveryMessage, setDeliveryMessage] = useState('Loading...')
   const [deliveryMethod, setDeliveryMethod] = useState('delivery') // 'delivery' or 'pickup'
+  const [selectedPickupAddress, setSelectedPickupAddress] = useState(null)
+  const [pickupAddresses, setPickupAddresses] = useState([])
   const [selfPickupEnabled, setSelfPickupEnabled] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [appliedPromos, setAppliedPromos] = useState([])
@@ -110,6 +112,7 @@ export default function Checkout() {
           console.log('Self pickup enabled:', data.settings.selfPickupEnabled)
           console.log('Free threshold:', data.settings.freeThreshold)
           setSelfPickupEnabled(data.settings.selfPickupEnabled || false)
+          setPickupAddresses(data.settings.pickupAddresses || [])
           // Set default delivery fee from settings
           if (deliveryMethod === 'delivery') {
             setDeliveryFee(data.settings.defaultFee || 2000)
@@ -280,6 +283,13 @@ export default function Checkout() {
       return
     }
 
+    // Validate pickup address selection
+    if (deliveryMethod === 'pickup' && pickupAddresses.length > 0 && !selectedPickupAddress) {
+      alert('Please select a pickup location')
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -295,10 +305,11 @@ export default function Checkout() {
             phone: formData.phone
           },
           shipping: deliveryMethod === 'pickup' ? {
-            address: 'Self Pickup',
-            city: 'Self Pickup',
-            state: 'Self Pickup',
-            zipCode: ''
+            address: selectedPickupAddress ? `${selectedPickupAddress.name} - ${selectedPickupAddress.address}` : 'Self Pickup',
+            city: selectedPickupAddress ? selectedPickupAddress.city : 'Self Pickup',
+            state: selectedPickupAddress ? selectedPickupAddress.state : 'Self Pickup',
+            zipCode: '',
+            pickupAddress: selectedPickupAddress
           } : {
             address: formData.address,
             city: formData.city,
@@ -350,10 +361,11 @@ export default function Checkout() {
             phone: formData.phone
           },
           shipping: deliveryMethod === 'pickup' ? {
-            address: 'Self Pickup',
-            city: 'Self Pickup',
-            state: 'Self Pickup',
-            zipCode: ''
+            address: selectedPickupAddress ? `${selectedPickupAddress.name} - ${selectedPickupAddress.address}` : 'Self Pickup',
+            city: selectedPickupAddress ? selectedPickupAddress.city : 'Self Pickup',
+            state: selectedPickupAddress ? selectedPickupAddress.state : 'Self Pickup',
+            zipCode: '',
+            pickupAddress: selectedPickupAddress
           } : {
             address: formData.address,
             city: formData.city,
@@ -644,6 +656,39 @@ export default function Checkout() {
                   )}
                 </div>
               </div>
+
+              {/* Pickup Address Selection */}
+              {deliveryMethod === 'pickup' && pickupAddresses.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Pickup Location</h2>
+                  <div className="space-y-3">
+                    {pickupAddresses.map(address => (
+                      <label key={address.id} className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                        style={{ borderColor: selectedPickupAddress?.id === address.id ? '#b45309' : '#d1d5db' }}>
+                        <input
+                          type="radio"
+                          name="pickupAddress"
+                          value={address.id}
+                          checked={selectedPickupAddress?.id === address.id}
+                          onChange={() => setSelectedPickupAddress(address)}
+                          className="w-4 h-4 text-amber-600 mt-1"
+                        />
+                        <div className="ml-3 flex-1">
+                          <span className="block font-medium text-gray-900">{address.name}</span>
+                          <span className="block text-sm text-gray-600 mb-1">{address.address}</span>
+                          <span className="block text-sm text-gray-600 mb-2">{address.city}, {address.state}</span>
+                          {address.phone && <span className="block text-sm text-gray-600">📞 {address.phone}</span>}
+                          {address.businessHours && <span className="block text-sm text-gray-600">🕒 {address.businessHours}</span>}
+                          {address.instructions && <span className="block text-sm text-gray-600">📋 {address.instructions}</span>}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {pickupAddresses.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No pickup locations available yet.</p>
+                  )}
+                </div>
+              )}
 
               {/* Shipping Address */}
               {deliveryMethod === 'delivery' && (

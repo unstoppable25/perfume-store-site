@@ -100,10 +100,21 @@ export default function Admin() {
     defaultFee: 2000,
     freeDeliveryThreshold: 0,
     selfPickupEnabled: false,
-    zones: []
+    zones: [],
+    pickupAddresses: []
   })
   const [newZone, setNewZone] = useState({ name: '', fee: '', states: '' })
   const [editingZone, setEditingZone] = useState(null)
+  const [newPickupAddress, setNewPickupAddress] = useState({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    instructions: '',
+    businessHours: '',
+    phone: ''
+  })
+  const [editingPickupAddress, setEditingPickupAddress] = useState(null)
   const [promoCodes, setPromoCodes] = useState([])
   const [newPromo, setNewPromo] = useState({
     code: '',
@@ -340,11 +351,27 @@ export default function Admin() {
             parsedZones = []
           }
           
+          let parsedPickupAddresses = []
+          try {
+            if (data.settings.pickup_addresses) {
+              const addressesValue = data.settings.pickup_addresses
+              if (Array.isArray(addressesValue)) {
+                parsedPickupAddresses = addressesValue
+              } else if (typeof addressesValue === 'string' && addressesValue.trim()) {
+                parsedPickupAddresses = JSON.parse(addressesValue)
+              }
+            }
+          } catch (err) {
+            console.error('Failed to parse pickup addresses:', err, 'Value was:', data.settings.pickup_addresses)
+            parsedPickupAddresses = []
+          }
+          
           const deliveryData = {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
             selfPickupEnabled: data.settings.self_pickup_enabled === 'true' || data.settings.self_pickup_enabled === true,
-            zones: parsedZones
+            zones: parsedZones,
+            pickupAddresses: parsedPickupAddresses
           }
           console.log('Loaded delivery settings:', deliveryData)
           setDeliverySettings(deliveryData)
@@ -1530,6 +1557,147 @@ export default function Admin() {
   const handleCancelZoneEdit = () => {
     setEditingZone(null)
     setNewZone({ name: '', fee: '', states: '' })
+  }
+
+  // Pickup Address Functions
+  const handleAddPickupAddress = async () => {
+    if (!newPickupAddress.name || !newPickupAddress.address || !newPickupAddress.city || !newPickupAddress.state) {
+      alert('Please fill in name, address, city, and state')
+      return
+    }
+
+    const pickupAddress = {
+      id: Date.now(),
+      name: newPickupAddress.name,
+      address: newPickupAddress.address,
+      city: newPickupAddress.city,
+      state: newPickupAddress.state,
+      instructions: newPickupAddress.instructions,
+      businessHours: newPickupAddress.businessHours,
+      phone: newPickupAddress.phone
+    }
+
+    const updatedSettings = {
+      ...deliverySettings,
+      pickupAddresses: [...deliverySettings.pickupAddresses, pickupAddress]
+    }
+    setDeliverySettings(updatedSettings)
+
+    // Auto-save pickup addresses
+    const addressesString = JSON.stringify(updatedSettings.pickupAddresses)
+    
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'pickup_addresses', value: addressesString })
+    })
+
+    setNewPickupAddress({
+      name: '',
+      address: '',
+      city: '',
+      state: '',
+      instructions: '',
+      businessHours: '',
+      phone: ''
+    })
+    alert('Pickup address added successfully!')
+  }
+
+  const handleEditPickupAddress = (address) => {
+    setEditingPickupAddress(address.id)
+    setNewPickupAddress({
+      name: address.name,
+      address: address.address,
+      city: address.city,
+      state: address.state,
+      instructions: address.instructions || '',
+      businessHours: address.businessHours || '',
+      phone: address.phone || ''
+    })
+  }
+
+  const handleUpdatePickupAddress = async () => {
+    if (!newPickupAddress.name || !newPickupAddress.address || !newPickupAddress.city || !newPickupAddress.state) {
+      alert('Please fill in name, address, city, and state')
+      return
+    }
+
+    const updatedAddresses = deliverySettings.pickupAddresses.map(address => {
+      if (address.id === editingPickupAddress) {
+        return {
+          ...address,
+          name: newPickupAddress.name,
+          address: newPickupAddress.address,
+          city: newPickupAddress.city,
+          state: newPickupAddress.state,
+          instructions: newPickupAddress.instructions,
+          businessHours: newPickupAddress.businessHours,
+          phone: newPickupAddress.phone
+        }
+      }
+      return address
+    })
+
+    setDeliverySettings({
+      ...deliverySettings,
+      pickupAddresses: updatedAddresses
+    })
+
+    // Auto-save pickup addresses
+    const addressesString = JSON.stringify(updatedAddresses)
+    
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'pickup_addresses', value: addressesString })
+    })
+
+    setEditingPickupAddress(null)
+    setNewPickupAddress({
+      name: '',
+      address: '',
+      city: '',
+      state: '',
+      instructions: '',
+      businessHours: '',
+      phone: ''
+    })
+    alert('Pickup address updated successfully!')
+  }
+
+  const handleDeletePickupAddress = async (addressId) => {
+    if (confirm('Are you sure you want to delete this pickup address?')) {
+      const updatedAddresses = deliverySettings.pickupAddresses.filter(address => address.id !== addressId)
+      setDeliverySettings({
+        ...deliverySettings,
+        pickupAddresses: updatedAddresses
+      })
+
+      // Auto-save pickup addresses
+      const addressesString = JSON.stringify(updatedAddresses)
+      
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'pickup_addresses', value: addressesString })
+      })
+
+      alert('Pickup address deleted successfully!')
+    }
+  }
+
+  const handleCancelPickupAddressEdit = () => {
+    setEditingPickupAddress(null)
+    setNewPickupAddress({
+      name: '',
+      address: '',
+      city: '',
+      state: '',
+      instructions: '',
+      businessHours: '',
+      phone: ''
+    })
   }
 
   // Promo Code Functions
@@ -3022,7 +3190,7 @@ export default function Admin() {
                         type="text"
                         value={newZone.name}
                         onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
-                        placeholder="e.g., Lagos Island"
+                        placeholder="e.g., Lagos Island, Abuja Central"
                         className="w-full px-3 py-2 border rounded-lg"
                       />
                     </div>
@@ -3037,14 +3205,17 @@ export default function Admin() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">States/Cities (comma-separated)</label>
+                      <label className="block text-sm font-medium mb-1">Locations (comma-separated)</label>
                       <input
                         type="text"
                         value={newZone.states}
                         onChange={(e) => setNewZone({ ...newZone, states: e.target.value })}
-                        placeholder="Lagos, Abuja"
+                        placeholder="Lagos Island, Ikoyi, Victoria Island"
                         className="w-full px-3 py-2 border rounded-lg"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter specific LGAs/cities for precise delivery fees
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3">
@@ -3112,6 +3283,150 @@ export default function Admin() {
                 </div>
               </div>
 
+              {/* Self Pickup Addresses */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Self Pickup Addresses</h3>
+                <p className="text-sm text-gray-600 mb-4">Manage locations where customers can pick up their orders</p>
+
+                {/* Add/Edit Pickup Address Form */}
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-semibold mb-3">{editingPickupAddress ? 'Edit Pickup Address' : 'Add New Pickup Address'}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Location Name *</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.name}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, name: e.target.value })}
+                        placeholder="e.g., Main Store - Lagos Island"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        value={newPickupAddress.phone}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, phone: e.target.value })}
+                        placeholder="+234 xxx xxx xxxx"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium mb-1">Full Address *</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.address}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, address: e.target.value })}
+                        placeholder="123 Victoria Island, Lagos"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">City *</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.city}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, city: e.target.value })}
+                        placeholder="Lagos Island"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">State *</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.state}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, state: e.target.value })}
+                        placeholder="Lagos"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Business Hours</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.businessHours}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, businessHours: e.target.value })}
+                        placeholder="Mon-Fri: 9AM-6PM, Sat: 10AM-4PM"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Pickup Instructions</label>
+                      <input
+                        type="text"
+                        value={newPickupAddress.instructions}
+                        onChange={(e) => setNewPickupAddress({ ...newPickupAddress, instructions: e.target.value })}
+                        placeholder="Enter through the main door, ask for customer service"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    {editingPickupAddress ? (
+                      <>
+                        <button
+                          onClick={handleUpdatePickupAddress}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          Update Address
+                        </button>
+                        <button
+                          onClick={handleCancelPickupAddressEdit}
+                          className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleAddPickupAddress}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      >
+                        + Add Pickup Address
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pickup Addresses List */}
+                <div className="space-y-3">
+                  {deliverySettings.pickupAddresses.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No pickup addresses added yet. Add addresses where customers can collect their orders.</p>
+                  ) : (
+                    deliverySettings.pickupAddresses.map(address => (
+                      <div key={address.id} className="p-4 border rounded-lg bg-white hover:shadow-md transition">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg">{address.name}</h4>
+                            <p className="text-sm text-gray-600 mb-1">{address.address}</p>
+                            <p className="text-sm text-gray-600 mb-2">{address.city}, {address.state}</p>
+                            {address.phone && <p className="text-sm text-gray-600">📞 {address.phone}</p>}
+                            {address.businessHours && <p className="text-sm text-gray-600">🕒 {address.businessHours}</p>}
+                            {address.instructions && <p className="text-sm text-gray-600">📋 {address.instructions}</p>}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditPickupAddress(address)}
+                              className="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeletePickupAddress(address.id)}
+                              className="px-3 py-1 text-red-600 hover:bg-red-50 rounded"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
               {/* Save Button */}
               <div className="flex justify-end pt-6 border-t">
                 <button
@@ -3124,15 +3439,23 @@ export default function Admin() {
 
               {/* Info Box */}
               <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h4 className="font-semibold text-yellow-800 mb-2">💡 How It Works:</h4>
+                <h4 className="font-semibold text-yellow-800 mb-2">💡 How Delivery Zones Work:</h4>
                 <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
-                  <li>Set a default delivery fee for all orders</li>
-                  <li>Run promotions with free delivery above a certain amount</li>
-                  <li>Enable self-pickup for customers to collect orders for free</li>
-                  <li>Create zones for specific locations with custom fees</li>
-                  <li>Zone fees override the default fee when the customer's state matches</li>
-                  <li>Free delivery promotion applies to all zones when threshold is met</li>
+                  <li><strong>Specific matching:</strong> Zones match by city/LGA first, then by state</li>
+                  <li><strong>Priority order:</strong> City/LGA matches override state matches</li>
+                  <li><strong>Examples:</strong> "Lagos Island" zone only applies to Lagos Island LGA, not all of Lagos state</li>
+                  <li><strong>Free delivery:</strong> Promotion applies to all zones when order threshold is met</li>
+                  <li><strong>Self-pickup:</strong> Always free and available when enabled</li>
+                  <li><strong>Default fee:</strong> Used when no zone matches the customer's location</li>
                 </ul>
+                <div className="mt-3 p-3 bg-yellow-100 rounded">
+                  <p className="text-sm font-semibold text-yellow-800">Zone Creation Tips:</p>
+                  <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
+                    <li>Use specific LGA names for precise delivery fees (e.g., "Ikeja, Surulere" not just "Lagos")</li>
+                    <li>Create separate zones for different areas within the same state</li>
+                    <li>Test zone matching by checking delivery fees in checkout</li>
+                  </ul>
+                </div>
               </div>
             </div>
           )}
