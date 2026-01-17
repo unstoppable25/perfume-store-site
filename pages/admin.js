@@ -102,21 +102,7 @@ export default function Admin() {
     selfPickupEnabled: false,
     zones: [],
     pickupAddresses: [],
-    storeAddress: {
-      address: '',
-      city: 'Lagos',
-      state: 'Lagos',
-      coordinates: { lat: null, lng: null }
-    },
-    distanceTiers: [
-      { min: 0, max: 3, fee: 1500 },
-      { min: 3, max: 6, fee: 2000 },
-      { min: 6, max: 10, fee: 2500 },
-      { min: 10, max: 15, fee: 3000 },
-      { min: 15, max: null, fee: 3500 }
-    ],
-    stateFlatRates: {},
-    useDistanceBasedPricing: false // New toggle for rollback
+    stateFlatRates: {}
   })
   const [newZone, setNewZone] = useState({ name: '', fee: '', states: '' })
   const [editingZone, setEditingZone] = useState(null)
@@ -381,58 +367,6 @@ export default function Admin() {
             parsedPickupAddresses = []
           }
 
-          let parsedStoreAddress = {
-            address: '',
-            city: 'Lagos',
-            state: 'Lagos',
-            coordinates: { lat: null, lng: null }
-          }
-          try {
-            if (data.settings.store_address) {
-              const addressValue = data.settings.store_address
-              if (typeof addressValue === 'string' && addressValue.trim()) {
-                parsedStoreAddress = JSON.parse(addressValue)
-              } else if (typeof addressValue === 'object') {
-                parsedStoreAddress = addressValue
-              }
-            }
-          } catch (err) {
-            console.error('Failed to parse store address:', err)
-            parsedStoreAddress = {
-              address: '',
-              city: 'Lagos',
-              state: 'Lagos',
-              coordinates: { lat: null, lng: null }
-            }
-          }
-
-          let parsedDistanceTiers = [
-            { min: 0, max: 3, fee: 1500 },
-            { min: 3, max: 6, fee: 2000 },
-            { min: 6, max: 10, fee: 2500 },
-            { min: 10, max: 15, fee: 3000 },
-            { min: 15, max: null, fee: 3500 }
-          ]
-          try {
-            if (data.settings.distance_tiers) {
-              const tiersValue = data.settings.distance_tiers
-              if (Array.isArray(tiersValue)) {
-                parsedDistanceTiers = tiersValue
-              } else if (typeof tiersValue === 'string' && tiersValue.trim()) {
-                parsedDistanceTiers = JSON.parse(tiersValue)
-              }
-            }
-          } catch (err) {
-            console.error('Failed to parse distance tiers:', err)
-            parsedDistanceTiers = [
-              { min: 0, max: 3, fee: 1500 },
-              { min: 3, max: 6, fee: 2000 },
-              { min: 6, max: 10, fee: 2500 },
-              { min: 10, max: 15, fee: 3000 },
-              { min: 15, max: null, fee: 3500 }
-            ]
-          }
-
           let parsedStateFlatRates = {}
           try {
             if (data.settings.state_flat_rates) {
@@ -448,23 +382,13 @@ export default function Admin() {
             parsedStateFlatRates = {}
           }
           
-          let useDistanceBasedPricing = false
-          try {
-            useDistanceBasedPricing = settings.use_distance_based_pricing === 'true' || settings.use_distance_based_pricing === true
-          } catch (err) {
-            console.error('Failed to parse distance pricing setting:', err)
-          }
-          
           const deliveryData = {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
             selfPickupEnabled: data.settings.self_pickup_enabled === 'true' || data.settings.self_pickup_enabled === true,
             zones: parsedZones,
             pickupAddresses: parsedPickupAddresses,
-            storeAddress: parsedStoreAddress,
-            distanceTiers: parsedDistanceTiers,
-            stateFlatRates: parsedStateFlatRates,
-            useDistanceBasedPricing: useDistanceBasedPricing
+            stateFlatRates: parsedStateFlatRates
           }
           console.log('Loaded delivery settings:', deliveryData)
           setDeliverySettings(deliveryData)
@@ -3171,61 +3095,6 @@ export default function Admin() {
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-2xl font-semibold mb-6">Delivery Settings</h2>
 
-              {/* Delivery System Toggle */}
-              <div className="mb-8 p-6 bg-red-50 rounded-lg border-2 border-red-200">
-                <h3 className="text-lg font-semibold mb-4 text-red-800">🚨 Delivery System Mode</h3>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deliverySystem"
-                      checked={!deliverySettings.useDistanceBasedPricing}
-                      onChange={async () => {
-                        setDeliverySettings({ ...deliverySettings, useDistanceBasedPricing: false })
-                        await fetch('/api/settings', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: 'use_distance_based_pricing', value: 'false' })
-                        })
-                        alert('Switched to Zone-Based Delivery System')
-                      }}
-                      className="w-5 h-5 text-blue-600"
-                    />
-                    <div>
-                      <span className="font-semibold text-blue-800">Zone-Based System (Legacy)</span>
-                      <p className="text-sm text-blue-600">Uses state/city zone matching</p>
-                    </div>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deliverySystem"
-                      checked={deliverySettings.useDistanceBasedPricing}
-                      onChange={async () => {
-                        setDeliverySettings({ ...deliverySettings, useDistanceBasedPricing: true })
-                        await fetch('/api/settings', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: 'use_distance_based_pricing', value: 'true' })
-                        })
-                        alert('Switched to Distance-Based Delivery System')
-                      }}
-                      className="w-5 h-5 text-green-600"
-                    />
-                    <div>
-                      <span className="font-semibold text-green-800">Distance-Based System (New)</span>
-                      <p className="text-sm text-green-600">Uses GPS distance calculation</p>
-                    </div>
-                  </label>
-                </div>
-                <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded">
-                  <p className="text-sm text-yellow-800">
-                    <strong>⚠️ Important:</strong> Switching systems will change how delivery fees are calculated. 
-                    Test thoroughly before going live. You can always switch back.
-                  </p>
-                </div>
-              </div>
-
               {/* Default Delivery Fee */}
               <div className="mb-8 p-6 bg-gray-50 rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Default Delivery Fee</h3>
@@ -3321,110 +3190,6 @@ export default function Admin() {
                     }
                   </p>
                 </div>
-              </div>
-
-              {/* Store Address Configuration */}
-              <div className="mb-8 p-6 bg-blue-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">🏪 Store Address (For Distance Calculations)</h3>
-                <p className="text-sm text-gray-600 mb-4">Set your store location for accurate distance-based delivery pricing.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-1">Full Store Address *</label>
-                    <input
-                      type="text"
-                      value={deliverySettings.storeAddress.address}
-                      onChange={async (e) => {
-                        const newAddress = { ...deliverySettings.storeAddress, address: e.target.value }
-                        setDeliverySettings({ ...deliverySettings, storeAddress: newAddress })
-                        await fetch('/api/settings', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: 'store_address', value: JSON.stringify(newAddress) })
-                        })
-                      }}
-                      placeholder="123 Victoria Island, Lagos"
-                      className="w-full px-3 py-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">City *</label>
-                    <input
-                      type="text"
-                      value={deliverySettings.storeAddress.city}
-                      onChange={async (e) => {
-                        const newAddress = { ...deliverySettings.storeAddress, city: e.target.value }
-                        setDeliverySettings({ ...deliverySettings, storeAddress: newAddress })
-                        await fetch('/api/settings', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: 'store_address', value: JSON.stringify(newAddress) })
-                        })
-                      }}
-                      placeholder="Lagos"
-                      className="w-full px-3 py-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">State *</label>
-                    <input
-                      type="text"
-                      value={deliverySettings.storeAddress.state}
-                      onChange={async (e) => {
-                        const newAddress = { ...deliverySettings.storeAddress, state: e.target.value }
-                        setDeliverySettings({ ...deliverySettings, storeAddress: newAddress })
-                        await fetch('/api/settings', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: 'store_address', value: JSON.stringify(newAddress) })
-                        })
-                      }}
-                      placeholder="Lagos"
-                      className="w-full px-3 py-2 border rounded-lg"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  💡 Distance calculations will be based on this address. Ensure it's accurate for proper delivery pricing.
-                </p>
-              </div>
-
-              {/* Distance-Based Pricing Tiers */}
-              <div className="mb-8 p-6 bg-green-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">📍 Distance-Based Pricing (Lagos + 15km Ogun)</h3>
-                <p className="text-sm text-gray-600 mb-4">Configure delivery fees based on distance from your store. Applies to Lagos State and up to 15km into Ogun State.</p>
-                
-                <div className="space-y-3">
-                  {deliverySettings.distanceTiers.map((tier, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-white rounded border">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">
-                          {tier.min} - {tier.max ? `${tier.max} km` : '∞ km'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">₦</span>
-                        <input
-                          type="number"
-                          value={tier.fee}
-                          onChange={async (e) => {
-                            const newTiers = [...deliverySettings.distanceTiers]
-                            newTiers[index] = { ...tier, fee: parseInt(e.target.value) || 0 }
-                            setDeliverySettings({ ...deliverySettings, distanceTiers: newTiers })
-                            await fetch('/api/settings', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ key: 'distance_tiers', value: JSON.stringify(newTiers) })
-                            })
-                          }}
-                          className="w-20 px-2 py-1 border rounded text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  💡 15km+ within coverage area uses flat rate. Outside coverage area uses state flat rates.
-                </p>
               </div>
 
               {/* State Flat Rates */}

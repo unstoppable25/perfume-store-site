@@ -68,8 +68,6 @@ export default function Checkout() {
   const [appliedPromos, setAppliedPromos] = useState([])
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoMessage, setPromoMessage] = useState('')
-  const [addressSuggestions, setAddressSuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -136,7 +134,7 @@ export default function Checkout() {
       setDeliveryFee(0)
       setDeliveryMessage('Self Pickup - FREE')
     } else if (formData.state || formData.city) {
-      fetchDeliveryFee(formData.state, formData.city, formData.address)
+      fetchDeliveryFee(formData.state, formData.city)
     }
   }, [deliveryMethod])
 
@@ -156,7 +154,7 @@ export default function Checkout() {
     if ((name === 'state' || name === 'city') && deliveryMethod === 'delivery') {
       const newFormData = { ...formData, [name]: value }
       if (name === 'state') newFormData.city = '' // Reset city when state changes
-      fetchDeliveryFee(newFormData.state, newFormData.city, newFormData.address)
+      fetchDeliveryFee(newFormData.state, newFormData.city)
     }
   }
 
@@ -165,7 +163,7 @@ export default function Checkout() {
   }
 
   // Fetch delivery fee based on location and cart total
-  const fetchDeliveryFee = async (state, city, address = '') => {
+  const fetchDeliveryFee = async (state, city) => {
     if (deliveryMethod === 'pickup') {
       setDeliveryFee(0)
       setDeliveryMessage('Self Pickup - FREE')
@@ -173,42 +171,10 @@ export default function Checkout() {
     }
 
     try {
-      // For now, use mock coordinates based on address/state/city
-      // In production, this should use Google Maps Geocoding API
-      let customerLat = null
-      let customerLng = null
-
-      // Simple mock coordinate lookup (replace with real geocoding)
-      const mockCoords = {
-        'Victoria Island, Lagos': { lat: 6.4281, lng: 3.4219 },
-        'Lekki Phase 1, Lagos': { lat: 6.4488, lng: 3.4737 },
-        'Ikeja, Lagos': { lat: 6.6018, lng: 3.3515 },
-        'Surulere, Lagos': { lat: 6.4874, lng: 3.3581 },
-        'Yaba, Lagos': { lat: 6.5101, lng: 3.3869 },
-        'Ajah, Lagos': { lat: 6.4720, lng: 3.5880 },
-        'Gbagada, Lagos': { lat: 6.5538, lng: 3.3869 },
-        'Maryland, Lagos': { lat: 6.5770, lng: 3.3650 },
-        'Oshodi, Lagos': { lat: 6.5550, lng: 3.3430 },
-        'Festac Town, Lagos': { lat: 6.4697, lng: 3.2830 }
-      }
-
-      // Try to get coordinates from address first, then fallback to city/state
-      const coords = mockCoords[address] || mockCoords[`${city}, ${state}`]
-      if (coords) {
-        customerLat = coords.lat
-        customerLng = coords.lng
-      }
-
       const res = await fetch('/api/delivery-fee', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          state,
-          city,
-          cartTotal: getCartTotal(),
-          customerLat,
-          customerLng
-        })
+        body: JSON.stringify({ state, city, cartTotal: getCartTotal() })
       })
       const data = await res.json()
       if (data.success) {
@@ -314,7 +280,7 @@ export default function Checkout() {
   // Update delivery fee when cart total changes
   useEffect(() => {
     if ((formData.state || formData.city) && deliveryMethod === 'delivery') {
-      fetchDeliveryFee(formData.state, formData.city, formData.address)
+      fetchDeliveryFee(formData.state, formData.city)
     }
   }, [getCartTotal()])
 
@@ -745,64 +711,15 @@ export default function Checkout() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Street Address *
                       </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="address"
-                          value={formData.address}
-                          onChange={(e) => {
-                            handleChange(e)
-                            // Basic address suggestions (can be enhanced with Google Places API)
-                            const query = e.target.value.toLowerCase()
-                            if (query.length > 2) {
-                              const suggestions = [
-                                'Victoria Island, Lagos',
-                                'Lekki Phase 1, Lagos',
-                                'Ikeja, Lagos',
-                                'Surulere, Lagos',
-                                'Yaba, Lagos',
-                                'Ajah, Lagos',
-                                'Gbagada, Lagos',
-                                'Maryland, Lagos',
-                                'Oshodi, Lagos',
-                                'Festac Town, Lagos'
-                              ].filter(addr => addr.toLowerCase().includes(query))
-                              setAddressSuggestions(suggestions)
-                              setShowSuggestions(suggestions.length > 0)
-                            } else {
-                              setShowSuggestions(false)
-                            }
-                            // Recalculate delivery fee as user types address
-                            if (deliveryMethod === 'delivery' && formData.state && formData.city) {
-                              setTimeout(() => fetchDeliveryFee(formData.state, formData.city, e.target.value), 500)
-                            }
-                          }}
-                          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                          className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                          placeholder="Enter your street address"
-                          required
-                        />
-                        {showSuggestions && addressSuggestions.length > 0 && (
-                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-b shadow-lg max-h-40 overflow-y-auto">
-                            {addressSuggestions.map((suggestion, index) => (
-                              <div
-                                key={index}
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                onClick={() => {
-                                  setFormData(prev => ({ ...prev, address: suggestion }))
-                                  setShowSuggestions(false)
-                                  // Recalculate delivery fee with the selected address
-                                  if (deliveryMethod === 'delivery' && formData.state && formData.city) {
-                                    fetchDeliveryFee(formData.state, formData.city, suggestion)
-                                  }
-                                }}
-                              >
-                                {suggestion}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
+                        placeholder="Enter your street address"
+                        required
+                      />
                     </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
