@@ -20,11 +20,68 @@ export default async function handler(req, res) {
         zones = []
       }
       
+      let storeAddress = {
+        address: '',
+        city: 'Lagos',
+        state: 'Lagos',
+        coordinates: { lat: null, lng: null }
+      }
+      try {
+        if (settings.store_address) {
+          const addressValue = settings.store_address
+          if (typeof addressValue === 'string' && addressValue.trim()) {
+            storeAddress = JSON.parse(addressValue)
+          } else if (typeof addressValue === 'object') {
+            storeAddress = addressValue
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse store address:', err)
+      }
+
+      let distanceTiers = [
+        { min: 0, max: 3, fee: 1500 },
+        { min: 3, max: 6, fee: 2000 },
+        { min: 6, max: 10, fee: 2500 },
+        { min: 10, max: 15, fee: 3000 },
+        { min: 15, max: null, fee: 3500 }
+      ]
+      try {
+        if (settings.distance_tiers) {
+          const tiersValue = settings.distance_tiers
+          if (Array.isArray(tiersValue)) {
+            distanceTiers = tiersValue
+          } else if (typeof tiersValue === 'string' && tiersValue.trim()) {
+            distanceTiers = JSON.parse(tiersValue)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse distance tiers:', err)
+      }
+
+      let stateFlatRates = {}
+      try {
+        if (settings.state_flat_rates) {
+          const ratesValue = settings.state_flat_rates
+          if (typeof ratesValue === 'string' && ratesValue.trim()) {
+            stateFlatRates = JSON.parse(ratesValue)
+          } else if (typeof ratesValue === 'object') {
+            stateFlatRates = ratesValue
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse state flat rates:', err)
+      }
+      
       const deliverySettings = {
         defaultFee: settings.delivery_default_fee ? parseInt(settings.delivery_default_fee) : 2000,
         freeThreshold: settings.delivery_free_threshold ? parseInt(settings.delivery_free_threshold) : 0,
         selfPickupEnabled: settings.self_pickup_enabled === 'true' || settings.self_pickup_enabled === true,
-        zones: zones
+        zones: zones,
+        pickupAddresses: pickupAddresses,
+        storeAddress: storeAddress,
+        distanceTiers: distanceTiers,
+        stateFlatRates: stateFlatRates
       }
       
       console.log('Delivery settings API response:', deliverySettings)

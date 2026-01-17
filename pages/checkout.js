@@ -68,17 +68,8 @@ export default function Checkout() {
   const [appliedPromos, setAppliedPromos] = useState([])
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoMessage, setPromoMessage] = useState('')
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    paymentMethod: 'paystack'
-  })
+  const [addressSuggestions, setAddressSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Check authentication and pre-fill form
   useEffect(() => {
@@ -113,10 +104,10 @@ export default function Checkout() {
           console.log('Free threshold:', data.settings.freeThreshold)
           setSelfPickupEnabled(data.settings.selfPickupEnabled || false)
           setPickupAddresses(data.settings.pickupAddresses || [])
-          // Set default delivery fee from settings
+          // Set initial delivery fee to default instead of 0
           if (deliveryMethod === 'delivery') {
             setDeliveryFee(data.settings.defaultFee || 2000)
-            setDeliveryMessage('Standard delivery')
+            setDeliveryMessage('Select delivery address for accurate pricing')
           }
         }
       } catch (err) {
@@ -632,7 +623,10 @@ export default function Checkout() {
                       <span className="block text-sm text-gray-500">We'll deliver to your address</span>
                     </div>
                     <span className="font-semibold text-amber-700">
-                      {deliveryFee > 0 ? `₦${deliveryFee.toLocaleString('en-NG')}` : 'FREE'}
+                      {formData.state && formData.city ? 
+                        (deliveryFee > 0 ? `₦${deliveryFee.toLocaleString('en-NG')}` : 'FREE') : 
+                        'Select address'
+                      }
                     </span>
                   </label>
 
@@ -699,14 +693,56 @@ export default function Checkout() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Street Address *
                       </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                        required
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          name="address"
+                          value={formData.address}
+                          onChange={(e) => {
+                            handleChange(e)
+                            // Basic address suggestions (can be enhanced with Google Places API)
+                            const query = e.target.value.toLowerCase()
+                            if (query.length > 2) {
+                              const suggestions = [
+                                'Victoria Island, Lagos',
+                                'Lekki Phase 1, Lagos',
+                                'Ikeja, Lagos',
+                                'Surulere, Lagos',
+                                'Yaba, Lagos',
+                                'Ajah, Lagos',
+                                'Gbagada, Lagos',
+                                'Maryland, Lagos',
+                                'Oshodi, Lagos',
+                                'Festac Town, Lagos'
+                              ].filter(addr => addr.toLowerCase().includes(query))
+                              setAddressSuggestions(suggestions)
+                              setShowSuggestions(suggestions.length > 0)
+                            } else {
+                              setShowSuggestions(false)
+                            }
+                          }}
+                          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                          className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
+                          placeholder="Enter your street address"
+                          required
+                        />
+                        {showSuggestions && addressSuggestions.length > 0 && (
+                          <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-b shadow-lg max-h-40 overflow-y-auto">
+                            {addressSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, address: suggestion }))
+                                  setShowSuggestions(false)
+                                }}
+                              >
+                                {suggestion}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
