@@ -3462,6 +3462,11 @@ export default function Admin() {
                 </p>
               </div>
 
+              {/* Zone-Based Delivery Configuration */}
+              <div className="mb-8 p-6 bg-blue-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">🏙️ Zone-Based Delivery (Legacy System)</h3>
+                <p className="text-sm text-gray-600 mb-4">Configure delivery zones for specific cities and states. Only active when using the legacy zone-based system.</p>
+
                 {/* Add/Edit Zone Form */}
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <h4 className="font-semibold mb-3">{editingZone ? 'Edit Zone' : 'Add New Zone'}</h4>
