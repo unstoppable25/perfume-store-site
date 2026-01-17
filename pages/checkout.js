@@ -70,6 +70,15 @@ export default function Checkout() {
   const [promoMessage, setPromoMessage] = useState('')
   const [addressSuggestions, setAddressSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    state: '',
+    city: '',
+    address: ''
+  })
 
   // Check authentication and pre-fill form
   useEffect(() => {
