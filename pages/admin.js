@@ -2825,19 +2825,35 @@ export default function Admin() {
                             {order.items.map((item, idx) => (
                               <div key={idx} className="text-sm text-gray-600 flex justify-between items-center">
                                 <div>
-                                  <span>{item.name} x{item.quantity}</span>
-                                  {item.categories && item.categories.length > 0 && (
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      Category: {item.categories.join(', ')}
-                                    </div>
-                                  )}
+                                  <span>{item.name} {item.categories && item.categories.length > 0 ? `(${item.categories[0]})` : ''} x{item.quantity}</span>
                                 </div>
                                 <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
                               </div>
                             ))}
-                            <div className="mt-2 pt-2 border-t flex justify-between font-bold">
-                              <span>Total</span>
-                              <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                            <div className="mt-3 pt-2 border-t space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Subtotal:</span>
+                                <span>₦{parseFloat(order.subtotal || order.total || 0).toLocaleString('en-NG')}</span>
+                              </div>
+                              {order.discountAmount && parseFloat(order.discountAmount) > 0 && (
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <span>Discount ({order.discountCode || 'Promo'}):</span>
+                                  <span>-₦{parseFloat(order.discountAmount).toLocaleString('en-NG')}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Delivery:</span>
+                                <span>
+                                  {order.deliveryFee && parseFloat(order.deliveryFee) > 0
+                                    ? `₦${parseFloat(order.deliveryFee).toLocaleString('en-NG')}`
+                                    : 'FREE'
+                                  }
+                                </span>
+                              </div>
+                              <div className="flex justify-between font-bold text-gray-800 border-t pt-1">
+                                <span>Total:</span>
+                                <span className="text-purple-600">₦{parseFloat(order.total).toLocaleString('en-NG')}</span>
+                              </div>
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mt-2">Payment: {order.paymentMethod}</p>

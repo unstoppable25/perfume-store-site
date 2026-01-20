@@ -167,7 +167,7 @@ export default function Shop() {
   const sortProducts = (products) => {
     const sorted = [...products]
 
-    // First group by category, then sort within each category
+    // First group by category
     const groupedByCategory = {}
     sorted.forEach(product => {
       const category = product.categories && product.categories.length > 0 ? product.categories[0] : 'Uncategorized'
@@ -177,8 +177,25 @@ export default function Shop() {
       groupedByCategory[category].push(product)
     })
 
+    // Sort categories by their lowest-priced item (for price sorting)
+    const sortedCategories = Object.keys(groupedByCategory).sort((catA, catB) => {
+      if (sortOption === 'Sort by price: low to high') {
+        // Find minimum price in each category
+        const minPriceA = Math.min(...groupedByCategory[catA].map(p => parseFloat(p.price)))
+        const minPriceB = Math.min(...groupedByCategory[catB].map(p => parseFloat(p.price)))
+        return minPriceA - minPriceB
+      } else if (sortOption === 'Sort by price: high to low') {
+        // Find maximum price in each category
+        const maxPriceA = Math.max(...groupedByCategory[catA].map(p => parseFloat(p.price)))
+        const maxPriceB = Math.max(...groupedByCategory[catB].map(p => parseFloat(p.price)))
+        return maxPriceB - maxPriceA
+      }
+      // For other sorting options, maintain alphabetical order by category
+      return catA.localeCompare(catB)
+    })
+
     // Sort within each category group
-    Object.keys(groupedByCategory).forEach(category => {
+    sortedCategories.forEach(category => {
       groupedByCategory[category].sort((a, b) => {
         switch (sortOption) {
           case 'Sort by price: low to high':
@@ -198,9 +215,9 @@ export default function Shop() {
       })
     })
 
-    // Flatten back to array, maintaining category grouping order
+    // Flatten back to array, maintaining sorted category order
     const result = []
-    Object.keys(groupedByCategory).forEach(category => {
+    sortedCategories.forEach(category => {
       result.push(...groupedByCategory[category])
     })
 
