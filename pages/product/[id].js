@@ -160,6 +160,13 @@ function ProductDetails() {
     return <div className="min-h-screen flex items-center justify-center">Product not found.</div>;
   }
 
+  const averageRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        ).toFixed(1)
+      : null;
+
   return (
     <>
       <Head>
