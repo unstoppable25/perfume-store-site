@@ -185,6 +185,9 @@ export default function Shop() {
         })
     }
   }
+
+  // Filter products based on search
+  const getFilteredCategories = () => {
     if (!searchQuery.trim()) {
       return categorizedProducts
     }
