@@ -61,6 +61,7 @@ export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false)
   const [activeTab, setActiveTab] = useState('products')
   const [orders, setOrders] = useState([])
+  const [orderSearch, setOrderSearch] = useState('')
   const [messages, setMessages] = useState([])
   const [subscribers, setSubscribers] = useState([])
   const [users, setUsers] = useState([])
@@ -2528,6 +2529,27 @@ export default function Admin() {
                 </button>
               </div>
 
+              {/* Order Search */}
+              <div className="mb-6">
+                <div className="relative max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search orders by ID..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                  {orderSearch && (
+                    <button
+                      onClick={() => setOrderSearch('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Add/Edit Order Form */}
               {(showAddOrder || editingOrder) && (
                 <div className="mb-6 bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
@@ -2736,6 +2758,10 @@ export default function Admin() {
                   ) : (
                     orders
                       .filter(order => order && order.id)
+                      .filter(order => 
+                        !orderSearch || 
+                        order.id.toLowerCase().includes(orderSearch.toLowerCase())
+                      )
                       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                       .map((order) => (
                         <div key={order.id} className="border p-4 rounded-lg bg-gray-50">
@@ -2797,8 +2823,15 @@ export default function Admin() {
                           <div>
                             <p className="text-sm font-semibold text-gray-700 mb-2">Items ({order.items.length})</p>
                             {order.items.map((item, idx) => (
-                              <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                                <span>{item.name} x{item.quantity}</span>
+                              <div key={idx} className="text-sm text-gray-600 flex justify-between items-center">
+                                <div>
+                                  <span>{item.name} x{item.quantity}</span>
+                                  {item.categories && item.categories.length > 0 && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Category: {item.categories.join(', ')}
+                                    </div>
+                                  )}
+                                </div>
                                 <span>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
                               </div>
                             ))}

@@ -20,6 +20,7 @@ export default function Shop() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categorizedProducts, setCategorizedProducts] = useState({});
   const [categoryOrder, setCategoryOrder] = useState([]);
+  const [sortOption, setSortOption] = useState('Default sorting');
 
   // Helper to get userId (from user object or session)
   const getUserId = () => {
@@ -105,11 +106,7 @@ export default function Shop() {
         const categories = settingsData?.settings?.categories || []
         
         // Sort products by their order field
-        const sortedProducts = (productsData || []).sort((a, b) => {
-          const orderA = a.order !== undefined ? a.order : 999999
-          const orderB = b.order !== undefined ? b.order : 999999
-          return orderA - orderB
-        })
+        const sortedProducts = sortProducts(productsData || [])
         
         // Only show active products
         const filteredProducts = (sortedProducts || []).filter(p => p.active !== false)
@@ -133,7 +130,7 @@ export default function Shop() {
       }
     }
     fetchData()
-  }, [])
+  }, [sortOption])
 
   const groupProductsByCategories = (productList) => {
     const grouped = {}
@@ -166,8 +163,28 @@ export default function Shop() {
     setCategorizedProducts(grouped)
   }
 
-  // Filter products based on search
-  const getFilteredCategories = () => {
+  // Sort products based on selected option
+  const sortProducts = (products) => {
+    const sorted = [...products]
+    
+    switch (sortOption) {
+      case 'Sort by price: low to high':
+        return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+      case 'Sort by price: high to low':
+        return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+      case 'Sort by latest':
+        return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      case 'Default sorting':
+      default:
+        // Sort by order field if available, otherwise by creation date
+        return sorted.sort((a, b) => {
+          const orderA = a.order !== undefined ? a.order : 999999
+          const orderB = b.order !== undefined ? b.order : 999999
+          if (orderA !== orderB) return orderA - orderB
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        })
+    }
+  }
     if (!searchQuery.trim()) {
       return categorizedProducts
     }
@@ -319,7 +336,11 @@ export default function Shop() {
             </div>
             
             <div className="hidden sm:block">
-              <select className="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700">
+              <select 
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-700"
+              >
                 <option>Default sorting</option>
                 <option>Sort by price: low to high</option>
                 <option>Sort by price: high to low</option>

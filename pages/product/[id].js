@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useCart } from '../../context/CartContext'
 
 
 function ProductDetails() {
@@ -19,6 +20,8 @@ function ProductDetails() {
   const [submitError, setSubmitError] = useState("");
   const [user, setUser] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     if (!id) return;
@@ -141,12 +144,13 @@ function ProductDetails() {
     }
   };
 
-  const averageRating =
-    reviews.length > 0
-      ? (
-          reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
-        ).toFixed(1)
-      : null;
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product);
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -185,6 +189,24 @@ function ProductDetails() {
               <p className="text-lg text-gray-700 mb-4">{product.description}</p>
               <div className="mb-2">
                 <span className="font-semibold">Price:</span> ₦{product.price}
+              </div>
+              <div className="mb-4">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.status === 'sold_out'}
+                  className={`px-6 py-3 rounded-lg font-semibold transition ${
+                    product.status === 'sold_out'
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'bg-amber-700 text-white hover:bg-amber-800'
+                  }`}
+                >
+                  {product.status === 'sold_out' ? 'Sold Out' : 'Add to Cart'}
+                </button>
+                {addedToCart && (
+                  <div className="mt-2 text-green-600 font-medium">
+                    ✓ Added to cart!
+                  </div>
+                )}
               </div>
               {averageRating && (
                 <div className="mb-2 flex items-center gap-2">
@@ -313,7 +335,22 @@ function ProductDetails() {
                       <div>
                         <h3 className="text-lg font-semibold mb-1">{rel.name}</h3>
                         <p className="text-gray-600 text-sm mb-1 line-clamp-2">{rel.description}</p>
-                        <div className="font-bold text-amber-700">₦{rel.price}</div>
+                        <div className="font-bold text-amber-700 mb-2">₦{rel.price}</div>
+                        <button
+                          onClick={() => {
+                            addToCart(rel);
+                            setAddedToCart(true);
+                            setTimeout(() => setAddedToCart(false), 2000);
+                          }}
+                          disabled={rel.status === 'sold_out'}
+                          className={`px-4 py-2 rounded text-sm font-medium transition w-full ${
+                            rel.status === 'sold_out'
+                              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                              : 'bg-amber-700 text-white hover:bg-amber-800'
+                          }`}
+                        >
+                          {rel.status === 'sold_out' ? 'Sold Out' : 'Add to Cart'}
+                        </button>
                       </div>
                     </div>
                   </Link>
