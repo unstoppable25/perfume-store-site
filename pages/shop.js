@@ -166,24 +166,45 @@ export default function Shop() {
   // Sort products based on selected option
   const sortProducts = (products) => {
     const sorted = [...products]
-    
-    switch (sortOption) {
-      case 'Sort by price: low to high':
-        return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-      case 'Sort by price: high to low':
-        return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-      case 'Sort by latest':
-        return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      case 'Default sorting':
-      default:
-        // Sort by order field if available, otherwise by creation date
-        return sorted.sort((a, b) => {
-          const orderA = a.order !== undefined ? a.order : 999999
-          const orderB = b.order !== undefined ? b.order : 999999
-          if (orderA !== orderB) return orderA - orderB
-          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-        })
-    }
+
+    // First group by category, then sort within each category
+    const groupedByCategory = {}
+    sorted.forEach(product => {
+      const category = product.categories && product.categories.length > 0 ? product.categories[0] : 'Uncategorized'
+      if (!groupedByCategory[category]) {
+        groupedByCategory[category] = []
+      }
+      groupedByCategory[category].push(product)
+    })
+
+    // Sort within each category group
+    Object.keys(groupedByCategory).forEach(category => {
+      groupedByCategory[category].sort((a, b) => {
+        switch (sortOption) {
+          case 'Sort by price: low to high':
+            return parseFloat(a.price) - parseFloat(b.price)
+          case 'Sort by price: high to low':
+            return parseFloat(b.price) - parseFloat(a.price)
+          case 'Sort by latest':
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+          case 'Default sorting':
+          default:
+            // Sort by order field if available, otherwise by creation date
+            const orderA = a.order !== undefined ? a.order : 999999
+            const orderB = b.order !== undefined ? b.order : 999999
+            if (orderA !== orderB) return orderA - orderB
+            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        }
+      })
+    })
+
+    // Flatten back to array, maintaining category grouping order
+    const result = []
+    Object.keys(groupedByCategory).forEach(category => {
+      result.push(...groupedByCategory[category])
+    })
+
+    return result
   }
 
   // Filter products based on search

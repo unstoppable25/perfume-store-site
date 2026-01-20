@@ -61,10 +61,36 @@ export default function OrderConfirmation() {
               </div>
               {orderDetails && (
                 <>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                    <span className="text-gray-600">Amount Paid:</span>
-                    <span className="font-semibold text-gray-800">₦{parseFloat(orderDetails.total || 0).toLocaleString('en-NG')}</span>
+                  {/* Order Summary Breakdown */}
+                  <div className="py-3 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-800 mb-2">Order Summary</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span>₦{parseFloat(orderDetails.subtotal || orderDetails.total || 0).toLocaleString('en-NG')}</span>
+                      </div>
+                      {orderDetails.discountAmount && parseFloat(orderDetails.discountAmount) > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Discount ({orderDetails.discountCode || 'Promo'}):</span>
+                          <span>-₦{parseFloat(orderDetails.discountAmount).toLocaleString('en-NG')}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Shipping:</span>
+                        <span>
+                          {orderDetails.deliveryFee && parseFloat(orderDetails.deliveryFee) > 0
+                            ? `₦${parseFloat(orderDetails.deliveryFee).toLocaleString('en-NG')}`
+                            : 'FREE'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-gray-800 border-t pt-1">
+                        <span>Total Paid:</span>
+                        <span>₦{parseFloat(orderDetails.total || 0).toLocaleString('en-NG')}</span>
+                      </div>
+                    </div>
                   </div>
+
                   <div className="flex justify-between items-center py-3 border-b border-gray-200">
                     <span className="text-gray-600">Payment Method:</span>
                     <span className="text-gray-800 capitalize">{orderDetails.paymentMethod || 'Paystack'}</span>
