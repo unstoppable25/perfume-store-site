@@ -167,61 +167,25 @@ export default function Shop() {
   const sortProducts = (products) => {
     const sorted = [...products]
 
-    // First group by category
-    const groupedByCategory = {}
-    sorted.forEach(product => {
-      const category = product.categories && product.categories.length > 0 ? product.categories[0] : 'Uncategorized'
-      if (!groupedByCategory[category]) {
-        groupedByCategory[category] = []
+    sorted.sort((a, b) => {
+      switch (sortOption) {
+        case 'Sort by price: low to high':
+          return parseFloat(a.price) - parseFloat(b.price)
+        case 'Sort by price: high to low':
+          return parseFloat(b.price) - parseFloat(a.price)
+        case 'Sort by latest':
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        case 'Default sorting':
+        default:
+          // Sort by order field if available, otherwise by creation date
+          const orderA = a.order !== undefined ? a.order : 999999
+          const orderB = b.order !== undefined ? b.order : 999999
+          if (orderA !== orderB) return orderA - orderB
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
       }
-      groupedByCategory[category].push(product)
     })
 
-    // Sort categories by their lowest-priced item (for price sorting)
-    const sortedCategories = Object.keys(groupedByCategory).sort((catA, catB) => {
-      if (sortOption === 'Sort by price: low to high') {
-        // Find minimum price in each category
-        const minPriceA = Math.min(...groupedByCategory[catA].map(p => parseFloat(p.price)))
-        const minPriceB = Math.min(...groupedByCategory[catB].map(p => parseFloat(p.price)))
-        return minPriceA - minPriceB
-      } else if (sortOption === 'Sort by price: high to low') {
-        // Find maximum price in each category
-        const maxPriceA = Math.max(...groupedByCategory[catA].map(p => parseFloat(p.price)))
-        const maxPriceB = Math.max(...groupedByCategory[catB].map(p => parseFloat(p.price)))
-        return maxPriceB - maxPriceA
-      }
-      // For other sorting options, maintain alphabetical order by category
-      return catA.localeCompare(catB)
-    })
-
-    // Sort within each category group
-    sortedCategories.forEach(category => {
-      groupedByCategory[category].sort((a, b) => {
-        switch (sortOption) {
-          case 'Sort by price: low to high':
-            return parseFloat(a.price) - parseFloat(b.price)
-          case 'Sort by price: high to low':
-            return parseFloat(b.price) - parseFloat(a.price)
-          case 'Sort by latest':
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-          case 'Default sorting':
-          default:
-            // Sort by order field if available, otherwise by creation date
-            const orderA = a.order !== undefined ? a.order : 999999
-            const orderB = b.order !== undefined ? b.order : 999999
-            if (orderA !== orderB) return orderA - orderB
-            return new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-        }
-      })
-    })
-
-    // Flatten back to array, maintaining sorted category order
-    const result = []
-    sortedCategories.forEach(category => {
-      result.push(...groupedByCategory[category])
-    })
-
-    return result
+    return sorted
   }
 
   // Filter products based on search
