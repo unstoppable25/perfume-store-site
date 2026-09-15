@@ -406,9 +406,9 @@ export default function Shop() {
                     {/* Horizontal Scrolling Product Row */}
                     <div className="relative">
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
-                        <div className="flex gap-6" style={{ scrollBehavior: 'smooth' }}>
+                        <div className="flex gap-4" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div key={product.id} className="flex-none w-52 sm:w-56 group relative">
+                            <div key={product.id} className="flex-none w-44 sm:w-48 group relative">
                               {/* Favorite button */}
                               <button
                                 aria-label={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
