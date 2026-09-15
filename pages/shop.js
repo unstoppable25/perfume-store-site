@@ -389,7 +389,7 @@ export default function Shop() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-2">
                 {(() => {
                   const filtered = getFilteredCategories()
                   // Use category order from admin, fallback to sorted keys for uncategorized
@@ -399,13 +399,13 @@ export default function Shop() {
                 })().map((category) => (
                   <div key={category} className="category-section">
                     {/* Category Header with Underline */}
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-amber-700 inline-block">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2 pb-2 border-b-2 border-amber-700 inline-block">
                       {category}
                     </h2>
                     
                     {/* Horizontal Scrolling Product Row */}
                     <div className="relative">
-                      <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
+                      <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
                         <div className="flex gap-3" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
                             <div key={product.id} className="flex-none w-36 sm:w-40 group relative">
