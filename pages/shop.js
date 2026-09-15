@@ -408,7 +408,7 @@ export default function Shop() {
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
                         <div className="flex gap-6" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div key={product.id} className="flex-none w-64 group relative">
+                            <div key={product.id} className="flex-none w-52 sm:w-56 group relative">
                               {/* Favorite button */}
                               <button
                                 aria-label={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
