@@ -334,10 +334,10 @@ export default function Shop() {
         </div>
 
         {/* Shop Header */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center mb-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          <div className="flex justify-between items-center mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Shop</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-0">Shop</h1>
               <p className="text-sm text-gray-600">Showing all {products.length} results</p>
             </div>
             
@@ -356,7 +356,7 @@ export default function Shop() {
           </div>
           
           {/* Search Bar */}
-          <div className="mb-8">
+          <div className="mb-3">
             <div className="relative max-w-2xl">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
@@ -364,7 +364,7 @@ export default function Shop() {
                 placeholder="Search perfumes by name, description, or category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
               {searchQuery && (
                 <button
