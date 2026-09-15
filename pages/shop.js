@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
 import Head from 'next/head'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { getOptimizedImageUrl } from '../lib/imageUrl'
 
 export async function getServerSideProps() {
   return { props: {} };
@@ -429,12 +430,22 @@ export default function Shop() {
                                 <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
                                   <div className="bg-gray-100 rounded-t-lg overflow-hidden aspect-[4/3]">
                                     {product.image ? (
-                                      <img
-                                        src={product.image}
-                                        alt={product.name}
-                                        className="w-full object-cover group-hover:scale-105 transition duration-300 rounded-lg"
-                                        style={{ aspectRatio: '4/3', height: 'auto' }}
-                                      />
+                                      // prefer variant URL list when available to serve optimized images
+                                      (() => {
+                                        const src = Array.isArray(product.variants) && product.variants.length > 0
+                                          ? product.variants[1] || product.variants[0] || product.image
+                                          : product.image
+                                        return (
+                                          <img
+                                            src={getOptimizedImageUrl(src)}
+                                            alt={product.name}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="w-full object-cover group-hover:scale-105 transition duration-300 rounded-lg"
+                                            style={{ aspectRatio: '4/3', height: 'auto' }}
+                                          />
+                                        )
+                                      })()
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                                         <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
