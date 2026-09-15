@@ -389,7 +389,7 @@ export default function Shop() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-12">
+              <div className="space-y-6">
                 {(() => {
                   const filtered = getFilteredCategories()
                   // Use category order from admin, fallback to sorted keys for uncategorized
@@ -406,9 +406,9 @@ export default function Shop() {
                     {/* Horizontal Scrolling Product Row */}
                     <div className="relative">
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
-                        <div className="flex gap-4" style={{ scrollBehavior: 'smooth' }}>
+                        <div className="flex gap-3" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div key={product.id} className="flex-none w-40 sm:w-44 group relative">
+                            <div key={product.id} className="flex-none w-36 sm:w-40 group relative">
                               {/* Favorite button */}
                               <button
                                 aria-label={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
