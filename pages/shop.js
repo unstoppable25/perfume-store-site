@@ -408,7 +408,7 @@ export default function Shop() {
                       <div className="overflow-x-auto pb-4" style={{ scrollbarWidth: 'thin' }}>
                         <div className="flex gap-4" style={{ scrollBehavior: 'smooth' }}>
                           {getFilteredCategories()[category].map((product) => (
-                            <div key={product.id} className="flex-none w-44 sm:w-48 group relative">
+                            <div key={product.id} className="flex-none w-40 sm:w-44 group relative">
                               {/* Favorite button */}
                               <button
                                 aria-label={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -458,9 +458,6 @@ export default function Shop() {
                                     <h3 className="text-base font-semibold text-gray-800 mb-1 truncate">
                                       {product.name}
                                     </h3>
-                                    <p className="text-sm text-gray-600 mb-2 line-clamp-2 h-10">
-                                      {product.description}
-                                    </p>
                                     {product.status && product.status !== 'available' && (
                                       <div className={`text-xs font-semibold mb-2 px-2 py-1 rounded-full inline-block ${
                                         product.status === 'sold_out' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
