@@ -1,5 +1,6 @@
 import { createOrder } from '../../lib/db'
 import { addSecurityHeaders } from '../../lib/security'
+import { sendOrderDiscordNotification } from '../../lib/discord'
 
 export default async function handler(req, res) {
   // Add security headers
@@ -28,6 +29,7 @@ export default async function handler(req, res) {
     }
 
     await createOrder(order)
+    await sendOrderDiscordNotification(order)
 
     // For Stripe payment, you would create a Stripe checkout session here
     // For now, we'll just return success

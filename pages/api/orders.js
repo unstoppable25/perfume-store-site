@@ -1,5 +1,6 @@
 import { getAllOrders, updateOrderStatus, getOrderById, createOrder } from '../../lib/db'
 import { sendOrderStatusUpdateEmail, sendOrderConfirmationEmail } from '../../lib/email'
+import { sendOrderDiscordNotification } from '../../lib/discord'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -87,6 +88,8 @@ export default async function handler(req, res) {
       } catch (emailErr) {
         console.error('Failed to send order confirmation email:', emailErr)
       }
+
+      await sendOrderDiscordNotification(newOrder)
 
       return res.status(201).json({ success: true, order: newOrder, message: 'Order created successfully' })
     } catch (err) {

@@ -2,6 +2,7 @@
 import crypto from 'crypto'
 import { createOrder } from '../../lib/db'
 import { sendOrderConfirmationEmail } from '../../lib/email'
+import { sendOrderDiscordNotification } from '../../lib/discord'
 import { addSecurityHeaders } from '../../lib/security'
 
 export default async function handler(req, res) {
@@ -65,6 +66,8 @@ export default async function handler(req, res) {
         console.error('Failed to send order confirmation email:', emailErr)
         // Don't fail the webhook if email fails
       }
+
+      await sendOrderDiscordNotification(order)
 
       return res.status(200).json({ message: 'Webhook processed successfully' })
     } catch (err) {
