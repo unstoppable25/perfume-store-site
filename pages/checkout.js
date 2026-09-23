@@ -64,6 +64,12 @@ export default function Checkout() {
   const [selectedPickupAddress, setSelectedPickupAddress] = useState(null)
   const [pickupAddresses, setPickupAddresses] = useState([])
   const [selfPickupEnabled, setSelfPickupEnabled] = useState(false)
+  const [bankTransfer, setBankTransfer] = useState({
+    enabled: false,
+    bankName: '',
+    accountNumber: '',
+    accountName: ''
+  })
   const [promoCode, setPromoCode] = useState('')
   const [appliedPromos, setAppliedPromos] = useState([])
   const [promoLoading, setPromoLoading] = useState(false)
@@ -75,7 +81,8 @@ export default function Checkout() {
     phone: '',
     state: '',
     city: '',
-    address: ''
+    address: '',
+    paymentMethod: 'paystack'
   })
 
   // Check authentication and pre-fill form
@@ -126,6 +133,24 @@ export default function Checkout() {
       }
     }
     fetchDeliverySettings()
+
+    const fetchPaymentSettings = async () => {
+      try {
+        const res = await fetch('/api/settings')
+        const data = await res.json()
+        if (data.success && data.settings) {
+          setBankTransfer({
+            enabled: data.settings.bank_transfer_enabled === true || data.settings.bank_transfer_enabled === 'true',
+            bankName: data.settings.bank_transfer_bank_name || '',
+            accountNumber: data.settings.bank_transfer_account_number || '',
+            accountName: data.settings.bank_transfer_account_name || ''
+          })
+        }
+      } catch (err) {
+        console.error('Failed to fetch payment settings', err)
+      }
+    }
+    fetchPaymentSettings()
   }, [router])
 
   // Update delivery fee when delivery method changes
@@ -351,6 +376,61 @@ export default function Checkout() {
         if (data.success) {
           clearCart()
           alert('🎉 Order placed successfully! Total: ₦0 (100% discount applied)')
+          router.push('/profile')
+        } else {
+          alert('Failed to place order. Please try again.')
+        }
+        setLoading(false)
+        return
+      }
+
+      // Create bank-transfer order without charging the customer online
+      if (formData.paymentMethod === 'bank_transfer') {
+        const orderData = {
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone
+          },
+          shipping: deliveryMethod === 'pickup' ? {
+            address: selectedPickupAddress ? `${selectedPickupAddress.name} - ${selectedPickupAddress.address}` : 'Self Pickup',
+            city: selectedPickupAddress ? selectedPickupAddress.city : 'Self Pickup',
+            state: selectedPickupAddress ? selectedPickupAddress.state : 'Self Pickup',
+            zipCode: '',
+            pickupAddress: selectedPickupAddress
+          } : {
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode
+          },
+          items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })),
+          total: getDiscountedTotal(),
+          deliveryFee,
+          promoCodes: appliedPromos.map(p => p.code),
+          promoDiscount: appliedPromos.reduce((sum, p) => sum + p.discountAmount, 0),
+          deliveryMethod,
+          status: 'Pending Bank Transfer',
+          paymentMethod: 'Bank Transfer',
+          paymentReference: 'BANK_' + Date.now()
+        }
+
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        })
+
+        const data = await res.json()
+        if (data.success) {
+          clearCart()
+          alert('Order placed. Please complete your bank transfer using the details shown and send proof of payment to us.')
           router.push('/profile')
         } else {
           alert('Failed to place order. Please try again.')
@@ -861,6 +941,32 @@ export default function Checkout() {
                       <div className="text-sm text-gray-500">Pay when you receive your order</div>
                     </div>
                   </label>
+                  {bankTransfer.enabled && (
+                    <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                      style={{ borderColor: formData.paymentMethod === 'bank_transfer' ? '#b45309' : '#d1d5db' }}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bank_transfer"
+                        checked={formData.paymentMethod === 'bank_transfer'}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-amber-600"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="font-medium">🏦 Bank Transfer</div>
+                        <div className="text-sm text-gray-500">Transfer payment manually before we process your order</div>
+                      </div>
+                    </label>
+                  )}
+                  {formData.paymentMethod === 'bank_transfer' && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-gray-800">
+                      <p className="font-semibold mb-2">Transfer payment to:</p>
+                      <p><strong>Bank:</strong> {bankTransfer.bankName}</p>
+                      <p><strong>Account number:</strong> {bankTransfer.accountNumber}</p>
+                      <p><strong>Account name:</strong> {bankTransfer.accountName}</p>
+                      <p className="mt-2 text-gray-600">Use your order ID as the transfer reference and send proof of payment after placing the order.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

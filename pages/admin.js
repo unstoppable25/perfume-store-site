@@ -101,6 +101,10 @@ export default function Admin() {
     defaultFee: 2000,
     freeDeliveryThreshold: 0,
     selfPickupEnabled: false,
+    bankTransferEnabled: false,
+    bankName: '',
+    bankAccountNumber: '',
+    bankAccountName: '',
     zones: [],
     pickupAddresses: [],
     stateFlatRates: {}
@@ -387,6 +391,10 @@ export default function Admin() {
             defaultFee: data.settings.delivery_default_fee ? parseInt(data.settings.delivery_default_fee) : 2000,
             freeDeliveryThreshold: data.settings.delivery_free_threshold ? parseInt(data.settings.delivery_free_threshold) : 0,
             selfPickupEnabled: data.settings.self_pickup_enabled === 'true' || data.settings.self_pickup_enabled === true,
+            bankTransferEnabled: data.settings.bank_transfer_enabled === 'true' || data.settings.bank_transfer_enabled === true,
+            bankName: data.settings.bank_transfer_bank_name || '',
+            bankAccountNumber: data.settings.bank_transfer_account_number || '',
+            bankAccountName: data.settings.bank_transfer_account_name || '',
             zones: parsedZones,
             pickupAddresses: parsedPickupAddresses,
             stateFlatRates: parsedStateFlatRates
@@ -1451,6 +1459,28 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'self_pickup_enabled', value: deliverySettings.selfPickupEnabled.toString() })
+      })
+
+      // Save bank transfer settings
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'bank_transfer_enabled', value: deliverySettings.bankTransferEnabled.toString() })
+      })
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'bank_transfer_bank_name', value: deliverySettings.bankName })
+      })
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'bank_transfer_account_number', value: deliverySettings.bankAccountNumber })
+      })
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'bank_transfer_account_name', value: deliverySettings.bankAccountName })
       })
 
       // Save zones
@@ -3239,6 +3269,60 @@ export default function Admin() {
                     }
                   </p>
                 </div>
+              </div>
+
+              {/* Bank Transfer Payment Option */}
+              <div className="mb-8 p-6 bg-amber-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Bank Transfer Payment</h3>
+                <label className="flex items-center gap-3 cursor-pointer mb-4">
+                  <input
+                    type="checkbox"
+                    checked={deliverySettings.bankTransferEnabled}
+                    onChange={(e) => setDeliverySettings({ ...deliverySettings, bankTransferEnabled: e.target.checked })}
+                    className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                  />
+                  <span className="text-sm font-medium">Enable Bank Transfer at Checkout</span>
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Bank Name</label>
+                    <input
+                      type="text"
+                      value={deliverySettings.bankName}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, bankName: e.target.value })}
+                      placeholder="e.g. First Bank"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Account Number</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={deliverySettings.bankAccountNumber}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, bankAccountNumber: e.target.value })}
+                      placeholder="0123456789"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Account Name</label>
+                    <input
+                      type="text"
+                      value={deliverySettings.bankAccountName}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, bankAccountName: e.target.value })}
+                      placeholder="Your business account name"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUpdateDeliverySettings}
+                  className="mt-4 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800"
+                >
+                  Save Bank Transfer Settings
+                </button>
               </div>
 
               {/* State Flat Rates */}
